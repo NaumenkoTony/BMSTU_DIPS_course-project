@@ -1,18 +1,4 @@
-services:
-  postgres:
-    image: library/postgres:13
-    container_name: postgres
-    restart: on-failure
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: "postgres"
-      POSTGRES_DB: postgres
-    volumes:
-      - ./db-data:/var/lib/postgresql/data
-      - ./postgres/:/docker-entrypoint-initdb.d/
-    ports:
-      - "5432:5432"
-  
+services:  
   loyalty_service:
     build:
       context: ./LoyaltyService
@@ -24,6 +10,20 @@ services:
       - postgres
     ports:
       - "8050:8050"
+  
+  loyalty_database:
+    image: library/postgres:13
+    container_name: LoyaltyDatabase
+    restart: on-failure
+    environment:
+      POSTGRES_USER: postgres_loyalty
+      POSTGRES_PASSWORD: "postgres_loyalty"
+      POSTGRES_DB: postgres_loyalty
+    volumes:
+      - ./LoyaltyDatabase/db-data:/var/lib/postgresql/data
+      - ./LoyaltyDatabase/db-scripts/:/docker-entrypoint-initdb.d/
+    ports:
+      - "8051:5432"
 
   payment_service:
     build:
@@ -37,6 +37,20 @@ services:
     ports:
       - "8060:8060"
 
+  payment_database:
+    image: library/postgres:13
+    container_name: PaymentDatabase
+    restart: on-failure
+    environment:
+      POSTGRES_USER: postgres_payment
+      POSTGRES_PASSWORD: "postgres_payment"
+      POSTGRES_DB: postgres_payment
+    volumes:
+      - ./PaymentDatabase/db-data:/var/lib/postgresql/data
+      - ./PaymentDatabase/db-scripts/:/docker-entrypoint-initdb.d/
+    ports:
+      - "8061:5432"
+
   reservation_service:
     build:
       context: ./ReservationService
@@ -49,6 +63,20 @@ services:
     ports:
       - "8070:8070"
 
+  reservation_database:
+    image: library/postgres:13
+    container_name: ReservationDatabase
+    restart: on-failure
+    environment:
+      POSTGRES_USER: postgres_reservation
+      POSTGRES_PASSWORD: "postgres_reservation"
+      POSTGRES_DB: postgres_reservation
+    volumes:
+      - ./ReservationDatabase/db-data:/var/lib/postgresql/data
+      - ./ReservationDatabase/db-scripts/:/docker-entrypoint-initdb.d/
+    ports:
+      - "8071:5432"
+
   gateway_service:
     build:
       context: ./GatewayService
@@ -56,9 +84,11 @@ services:
     container_name: GatewayService
     restart: on-failure
     depends_on:
-      - postgres
+      - reservation_database
       - reservation_service
+      - payment_database
       - payment_service
+      - loyalty_database
       - loyalty_service
     image: tonynm/gateway_service
     ports:
