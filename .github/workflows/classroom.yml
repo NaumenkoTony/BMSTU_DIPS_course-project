@@ -53,13 +53,13 @@ jobs:
         timeout-minutes: 5
         run: |
           docker compose up -d
-          ./scripts/wait-script.sh
+          ./program/backend/scripts/wait-script.sh
         env:
           WAIT_PORTS: 8080,8070,8060,8050
 
       - name: Run API Tests
         timeout-minutes: 5
-        run: ./scripts/test-script.sh
+        run: ./program/backend/scripts/test-script.sh
         env:
           VARIANT: v2
           SERVICE_NAME: loyalty_service
