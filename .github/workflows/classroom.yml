@@ -21,7 +21,7 @@ jobs:
         timeout-minutes: 10
         run: |
           cd program/backend
-          dockercompose build
+          docker compose build
           
   test:
     name: Test
@@ -39,7 +39,7 @@ jobs:
         timeout-minutes: 10
         run: |
           cd program/backend
-          dockercompose build
+          docker compose build
 
       - name: Run containers
         timeout-minutes: 5
