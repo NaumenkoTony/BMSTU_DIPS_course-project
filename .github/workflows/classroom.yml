@@ -20,6 +20,9 @@ jobs:
       - name: Change to project directory
         run: cd program/backend
 
+      - name: show files
+        run: ls -a
+
       - name: Build images
         timeout-minutes: 10
         run: docker compose build
@@ -35,7 +38,7 @@ jobs:
 
       - name: Change to project directory
         run: cd program/backend
-        
+
       - name: Build images
         timeout-minutes: 10
         run: docker compose build
