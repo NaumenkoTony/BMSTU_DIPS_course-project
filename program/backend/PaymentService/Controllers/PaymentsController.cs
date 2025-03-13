@@ -42,4 +42,16 @@ public class PaymentsController(IPaymentRepository repository, IMapper mapper) :
         await repository.UpdateAsync(newModel, payment.Id);
         return Ok(newModel);
     }
+
+    [Route("/api/v1/[controller]{uid}")]
+    [HttpDelete]
+    public async Task<ActionResult<PaymentResponse>> DeletePaymentAsync(string uid)
+    {
+        var payment = await repository.GetByUidAsync(uid);
+        if (payment != null)
+        {
+            await repository.DeleteAsync(payment.Id);
+        }
+        return Ok();
+    }
 }
