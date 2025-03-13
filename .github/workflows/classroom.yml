@@ -40,11 +40,9 @@ jobs:
           SERVICE_NAME: loyalty_service
           PORT_NUMBER: 8050
 
-      - uses: education/autograding@v1
-        id: autograder
-        continue-on-error: true
-
       - name: Stop containers
         if: always()
         continue-on-error: true
-        run: docker compose down -v
+        run: |
+          cd program/backend
+          docker compose down -v
