@@ -1,0 +1,48 @@
+name: GitHub Classroom Workflow
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  api-test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Build images
+        timeout-minutes: 10
+        run: |
+          cd program/backend
+          docker compose build
+
+      - name: Run containers
+        timeout-minutes: 5
+        run: |
+          cd program/backend
+          docker compose up -d
+          ./scripts/wait-script.sh
+        env:
+          WAIT_PORTS: 8080,8070,8060,8050
+
+      - name: Run API Tests
+        timeout-minutes: 5
+        run: |
+          cd program/backend
+          ./scripts/test-script.sh
+        env:
+          VARIANT: v2
+          SERVICE_NAME: loyalty_service
+          PORT_NUMBER: 8050
+
+      - name: Stop containers
+        if: always()
+        continue-on-error: true
+        run: |
+          cd program/backend
+          docker compose down -v

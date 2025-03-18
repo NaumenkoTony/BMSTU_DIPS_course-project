@@ -1,0 +1,2 @@
+CREATE DATABASE payments;
+GRANT ALL PRIVILEGES ON DATABASE payments TO program;

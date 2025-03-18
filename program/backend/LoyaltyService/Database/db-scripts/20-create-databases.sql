@@ -1,0 +1,2 @@
+CREATE DATABASE loyalties;
+GRANT ALL PRIVILEGES ON DATABASE loyalties TO program;
