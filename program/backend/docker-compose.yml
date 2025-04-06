@@ -77,6 +77,31 @@ services:
     ports:
       - "8071:5432"
 
+  identity_service:
+    container_name: IdentityService
+    build:
+      context: ./IdentityService
+      dockerfile: Dockerfile
+    depends_on:
+      - identity_database
+    image: tonynm/identity_service
+    restart: on-failure
+    ports:
+      - "8000:8000"
+
+  identity_database:
+    container_name: IdentityDatabase
+    image: postgres:13
+    restart: on-failure
+    environment:
+      POSTGRES_USER: postgres_identity
+      POSTGRES_PASSWORD: "postgres_identity"
+      POSTGRES_DB: postgres_identity
+    ports:
+      - "8001:5432"
+    volumes:
+      - ./IdentityService/Database/db-data:/var/lib/postgresql/data
+
   gateway_service:
     container_name: GatewayService
     build:
@@ -89,6 +114,7 @@ services:
       - payment_service
       - loyalty_database
       - loyalty_service
+      - identity_database
       - redis
     image: tonynm/gateway_service
     restart: on-failure

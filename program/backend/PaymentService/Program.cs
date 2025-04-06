@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using PaymentService.Data;
 using ReservationService.Data.RepositoriesPostgreSQL;
 
@@ -12,27 +14,52 @@ builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = "http://identity_service:8000";
+        options.Audience = "resource_server";
+        options.RequireHttpsMetadata = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogError("Authentication failed: " + context.Exception.Message);
+                return Task.CompletedTask;
+            },
+            OnChallenge = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogWarning("Authentication challenge triggered: {Error}, {ErrorDescription}", context.Error, context.ErrorDescription);
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogInformation("Token validated successfully.");
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+builder.Services.AddAuthorization();
+
 builder.Services.AddControllers();
+
 builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<PaymentsContext>();
-    
-    try
-    {
-        dbContext.Database.OpenConnection();
-        dbContext.Database.CloseConnection();
-        Console.WriteLine("Connected to database");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error connecting to database: {ex.Message}");
-        Environment.Exit(1);
-    }
-}
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

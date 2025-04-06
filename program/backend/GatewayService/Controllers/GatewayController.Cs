@@ -11,10 +11,13 @@ using GatewayService.Models.ReservationServiceDto;
 using GatewayService.Models.LoyaltyServiceDto;
 using GatewayService.Models.PaymentServiceDto;
 using GatewayService.Services;
-using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
+
+[Authorize]
 public class GatewayController(IHttpClientFactory httpClientFactory, IMapper mapper, ILogger<GatewayController> logger, IConnectionMultiplexer redis) : ControllerBase
 {
     private readonly IHttpClientFactory httpClientFactory = httpClientFactory;
@@ -24,7 +27,7 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
 
     private readonly CircuitBreaker reservationServiceCircuitBreaker = new CircuitBreaker(5, TimeSpan.FromSeconds(60));
     private readonly CircuitBreaker loyaltyServiceCircuitBreaker = new CircuitBreaker(5, TimeSpan.FromSeconds(60));
-    private readonly CircuitBreaker PaymentServiceCircuitBreaker = new CircuitBreaker(5, TimeSpan.FromSeconds(60));
+    private readonly CircuitBreaker paymentServiceCircuitBreaker = new CircuitBreaker(5, TimeSpan.FromSeconds(60));
 
     private async Task<ReservationResponse> CreateReservationResponseAsync(ReservationServiceResponse reservationServiceResponse)
     {
@@ -58,16 +61,16 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
         try
         {
             var paymentService = httpClientFactory.CreateClient("PaymentService");
-            if (PaymentServiceCircuitBreaker.AllowRequest())
+            if (paymentServiceCircuitBreaker.AllowRequest())
             {
                 var paymentResponse = await paymentService.GetAsync($"/api/v1/payments/{reservationServiceResponse.PaymentUid}");
                 if (!paymentResponse.IsSuccessStatusCode)
                 {
-                    PaymentServiceCircuitBreaker.RecordFailure();
+                    paymentServiceCircuitBreaker.RecordFailure();
                 }
                 else
                 {
-                    PaymentServiceCircuitBreaker.RecordSuccess();
+                    paymentServiceCircuitBreaker.RecordSuccess();
                     var paymentJsonString = await paymentResponse.Content.ReadAsStringAsync();
                     var payment = JsonConvert.DeserializeObject<PaymentServiceResponse>(paymentJsonString);
                     paymentInfo = mapper.Map<PaymentInfo>(payment);
@@ -76,7 +79,7 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
         }
         catch (Exception)
         {
-            PaymentServiceCircuitBreaker.RecordFailure();
+            paymentServiceCircuitBreaker.RecordFailure();
         }
 
         var reservationResponse = new ReservationResponse
@@ -143,7 +146,7 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
 
     [Route("/api/v1/me")]
     [HttpGet]
-    public async Task<ActionResult<UserInfoResponse>> GetInfoAsync([FromHeader(Name = "X-User-Name")] string username)
+    public async Task<ActionResult<UserInfoResponse>> GetInfoAsync()
     {
         try
         {
@@ -153,7 +156,6 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
             }
             var reservationService = httpClientFactory.CreateClient("ReservationService");
             var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/reservations");
-            request.Headers.Add("X-User-Name", username);
             var reservationsResponse = await reservationService.SendAsync(request);
             if (!reservationsResponse.IsSuccessStatusCode)
             {
@@ -181,7 +183,6 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
                 {
                     var loyaltyService = httpClientFactory.CreateClient("LoyaltyService");
                     request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/loyalties");
-                    request.Headers.Add("X-User-Name", username);
                     var loyaltiesResponse = await loyaltyService.SendAsync(request);
                     if (!loyaltiesResponse.IsSuccessStatusCode)
                     {
@@ -219,7 +220,7 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
 
     [Route("api/v1/loyalty")]
     [HttpGet]
-    public async Task<ActionResult<LoyaltyInfoResponse>> GetLoyalty([FromHeader(Name = "X-User-Name")] string username)
+    public async Task<ActionResult<LoyaltyInfoResponse>> GetLoyalty()
     {
         try
         {
@@ -230,8 +231,6 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
 
             var loyaltyService = httpClientFactory.CreateClient("LoyaltyService");
             var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/loyalties");
-            request.Headers.Add("X-User-Name", username);
-
             var loyaltyResponse = await loyaltyService.SendAsync(request);
 
             if (!loyaltyResponse.IsSuccessStatusCode)
@@ -262,7 +261,7 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
 
     [Route("api/v1/reservations")]
     [HttpPost]
-    public async Task<ActionResult<LoyaltyInfoResponse>> BookHotel([FromHeader(Name = "X-User-Name")] string username, [FromBody] CreateReservationRequest createReservationRequest)
+    public async Task<ActionResult<LoyaltyInfoResponse>> BookHotel([FromBody] CreateReservationRequest createReservationRequest)
     {
         if (!ModelState.IsValid)
         {
@@ -317,7 +316,6 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
             loyaltyService = httpClientFactory.CreateClient("LoyaltyService");
 
             var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/loyalties");
-            request.Headers.Add("X-User-Name", username);
             var loyaltyResponse = await loyaltyService.SendAsync(request);
             if (!loyaltyResponse.IsSuccessStatusCode)
             {
@@ -347,7 +345,7 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
             Price = costWithDiscount
         };
 
-        if (!PaymentServiceCircuitBreaker.AllowRequest())
+        if (!paymentServiceCircuitBreaker.AllowRequest())
         {
             return StatusCode(503, new { message = "Payment Service unavailable" });
         }
@@ -362,10 +360,10 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
             var paymentResponse = await paymentClient.PostAsync("/api/v1/payments", paymentContent);
             if (!paymentResponse.IsSuccessStatusCode)
             {
-                PaymentServiceCircuitBreaker.RecordFailure();
+                paymentServiceCircuitBreaker.RecordFailure();
                 return StatusCode((int)paymentResponse.StatusCode, new { message = "Error posting payments from microservice" });
             }
-            PaymentServiceCircuitBreaker.RecordSuccess();
+            paymentServiceCircuitBreaker.RecordSuccess();
             var paymentResponseJsonString = await paymentResponse.Content.ReadAsStringAsync();
             payment = JsonConvert.DeserializeObject<PaymentServiceResponse>(paymentResponseJsonString);
             if (null == payment)
@@ -375,10 +373,11 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
         }
         catch (Exception)
         {
-            PaymentServiceCircuitBreaker.RecordFailure();
+            paymentServiceCircuitBreaker.RecordFailure();
             return StatusCode(503, new { message = "Payment Service unavailable" });
         }
 
+        var username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var reservationRequest = new ReservationServiceRequest
         {
             Username = username,
@@ -448,7 +447,7 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
 
     [Route("api/v1/reservations/{reservationUid}")]
     [HttpGet]
-    public async Task<ActionResult<ReservationResponse>> GetReservationByUsername([FromHeader(Name = "X-User-Name")] string username, string reservationUid)
+    public async Task<ActionResult<ReservationResponse>> GetReservationByUsername(string reservationUid)
     {
         try
         {
@@ -458,7 +457,6 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
             }
             var reservationService = httpClientFactory.CreateClient("ReservationService");
             var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/reservations/{reservationUid}");
-            request.Headers.Add("X-User-Name", username);
             var reservationServiceResponse = await reservationService.SendAsync(request);
             if (!reservationServiceResponse.IsSuccessStatusCode)
             {
@@ -486,7 +484,7 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
 
     [Route("api/v1/reservations")]
     [HttpGet]
-    public async Task<ActionResult<ReservationResponse>> GetReservationsByUsername([FromHeader(Name = "X-User-Name")] string username)
+    public async Task<ActionResult<ReservationResponse>> GetReservationsByUsername()
     {
         try
         {
@@ -496,7 +494,6 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
             }
             var reservationService = httpClientFactory.CreateClient("ReservationService");
             var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/reservations");
-            request.Headers.Add("X-User-Name", username);
             var reservationsResponse = await reservationService.SendAsync(request);
             if (!reservationsResponse.IsSuccessStatusCode)
             {
@@ -529,7 +526,7 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
 
     [Route("api/v1/reservations/{reservationUid}")]
     [HttpDelete]
-    public async Task<ActionResult<ReservationResponse>> UnbookHotel([FromHeader(Name = "X-User-Name")] string username, string reservationUid)
+    public async Task<ActionResult<ReservationResponse>> UnbookHotel(string reservationUid)
     {
         if (!reservationServiceCircuitBreaker.AllowRequest())
         {
@@ -542,7 +539,6 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
             reservationService = httpClientFactory.CreateClient("ReservationService");
 
             var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/reservations/{reservationUid}");
-            request.Headers.Add("X-User-Name", username);
             var reservationServiceResponse = await reservationService.SendAsync(request);
             if (!reservationServiceResponse.IsSuccessStatusCode)
             {
@@ -571,11 +567,12 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
             return StatusCode(503, new { message = "Reservation Service unavailable" });
         }
 
-        if (!PaymentServiceCircuitBreaker.AllowRequest())
+        if (!paymentServiceCircuitBreaker.AllowRequest())
         {
             return StatusCode(503, new { message = "Payment Service unavailable" });
         }
         
+        var username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         HttpClient paymentService;
         try
         {
@@ -586,10 +583,10 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
             var payment = JsonConvert.DeserializeObject<PaymentServiceResponse>(paymentJsonString);
             if (null == payment)
             {
-                PaymentServiceCircuitBreaker.RecordFailure();
+                paymentServiceCircuitBreaker.RecordFailure();
                 return NotFound($"Payment with uid {reservation.PaymentUid} was not found");
             }
-            PaymentServiceCircuitBreaker.RecordSuccess();
+            paymentServiceCircuitBreaker.RecordSuccess();
             payment.Status = PaymentOperationStatus.CANCELED.ToString();
             var request = new HttpRequestMessage(HttpMethod.Put, $"/api/v1/payments");
             var json = JsonConvert.SerializeObject(payment);
@@ -602,7 +599,7 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
         }        
         catch (Exception)
         {
-            PaymentServiceCircuitBreaker.RecordFailure();
+            paymentServiceCircuitBreaker.RecordFailure();
             return StatusCode(503, new { message = "Payment Service unavailable" });
         }
 
@@ -616,7 +613,6 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
         {
             var loyaltyClient = httpClientFactory.CreateClient("LoyaltyService");
             var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/loyalties/degrade");
-            request.Headers.Add("X-User-Name", username);
             var loyaltyResponse = await loyaltyClient.SendAsync(request);
 
             if (!loyaltyResponse.IsSuccessStatusCode)

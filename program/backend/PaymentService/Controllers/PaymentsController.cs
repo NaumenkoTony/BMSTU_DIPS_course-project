@@ -1,11 +1,14 @@
 namespace PaymentService.Controllers;
 
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PaymentService.Data;
 using PaymentService.Models.DomainModels;
 using PaymentService.Models.Dto;
 
+
+[Authorize]
 public class PaymentsController(IPaymentRepository repository, IMapper mapper) : Controller
 {
     private readonly IPaymentRepository repository = repository;

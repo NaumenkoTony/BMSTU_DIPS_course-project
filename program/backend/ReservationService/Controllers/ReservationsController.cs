@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ReservationService.Data;
 using ReservationService.Models.DomainModels;
@@ -6,6 +8,7 @@ using ReservationService.Models.Dto;
 
 namespace ReservationService.Controllers;
 
+[Authorize]
 public class ReservationsController(IReservationRepository repository, IHotelRepository hotelRepository, IMapper mapper, ILogger<ReservationsController> logger) : Controller
 {
     private readonly IReservationRepository repository = repository;
@@ -15,8 +18,9 @@ public class ReservationsController(IReservationRepository repository, IHotelRep
 
     [Route("/api/v1/[controller]")]
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ReservationResponse>>> GetByUsernameAsync([FromHeader(Name = "X-User-Name")] string username)
+    public async Task<ActionResult<IEnumerable<ReservationResponse>>> GetByUsernameAsync()
     {
+        var username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         return Ok(mapper.Map<IEnumerable<ReservationResponse>>(await repository.GetReservationsByUsernameAsync(username)));
     }
 
@@ -50,8 +54,9 @@ public class ReservationsController(IReservationRepository repository, IHotelRep
 
     [Route("/api/v1/[controller]/{uid}")]
     [HttpGet]
-    public async Task<ActionResult<ReservationResponse>> GetReservationAsync([FromHeader(Name = "X-User-Name")] string username, string uid)
+    public async Task<ActionResult<ReservationResponse>> GetReservationAsync(string uid)
     {   
+        var username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         return Ok(mapper.Map<ReservationResponse>(await repository.GetByUsernameUidAsync(username, uid)));
     }
 }
