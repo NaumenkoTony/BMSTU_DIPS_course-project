@@ -1,13 +1,10 @@
 namespace LoyaltyService.Controllers;
 
-using System.Security.Claims;
 using AutoMapper;
 using LoyaltyService.Data;
 using LoyaltyService.Models.Dto;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-[Authorize]
 public class LoyaltiesController(ILoyalityRepository repository, IMapper mapper) : Controller
 {
     private readonly ILoyalityRepository repository = repository;
@@ -15,17 +12,15 @@ public class LoyaltiesController(ILoyalityRepository repository, IMapper mapper)
     
     [Route("/api/v1/[controller]")]
     [HttpGet]
-    public async Task<ActionResult<LoyaltyResponse>> GetByUsername()
+    public async Task<ActionResult<LoyaltyResponse>> GetByUsername([FromHeader(Name = "X-User-Name")] string username)
     {
-        var username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         return Ok(mapper.Map<LoyaltyResponse>(await repository.GetLoyalityByUsername(username)));
     }
 
     [Route("/api/v1/[controller]/improve")]
     [HttpGet]
-    public async Task<ActionResult> ImproveLoyality()
+    public async Task<ActionResult> ImproveLoyality([FromHeader(Name = "X-User-Name")] string username)
     {
-        var username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         await repository.ImproveLoyality(username);
         return Ok();
     }
@@ -33,9 +28,8 @@ public class LoyaltiesController(ILoyalityRepository repository, IMapper mapper)
     
     [Route("/api/v1/[controller]/degrade")]
     [HttpGet]
-    public async Task<ActionResult> DegradeLoyality()
+    public async Task<ActionResult> DegradeLoyality([FromHeader(Name = "X-User-Name")] string username)
     {
-        var username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         await repository.DegradeLoyality(username);
         return Ok();
     }

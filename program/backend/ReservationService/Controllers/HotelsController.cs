@@ -1,5 +1,4 @@
 using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ReservationService.Data;
 using ReservationService.Models.DomainModels;
@@ -7,7 +6,6 @@ using ReservationService.Models.Dto;
 
 namespace ReservationService.Controllers;
 
-[Authorize]
 public class HotelsController(IHotelRepository repository, IMapper mapper) : Controller
 {
     private readonly IHotelRepository repository = repository;

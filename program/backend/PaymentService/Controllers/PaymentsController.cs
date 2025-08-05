@@ -1,14 +1,11 @@
 namespace PaymentService.Controllers;
 
 using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PaymentService.Data;
 using PaymentService.Models.DomainModels;
 using PaymentService.Models.Dto;
 
-
-[Authorize]
 public class PaymentsController(IPaymentRepository repository, IMapper mapper) : Controller
 {
     private readonly IPaymentRepository repository = repository;
@@ -44,17 +41,5 @@ public class PaymentsController(IPaymentRepository repository, IMapper mapper) :
 
         await repository.UpdateAsync(newModel, payment.Id);
         return Ok(newModel);
-    }
-
-    [Route("/api/v1/[controller]{uid}")]
-    [HttpDelete]
-    public async Task<ActionResult<PaymentResponse>> DeletePaymentAsync(string uid)
-    {
-        var payment = await repository.GetByUidAsync(uid);
-        if (payment != null)
-        {
-            await repository.DeleteAsync(payment.Id);
-        }
-        return Ok();
     }
 }

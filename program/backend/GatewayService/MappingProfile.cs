@@ -17,7 +17,5 @@ public class MappingProfile : Profile
         CreateMap<LoyaltyServiceResponse, LoyaltyInfoResponse>().ReverseMap();
 
         CreateMap<PaymentServiceResponse, PaymentInfo>().ReverseMap();
-
-        CreateMap<LoyaltyServiceResponse, LoyaltyInfoResponse>().ReverseMap();
     }
 }
