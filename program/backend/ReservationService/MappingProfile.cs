@@ -1,9 +1,8 @@
-namespace ReservationService.Mapping;
+namespace ReservationService;
 
 using AutoMapper;
-using Microsoft.AspNetCore.SignalR;
+using Contracts.Dto;
 using ReservationService.Models.DomainModels;
-using ReservationService.Models.Dto;
 
 public class MappingProfile : Profile
 {

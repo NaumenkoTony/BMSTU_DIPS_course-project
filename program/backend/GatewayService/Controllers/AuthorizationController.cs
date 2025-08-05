@@ -3,16 +3,7 @@ namespace GatewayService.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http;
 using System.Threading.Tasks;
-using GatewayService.Models.Dto;
-using Newtonsoft.Json;
-using AutoMapper;
-using System.Text;
-using GatewayService.Models.ReservationServiceDto;
-using GatewayService.Models.LoyaltyServiceDto;
-using GatewayService.Models.PaymentServiceDto;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity.Data;
-
 
 [Route("/api/v1/authorize")]
 [ApiController]
@@ -23,7 +14,7 @@ public class AuthorizationController(ILogger<AuthorizationController> logger, IC
 
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] Models.Dto.LoginRequest request)
+    public async Task<IActionResult> Login([FromBody] Models.LoginRequest request)
     {
         if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password))
             return BadRequest("Username and password are required.");

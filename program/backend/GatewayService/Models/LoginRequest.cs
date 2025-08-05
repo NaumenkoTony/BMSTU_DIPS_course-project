@@ -1,4 +1,4 @@
-namespace GatewayService.Models.Dto;
+namespace GatewayService.Models;
 public partial class LoginRequest
 {
     public required string Username { get; set; }

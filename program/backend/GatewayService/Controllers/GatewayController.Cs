@@ -3,87 +3,38 @@ namespace GatewayService.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http;
 using System.Threading.Tasks;
-using GatewayService.Models.Dto;
+using Contracts.Dto;
+using GatewayService.Models;
 using Newtonsoft.Json;
 using AutoMapper;
 using System.Text;
-using GatewayService.Models.ReservationServiceDto;
-using GatewayService.Models.LoyaltyServiceDto;
-using GatewayService.Models.PaymentServiceDto;
-using GatewayService.Services;
-using System.Text.Json;
-using Microsoft.Extensions.Logging;
-using StackExchange.Redis;
 
-public class GatewayController(IHttpClientFactory httpClientFactory, IMapper mapper, ILogger<GatewayController> logger, IConnectionMultiplexer redis) : ControllerBase
+public class GatewayController(IHttpClientFactory httpClientFactory, IMapper mapper, ILogger<GatewayController> logger) : ControllerBase
 {
     private readonly IHttpClientFactory httpClientFactory = httpClientFactory;
     private readonly IMapper mapper = mapper;
     private readonly ILogger<GatewayController> logger = logger;
-    private readonly IConnectionMultiplexer redis = redis;
 
-    private readonly CircuitBreaker reservationServiceCircuitBreaker = new CircuitBreaker(5, TimeSpan.FromSeconds(60));
-    private readonly CircuitBreaker loyaltyServiceCircuitBreaker = new CircuitBreaker(5, TimeSpan.FromSeconds(60));
-    private readonly CircuitBreaker PaymentServiceCircuitBreaker = new CircuitBreaker(5, TimeSpan.FromSeconds(60));
-
-    private async Task<ReservationResponse> CreateReservationResponseAsync(ReservationServiceResponse reservationServiceResponse)
+    private async Task<AggregatedReservationResponse> CreateReservationResponseAsync(ReservationResponse reservationServiceResponse)
     {
-        HotelInfo? hotelInfo = null;
-        PaymentInfo? paymentInfo = null;
+        var reservationService = httpClientFactory.CreateClient("ReservationService");
+        var paymentService = httpClientFactory.CreateClient("PaymentService");
 
-        try
-        {
-            var reservationService = httpClientFactory.CreateClient("ReservationService");
-            if (reservationServiceCircuitBreaker.AllowRequest())
-            {
-                var hotelResponse = await reservationService.GetAsync($"/api/v1/reservations/hotels/{reservationServiceResponse.HotelId}");
-                if (!hotelResponse.IsSuccessStatusCode)
-                {
-                    reservationServiceCircuitBreaker.RecordFailure();
-                }
-                else
-                {
-                    reservationServiceCircuitBreaker.RecordSuccess();
-                    var hotelJsonString = await hotelResponse.Content.ReadAsStringAsync();
-                    var hotel = JsonConvert.DeserializeObject<HotelServiceResponse>(hotelJsonString);
-                    hotelInfo = mapper.Map<HotelInfo>(hotel);
-                }
-            }
-        }
-        catch (Exception)
-        {
-            reservationServiceCircuitBreaker.RecordFailure();
-        }
+        var hotelResponse = await reservationService.GetAsync($"/api/v1/reservations/hotels/{reservationServiceResponse.HotelId}");
+        var hotelJsonString = await hotelResponse.Content.ReadAsStringAsync();
+        var hotel = JsonConvert.DeserializeObject<HotelResponse>(hotelJsonString);
+        var hotelInfo = mapper.Map<HotelInfo>(hotel);
 
-        try
-        {
-            var paymentService = httpClientFactory.CreateClient("PaymentService");
-            if (PaymentServiceCircuitBreaker.AllowRequest())
-            {
-                var paymentResponse = await paymentService.GetAsync($"/api/v1/payments/{reservationServiceResponse.PaymentUid}");
-                if (!paymentResponse.IsSuccessStatusCode)
-                {
-                    PaymentServiceCircuitBreaker.RecordFailure();
-                }
-                else
-                {
-                    PaymentServiceCircuitBreaker.RecordSuccess();
-                    var paymentJsonString = await paymentResponse.Content.ReadAsStringAsync();
-                    var payment = JsonConvert.DeserializeObject<PaymentServiceResponse>(paymentJsonString);
-                    paymentInfo = mapper.Map<PaymentInfo>(payment);
-                }
-            }
-        }
-        catch (Exception)
-        {
-            PaymentServiceCircuitBreaker.RecordFailure();
-        }
+        var paymentResponse = await paymentService.GetAsync($"/api/v1/payments/{reservationServiceResponse.PaymentUid}");
+        var paymentJsonString = await paymentResponse.Content.ReadAsStringAsync();
+        var payment = JsonConvert.DeserializeObject<PaymentResponse>(paymentJsonString);
+        var paymentInfo = mapper.Map<PaymentInfo>(payment);
 
-        var reservationResponse = new ReservationResponse
+        var reservationResponse = new AggregatedReservationResponse
         {
             ReservationUid = reservationServiceResponse.ReservationUid,
             Hotel = hotelInfo,
-            StartDate = reservationServiceResponse.StartDate,
+            StartDate =  reservationServiceResponse.StartDate,
             EndDate = reservationServiceResponse.EndDate,
             Status = reservationServiceResponse.Status,
             Payment = paymentInfo
@@ -101,43 +52,28 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
             return BadRequest(new { message = "Invalid pagination parameters" });
         }
 
-        try
+        var reservationService = httpClientFactory.CreateClient("ReservationService");
+        var hotelsResponse = await reservationService.GetAsync($"/api/v1/hotels?page={page}&size={size}");
+        if (!hotelsResponse.IsSuccessStatusCode)
         {
-            if (!reservationServiceCircuitBreaker.AllowRequest())
-            {
-                return StatusCode(503, new { message = "Service unavailable. Please try again later." });
-            }
-
-            var reservationService = httpClientFactory.CreateClient("ReservationService");
-            var hotelsResponse = await reservationService.GetAsync($"/api/v1/hotels?page={page}&size={size}");
-            if (!hotelsResponse.IsSuccessStatusCode)
-            {
-                reservationServiceCircuitBreaker.RecordFailure();
-                return StatusCode(503, new { message = "Error receiving hotels from microservice" });
-            }
-            reservationServiceCircuitBreaker.RecordSuccess();
-            var hotelsJsonString = await hotelsResponse.Content.ReadAsStringAsync();
-            var hotelsServiceResponse = JsonConvert.DeserializeObject<List<HotelServiceResponse>>(hotelsJsonString);
-            if (hotelsServiceResponse == null)
-            {
-                return StatusCode(503, new { message = "Error parsing hotel data" });
-            }
-
-            var pagedResponse = new PaginationResponse
-            {
-                Page = page,
-                PageSize = size,
-                TotalElements = hotelsServiceResponse.Count,
-                Items = mapper.Map<List<HotelResponse>>(hotelsServiceResponse)
-            };
-
-            return Ok(pagedResponse);
+            return StatusCode((int)hotelsResponse.StatusCode, new { message = "Error receiving hotels from microservice" });
         }
-        catch (Exception)
+        var hotelsJsonString = await hotelsResponse.Content.ReadAsStringAsync();
+        var hotelsServiceResponse = JsonConvert.DeserializeObject<List<HotelResponse>>(hotelsJsonString);
+        if (hotelsServiceResponse == null)
         {
-            reservationServiceCircuitBreaker.RecordFailure();
-            return StatusCode(503, new { message = "Reservation Service unavailable" });
+            return StatusCode(500, new { message = "Error parsing hotel data" });
         }
+
+        var pagedResponse = new PaginationResponse
+        {
+            Page = page,
+            PageSize = size,
+            TotalElements = hotelsServiceResponse.Count,
+            Items = mapper.Map<List<HotelResponse>>(hotelsServiceResponse)
+        };
+
+        return Ok(pagedResponse);
     }
 
 
@@ -145,241 +81,142 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
     [HttpGet]
     public async Task<ActionResult<UserInfoResponse>> GetInfoAsync([FromHeader(Name = "X-User-Name")] string username)
     {
-        try
+        var reservationService = httpClientFactory.CreateClient("ReservationService");
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/reservations");
+        request.Headers.Add("X-User-Name", username);
+        var reservationsResponse = await reservationService.SendAsync(request);
+        if (!reservationsResponse.IsSuccessStatusCode)
         {
-            if (!reservationServiceCircuitBreaker.AllowRequest())
-            {
-                return StatusCode(503, new { message = "Reservation Service unavailable" });
-            }
-            var reservationService = httpClientFactory.CreateClient("ReservationService");
-            var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/reservations");
-            request.Headers.Add("X-User-Name", username);
-            var reservationsResponse = await reservationService.SendAsync(request);
-            if (!reservationsResponse.IsSuccessStatusCode)
-            {
-                reservationServiceCircuitBreaker.RecordFailure();
-                return StatusCode((int)reservationsResponse.StatusCode, new { message = "Error receiving reservations from microservice" });
-            }
-            reservationServiceCircuitBreaker.RecordSuccess();
-            var reservationsJsonString = await reservationsResponse.Content.ReadAsStringAsync();
-            var reservations = JsonConvert.DeserializeObject<List<ReservationServiceResponse>>(reservationsJsonString);
-            if (reservations == null)
-            {
-                return StatusCode(503, new { message = "Error parsing reservation data" });
-            }
-
-            List<ReservationResponse> reservationResponses = [];
-            foreach (var reservation in reservations)
-            {
-                reservationResponses.Add(await CreateReservationResponseAsync(reservation));
-            }
-
-            LoyaltyServiceResponse? loyalty = null;
-            try
-            {
-                if (loyaltyServiceCircuitBreaker.AllowRequest())
-                {
-                    var loyaltyService = httpClientFactory.CreateClient("LoyaltyService");
-                    request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/loyalties");
-                    request.Headers.Add("X-User-Name", username);
-                    var loyaltiesResponse = await loyaltyService.SendAsync(request);
-                    if (!loyaltiesResponse.IsSuccessStatusCode)
-                    {
-                        loyaltyServiceCircuitBreaker.RecordFailure();
-                        return StatusCode((int)loyaltiesResponse.StatusCode, new { message = "Error receiving loyalty from microservice" });
-                    }
-                    loyaltyServiceCircuitBreaker.RecordSuccess();
-                    var loyaltiesResponseJsonString = await loyaltiesResponse.Content.ReadAsStringAsync();
-                    loyalty = JsonConvert.DeserializeObject<LoyaltyServiceResponse>(loyaltiesResponseJsonString);
-                    if (loyalty == null)
-                    {
-                        return StatusCode(503, new { message = "Error parsing loyalty data" });
-                    }
-                }
-            }
-            catch (Exception)
-            {
-                loyaltyServiceCircuitBreaker.RecordFailure();
-            }
-
-            UserInfoResponse userInfoResponse = new UserInfoResponse
-            {
-                Reservations = reservationResponses,
-                Loyalty = loyalty
-            };
-
-            return Ok(userInfoResponse);
+            return StatusCode((int)reservationsResponse.StatusCode, new { message = "Error receiving reservations from microservice" });
         }
-        catch (Exception)
+        var reservationsJsonString = await reservationsResponse.Content.ReadAsStringAsync();
+        var reservations = JsonConvert.DeserializeObject<List<ReservationResponse>>(reservationsJsonString);
+        if (reservations == null)
         {
-            reservationServiceCircuitBreaker.RecordFailure();
-            return StatusCode(503, new { message = "Reservation Service unavailable." });
+            return StatusCode(500, new { message = "Error parsing reservation data" });
         }
+
+        var paymentService = httpClientFactory.CreateClient("PaymentService");
+        List<AggregatedReservationResponse> reservationResponses = [];
+        foreach (var reservation in reservations)
+        {
+            reservationResponses.Add(await CreateReservationResponseAsync(reservation));
+        }
+        
+        var loyaltyService = httpClientFactory.CreateClient("LoyaltyService");
+        request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/loyalties");
+        request.Headers.Add("X-User-Name", username);
+        var loyaltiesResponse = await loyaltyService.SendAsync(request);
+        if (!loyaltiesResponse.IsSuccessStatusCode)
+        {
+            return StatusCode((int)loyaltiesResponse.StatusCode, new { message = "Error receiving loyalty from microservice" });
+        }
+
+        var loyaltiesResponseJsonString = await loyaltiesResponse.Content.ReadAsStringAsync();
+        var loyalty = JsonConvert.DeserializeObject<LoyaltyResponse>(loyaltiesResponseJsonString);
+        if (loyalty == null)
+        {
+            return StatusCode(500, new { message = "Error parsing loyalty data" });
+        }
+
+        UserInfoResponse userInfoResponse = new UserInfoResponse
+        {
+            Reservations = reservationResponses,
+            Loyalty = mapper.Map<LoyaltyInfoResponse>(loyalty) 
+        };
+
+        return Ok(userInfoResponse);
     }
 
     [Route("api/v1/loyalty")]
     [HttpGet]
     public async Task<ActionResult<LoyaltyInfoResponse>> GetLoyalty([FromHeader(Name = "X-User-Name")] string username)
     {
-        try
+        var loyaltyService = httpClientFactory.CreateClient("LoyaltyService");
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/loyalties");
+        request.Headers.Add("X-User-Name", username);
+        var loyaltyResponse = await loyaltyService.SendAsync(request);
+        if (!loyaltyResponse.IsSuccessStatusCode)
         {
-            if (!loyaltyServiceCircuitBreaker.AllowRequest())
-            {
-                return StatusCode(503, new { message = "Loyalty Service unavailable" });
-            }
-
-            var loyaltyService = httpClientFactory.CreateClient("LoyaltyService");
-            var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/loyalties");
-            request.Headers.Add("X-User-Name", username);
-
-            var loyaltyResponse = await loyaltyService.SendAsync(request);
-
-            if (!loyaltyResponse.IsSuccessStatusCode)
-            {
-                loyaltyServiceCircuitBreaker.RecordFailure();
-                return StatusCode(503, new { message = "Error receiving loyalties from microservice" });
-            }
-
-            loyaltyServiceCircuitBreaker.RecordSuccess();
-
-            var loyaltyJsonString = await loyaltyResponse.Content.ReadAsStringAsync();
-            var loyaltyServiceResponse = JsonConvert.DeserializeObject<LoyaltyServiceResponse>(loyaltyJsonString);
-
-            if (loyaltyServiceResponse == null)
-            {
-                loyaltyServiceCircuitBreaker.RecordFailure();
-                return StatusCode(503, new { message = "Error parsing loyalty data" });
-            }
-
-            return Ok(mapper.Map<LoyaltyInfoResponse>(loyaltyServiceResponse));
+            return StatusCode((int)loyaltyResponse.StatusCode, new { message = "Error receiving loyalties from microservice" });
         }
-        catch (Exception)
+        var loyaltyJsonString = await loyaltyResponse.Content.ReadAsStringAsync();
+        var loyaltyServiceResponse = JsonConvert.DeserializeObject<LoyaltyResponse>(loyaltyJsonString);
+        if (loyaltyServiceResponse == null)
         {
-            loyaltyServiceCircuitBreaker.RecordFailure();
-            return StatusCode(503, new { message = "Loyalty Service unavailable" });
+            return StatusCode(500, new { message = "Error parsing loyalty data" });
         }
+
+        return Ok(mapper.Map<LoyaltyInfoResponse>(loyaltyServiceResponse));
     }
 
     [Route("api/v1/reservations")]
     [HttpPost]
     public async Task<ActionResult<LoyaltyInfoResponse>> BookHotel([FromHeader(Name = "X-User-Name")] string username, [FromBody] CreateReservationRequest createReservationRequest)
     {
-        if (!ModelState.IsValid)
+         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
 
-
-        if (!reservationServiceCircuitBreaker.AllowRequest())
+        var reservationService = httpClientFactory.CreateClient("ReservationService");
+        var hotelResponse = await reservationService.GetAsync($"/api/v1/hotels/{createReservationRequest.HotelUid}");
+        if (!hotelResponse.IsSuccessStatusCode)
         {
-            return StatusCode(503, new { message = "Reservation Service unavailable" });
+            return StatusCode((int)hotelResponse.StatusCode, new { message = $"Error receiving hotel from microservice" });
         }
-
-        HotelServiceResponse? hotel;
-        HttpClient reservationService;
-        try
+        var hotelJsonString = await hotelResponse.Content.ReadAsStringAsync();
+        var hotel = JsonConvert.DeserializeObject<HotelResponse>(hotelJsonString);
+        if (null == hotel)
         {
-            reservationService = httpClientFactory.CreateClient("ReservationService");
-
-            var hotelResponse = await reservationService.GetAsync($"/api/v1/hotels/{createReservationRequest.HotelUid}");
-            if (!hotelResponse.IsSuccessStatusCode)
-            {
-                reservationServiceCircuitBreaker.RecordFailure();
-                return StatusCode((int)hotelResponse.StatusCode, new { message = $"Error receiving hotel from microservice" });
-            }
-            reservationServiceCircuitBreaker.RecordSuccess();
-            var hotelJsonString = await hotelResponse.Content.ReadAsStringAsync();
-            hotel = JsonConvert.DeserializeObject<HotelServiceResponse>(hotelJsonString);
-            if (null == hotel)
-            {
-                return NotFound($"Hotel with uid {createReservationRequest.HotelUid} was not found");
-            }
-        }
-        catch (Exception)
-        {
-            reservationServiceCircuitBreaker.RecordFailure();
-            return StatusCode(503, new { message = "Reservation Service unavailable" });
+            return NotFound($"Hotel with uid {createReservationRequest.HotelUid} was not found");
         }
 
         DateTime startDate = DateTime.Parse(createReservationRequest.StartDate);
         DateTime endDate = DateTime.Parse(createReservationRequest.EndDate);
         int nightsNumber = (endDate - startDate).Days;
         int cost = nightsNumber * hotel.Price;
-        if (!loyaltyServiceCircuitBreaker.AllowRequest())
+        var loyaltyService = httpClientFactory.CreateClient("LoyaltyService");
+        
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/loyalties");
+        request.Headers.Add("X-User-Name", username);
+        var loyaltyResponse = await loyaltyService.SendAsync(request);
+        if (!loyaltyResponse.IsSuccessStatusCode)
         {
-            return StatusCode(503, new { message = "Loyalty Service unavailable" });
+            return StatusCode((int)loyaltyResponse.StatusCode, new { message = "Error receiving loyalties from microservice" });
         }
+        var loyaltyJsonString = await loyaltyResponse.Content.ReadAsStringAsync();
+        var loyaltyServiceResponse = JsonConvert.DeserializeObject<LoyaltyResponse>(loyaltyJsonString);
+        if (loyaltyServiceResponse == null)
+        {
+            return StatusCode(500, new { message = "Error parsing loyalty data" });
+        }
+        var loyalty = mapper.Map<LoyaltyInfoResponse>(loyaltyServiceResponse);
 
-        LoyaltyInfoResponse? loyalty;
-        HttpClient loyaltyService;
-        try
-        {
-            loyaltyService = httpClientFactory.CreateClient("LoyaltyService");
-
-            var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/loyalties");
-            request.Headers.Add("X-User-Name", username);
-            var loyaltyResponse = await loyaltyService.SendAsync(request);
-            if (!loyaltyResponse.IsSuccessStatusCode)
-            {
-                loyaltyServiceCircuitBreaker.RecordFailure();
-                return StatusCode((int)loyaltyResponse.StatusCode, new { message = "Error receiving loyalties from microservice" });
-            }
-            loyaltyServiceCircuitBreaker.RecordSuccess();
-            var loyaltyJsonString = await loyaltyResponse.Content.ReadAsStringAsync();
-            var loyaltyServiceResponse = JsonConvert.DeserializeObject<LoyaltyServiceResponse>(loyaltyJsonString);
-            if (loyaltyServiceResponse == null)
-            {
-                return StatusCode(503, new { message = "Error parsing loyalty data" });
-            }
-            loyalty = mapper.Map<LoyaltyInfoResponse>(loyaltyServiceResponse);
-        }
-        catch (Exception)
-        {
-            loyaltyServiceCircuitBreaker.RecordFailure();
-            return StatusCode(503, new { message = "Loyalty Service unavailable" });
-        }
         double discount = loyalty.Discount;
         int costWithDiscount = Convert.ToInt32(cost * (100 - discount) / 100);
 
-        var paymentRequest = new PaymentServiceRequest
+        var paymentRequest = new PaymentRequest
         {
             Status = PaymentOperationStatus.PAID.ToString(),
             Price = costWithDiscount
         };
-
-        if (!PaymentServiceCircuitBreaker.AllowRequest())
+        var paymentClient = httpClientFactory.CreateClient("PaymentService");
+        string paymentJsonContent = System.Text.Json.JsonSerializer.Serialize(paymentRequest);
+        var paymentContent = new StringContent(paymentJsonContent, Encoding.UTF8, "application/json");
+        var paymentResponse = await paymentClient.PostAsync("/api/v1/payments", paymentContent);
+        if (!paymentResponse.IsSuccessStatusCode)
         {
-            return StatusCode(503, new { message = "Payment Service unavailable" });
+            return StatusCode((int)paymentResponse.StatusCode, new { message = "Error posting payments from microservice" });
         }
-        PaymentServiceResponse? payment;
-        HttpClient paymentClient;
-        try
+        var paymentResponseJsonString = await paymentResponse.Content.ReadAsStringAsync();
+        var payment = JsonConvert.DeserializeObject<PaymentResponse>(paymentResponseJsonString);
+        if (null == payment)
         {
-            paymentClient = httpClientFactory.CreateClient("PaymentService");
-
-            string paymentJsonContent = System.Text.Json.JsonSerializer.Serialize(paymentRequest);
-            var paymentContent = new StringContent(paymentJsonContent, Encoding.UTF8, "application/json");
-            var paymentResponse = await paymentClient.PostAsync("/api/v1/payments", paymentContent);
-            if (!paymentResponse.IsSuccessStatusCode)
-            {
-                PaymentServiceCircuitBreaker.RecordFailure();
-                return StatusCode((int)paymentResponse.StatusCode, new { message = "Error posting payments from microservice" });
-            }
-            PaymentServiceCircuitBreaker.RecordSuccess();
-            var paymentResponseJsonString = await paymentResponse.Content.ReadAsStringAsync();
-            payment = JsonConvert.DeserializeObject<PaymentServiceResponse>(paymentResponseJsonString);
-            if (null == payment)
-            {
-                return NotFound($"Payment was not created");
-            }
-        }
-        catch (Exception)
-        {
-            PaymentServiceCircuitBreaker.RecordFailure();
-            return StatusCode(503, new { message = "Payment Service unavailable" });
+            return NotFound($"Payment was not created");
         }
 
-        var reservationRequest = new ReservationServiceRequest
+        var reservationRequest = new ReservationRequest
         {
             Username = username,
             HotelId = hotel.Id,
@@ -390,47 +227,23 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
         };
         var reservationJsonContent = System.Text.Json.JsonSerializer.Serialize(reservationRequest);
         var reservationContent = new StringContent(reservationJsonContent, Encoding.UTF8, "application/json");
-
-        ReservationServiceResponse? reservation;
-        try
+        var reservationСlient = httpClientFactory.CreateClient("ReservationService");
+        var reservationResponseBody = await reservationСlient.PostAsync("/api/v1/reservations/", reservationContent);
+        if (!reservationResponseBody.IsSuccessStatusCode)
         {
-            reservationService = httpClientFactory.CreateClient("ReservationService");
-
-            var reservationResponseBody = await reservationService.PostAsync("/api/v1/reservations/", reservationContent);
-            if (!reservationResponseBody.IsSuccessStatusCode)
-            {
-                reservationServiceCircuitBreaker.RecordFailure();
-                return StatusCode((int)reservationResponseBody.StatusCode, new { message = "Error creating reservation from microservice" });
-            }
-            reservationServiceCircuitBreaker.RecordSuccess();
-            var reservationResponseBodyJsonString = await reservationResponseBody.Content.ReadAsStringAsync();
-            reservation = JsonConvert.DeserializeObject<ReservationServiceResponse>(reservationResponseBodyJsonString);
-            if (null == reservation)
-            {
-                return NotFound($"Reservation was not created");
-            }
+            return StatusCode((int)reservationResponseBody.StatusCode, new { message = "Error creating reservation from microservice" });
         }
-        catch (Exception)
+        var reservationResponseBodyJsonString = await reservationResponseBody.Content.ReadAsStringAsync();
+        var reservation = JsonConvert.DeserializeObject<ReservationResponse>(reservationResponseBodyJsonString);
+        if (null == reservation)
         {
-            reservationServiceCircuitBreaker.RecordFailure();
-            return StatusCode(503, new { message = "Reservation Service unavailable" });
+            return NotFound($"Reservation was not created");
         }
 
-        HttpClient loyaltyClient;
-        try
-        {
-            loyaltyClient = httpClientFactory.CreateClient("LoyaltyService");
-
-            var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/loyalties/improve");
-            request.Headers.Add("X-User-Name", username);
-            var loyaltyResponse = await loyaltyService.SendAsync(request);
-        }
-        catch (Exception)
-        {
-            loyaltyServiceCircuitBreaker.RecordFailure();
-            await paymentClient.DeleteAsync($"/api/v1/payments/{payment.PaymentUid}");
-            return StatusCode(503, new { message = "Loyalty Service unavailable" });
-        }
+        var loyaltyClient = httpClientFactory.CreateClient("LoyaltyService");
+        request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/loyalties/improve");
+        request.Headers.Add("X-User-Name", username);
+        loyaltyResponse = await loyaltyService.SendAsync(request);
 
         var createReservationResponse = new CreateReservationResponse
         {
@@ -443,198 +256,115 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
             Payment = mapper.Map<PaymentInfo>(payment)
         };
 
-        return Ok(createReservationResponse);
+        return Ok(createReservationResponse);    
     }
 
+    
     [Route("api/v1/reservations/{reservationUid}")]
     [HttpGet]
-    public async Task<ActionResult<ReservationResponse>> GetReservationByUsername([FromHeader(Name = "X-User-Name")] string username, string reservationUid)
+    public async Task<ActionResult<AggregatedReservationResponse>> GetReservationByUsername([FromHeader(Name = "X-User-Name")] string username, string reservationUid)
     {
-        try
+        var reservationService = httpClientFactory.CreateClient("ReservationService");
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/reservations/{reservationUid}");
+        request.Headers.Add("X-User-Name", username);
+        var reservationServiceResponse = await reservationService.SendAsync(request);
+        if (!reservationServiceResponse.IsSuccessStatusCode)
         {
-            if (!reservationServiceCircuitBreaker.AllowRequest())
-            {
-                return StatusCode(503, new { message = "Reservation Service unavailable" });
-            }
-            var reservationService = httpClientFactory.CreateClient("ReservationService");
-            var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/reservations/{reservationUid}");
-            request.Headers.Add("X-User-Name", username);
-            var reservationServiceResponse = await reservationService.SendAsync(request);
-            if (!reservationServiceResponse.IsSuccessStatusCode)
-            {
-                reservationServiceCircuitBreaker.RecordFailure();
-                return StatusCode(503, new { message = $"Error receiving hotel from microservice" });
-            }
-            reservationServiceCircuitBreaker.RecordSuccess();
-            var reservationJsonString = await reservationServiceResponse.Content.ReadAsStringAsync();
-            var reservation = JsonConvert.DeserializeObject<ReservationServiceResponse>(reservationJsonString);
-            if (null == reservation)
-            {
-                return NotFound($"Reservations with uid {reservationUid} was not found");
-            }
-
-            ReservationResponse reservationResponse = await CreateReservationResponseAsync(reservation);
-
-            return Ok(reservationResponse);
+            return StatusCode((int)reservationServiceResponse.StatusCode, new { message = $"Error receiving hotel from microservice" });
         }
-        catch (Exception)
+        var reservationJsonString = await reservationServiceResponse.Content.ReadAsStringAsync();
+        var reservation = JsonConvert.DeserializeObject<ReservationResponse>(reservationJsonString);
+        if (null == reservation)
         {
-            reservationServiceCircuitBreaker.RecordFailure();
-            return StatusCode(503, new { message = "Reservation Service unavailable" });
+            return NotFound($"Reservations with uid {reservationUid} was not found");
         }
+
+        AggregatedReservationResponse reservationResponse = await CreateReservationResponseAsync(reservation);
+
+        return Ok(reservationResponse);
     }
 
     [Route("api/v1/reservations")]
     [HttpGet]
-    public async Task<ActionResult<ReservationResponse>> GetReservationsByUsername([FromHeader(Name = "X-User-Name")] string username)
+    public async Task<ActionResult<AggregatedReservationResponse>> GetReservationsByUsername([FromHeader(Name = "X-User-Name")] string username)
     {
-        try
+        var reservationService = httpClientFactory.CreateClient("ReservationService");
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/reservations");
+        request.Headers.Add("X-User-Name", username);
+        var reservationsResponse = await reservationService.SendAsync(request);
+        if (!reservationsResponse.IsSuccessStatusCode)
         {
-            if (!reservationServiceCircuitBreaker.AllowRequest())
-            {
-                return StatusCode(503, new { message = "Reservation Service unavailable" });
-            }
-            var reservationService = httpClientFactory.CreateClient("ReservationService");
-            var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/reservations");
-            request.Headers.Add("X-User-Name", username);
-            var reservationsResponse = await reservationService.SendAsync(request);
-            if (!reservationsResponse.IsSuccessStatusCode)
-            {
-                reservationServiceCircuitBreaker.RecordFailure();
-                return StatusCode(503, new { message = $"Error receiving hotel from microservice" });
-            }
-            reservationServiceCircuitBreaker.RecordSuccess();
-            var reservationsJsonString = await reservationsResponse.Content.ReadAsStringAsync();
-            var reservations = JsonConvert.DeserializeObject<List<ReservationServiceResponse>>(reservationsJsonString);
-            if (reservations == null)
-            {
-                return StatusCode(503, new { message = "Error parsing reservation data" });
-            }
-
-            var paymentService = httpClientFactory.CreateClient("PaymentService");
-            List<ReservationResponse> reservationResponses = [];
-            foreach (var reservation in reservations)
-            {
-                reservationResponses.Add(await CreateReservationResponseAsync(reservation));
-            }
-
-            return Ok(reservationResponses);
+            return StatusCode((int)reservationsResponse.StatusCode, new { message = "Error receiving reservations from microservice" });
         }
-        catch (Exception)
+        var reservationsJsonString = await reservationsResponse.Content.ReadAsStringAsync();
+        var reservations = JsonConvert.DeserializeObject<List<ReservationResponse>>(reservationsJsonString);
+        if (reservations == null)
         {
-            reservationServiceCircuitBreaker.RecordFailure();
-            return StatusCode(503, new { message = "Reservation Service unavailable" });
+            return StatusCode(500, new { message = "Error parsing reservation data" });
         }
+
+        var paymentService = httpClientFactory.CreateClient("PaymentService");
+        List<AggregatedReservationResponse> reservationResponses = [];
+        foreach (var reservation in reservations)
+        {
+            reservationResponses.Add(await CreateReservationResponseAsync(reservation));
+        }
+
+        return Ok(reservationResponses);
     }
 
     [Route("api/v1/reservations/{reservationUid}")]
     [HttpDelete]
-    public async Task<ActionResult<ReservationResponse>> UnbookHotel([FromHeader(Name = "X-User-Name")] string username, string reservationUid)
+    public async Task<ActionResult<AggregatedReservationResponse>> UnbookHotel([FromHeader(Name = "X-User-Name")] string username, string reservationUid)
     {
-        if (!reservationServiceCircuitBreaker.AllowRequest())
+        var reservationService = httpClientFactory.CreateClient("ReservationService");
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/reservations/{reservationUid}");
+        request.Headers.Add("X-User-Name", username);
+        var reservationServiceResponse = await reservationService.SendAsync(request);
+        if (!reservationServiceResponse.IsSuccessStatusCode)
         {
-            return StatusCode(503, new { message = "Reservation Service unavailable" });
+            return StatusCode((int)reservationServiceResponse.StatusCode, new { message = $"Error receiving reservation from microservice" });
+        }
+        var reservationJsonString = await reservationServiceResponse.Content.ReadAsStringAsync();
+        var reservation = JsonConvert.DeserializeObject<ReservationResponse>(reservationJsonString);
+        if (null == reservation)
+        {
+            return NotFound($"Reservations with uid {reservationUid} was not found");
         }
 
-        ReservationServiceResponse? reservation;
-        HttpClient reservationService;
-        try {
-            reservationService = httpClientFactory.CreateClient("ReservationService");
-
-            var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/reservations/{reservationUid}");
-            request.Headers.Add("X-User-Name", username);
-            var reservationServiceResponse = await reservationService.SendAsync(request);
-            if (!reservationServiceResponse.IsSuccessStatusCode)
-            {
-                return StatusCode((int)reservationServiceResponse.StatusCode, new { message = $"Error receiving reservation from microservice" });
-            }
-            var reservationJsonString = await reservationServiceResponse.Content.ReadAsStringAsync();
-            reservation = JsonConvert.DeserializeObject<ReservationServiceResponse>(reservationJsonString);
-            if (null == reservation)
-            {
-                return NotFound($"Reservations with uid {reservationUid} was not found");
-            }
-
-            reservation.Status = ReservationStatus.CANCELED.ToString();
-            request = new HttpRequestMessage(HttpMethod.Put, $"/api/v1/reservations");
-            var json = JsonConvert.SerializeObject(reservation);
-            request.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-            reservationServiceResponse = await reservationService.SendAsync(request);
-            if (!reservationServiceResponse.IsSuccessStatusCode)
-            {
-                return StatusCode((int)reservationServiceResponse.StatusCode, new { message = $"Error updating reservation" });
-            }
-        }
-        catch (Exception)
+        reservation.Status = ReservationStatus.CANCELED.ToString();
+        request = new HttpRequestMessage(HttpMethod.Put, $"/api/v1/reservations");
+        var json = JsonConvert.SerializeObject(reservation);
+        request.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+        reservationServiceResponse = await reservationService.SendAsync(request);
+        if (!reservationServiceResponse.IsSuccessStatusCode)
         {
-            reservationServiceCircuitBreaker.RecordFailure();
-            return StatusCode(503, new { message = "Reservation Service unavailable" });
-        }
-
-        if (!PaymentServiceCircuitBreaker.AllowRequest())
-        {
-            return StatusCode(503, new { message = "Payment Service unavailable" });
+            return StatusCode((int)reservationServiceResponse.StatusCode, new { message = $"Error updating reservation" });
         }
         
-        HttpClient paymentService;
-        try
+        var paymentService = httpClientFactory.CreateClient("PaymentService");
+        var paymentServiceResponse = await paymentService.GetAsync($"/api/v1/payments/{reservation.PaymentUid}");
+        var paymentJsonString = await paymentServiceResponse.Content.ReadAsStringAsync();
+        var payment = JsonConvert.DeserializeObject<PaymentResponse>(paymentJsonString);
+        if (null == payment)
         {
-            paymentService = httpClientFactory.CreateClient("PaymentService");
-
-            var paymentServiceResponse = await paymentService.GetAsync($"/api/v1/payments/{reservation.PaymentUid}");
-            var paymentJsonString = await paymentServiceResponse.Content.ReadAsStringAsync();
-            var payment = JsonConvert.DeserializeObject<PaymentServiceResponse>(paymentJsonString);
-            if (null == payment)
-            {
-                PaymentServiceCircuitBreaker.RecordFailure();
-                return NotFound($"Payment with uid {reservation.PaymentUid} was not found");
-            }
-            PaymentServiceCircuitBreaker.RecordSuccess();
-            payment.Status = PaymentOperationStatus.CANCELED.ToString();
-            var request = new HttpRequestMessage(HttpMethod.Put, $"/api/v1/payments");
-            var json = JsonConvert.SerializeObject(payment);
-            request.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-            paymentServiceResponse = await paymentService.SendAsync(request);
-            if (!paymentServiceResponse.IsSuccessStatusCode)
-            {
-                return StatusCode((int)paymentServiceResponse.StatusCode, new { message = $"Error updating payment" });
-            }
-        }        
-        catch (Exception)
+            return NotFound($"Payment with uid {reservation.PaymentUid} was not found");
+        }
+        payment.Status = PaymentOperationStatus.CANCELED.ToString();
+        request = new HttpRequestMessage(HttpMethod.Put, $"/api/v1/payments");
+        json = JsonConvert.SerializeObject(payment);
+        request.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+        paymentServiceResponse = await paymentService.SendAsync(request);
+        if (!paymentServiceResponse.IsSuccessStatusCode)
         {
-            PaymentServiceCircuitBreaker.RecordFailure();
-            return StatusCode(503, new { message = "Payment Service unavailable" });
+            return StatusCode((int)paymentServiceResponse.StatusCode, new { message = $"Error updating payment" });
         }
 
-        if (!loyaltyServiceCircuitBreaker.AllowRequest())
-        {
-            await EnqueueLoyaltyRequestAsync(username);
-            return NoContent();
-        }
-
-        try
-        {
-            var loyaltyClient = httpClientFactory.CreateClient("LoyaltyService");
-            var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/loyalties/degrade");
-            request.Headers.Add("X-User-Name", username);
-            var loyaltyResponse = await loyaltyClient.SendAsync(request);
-
-            if (!loyaltyResponse.IsSuccessStatusCode)
-            {
-                await EnqueueLoyaltyRequestAsync(username);
-            }
-        }
-        catch (Exception)
-        {
-            await EnqueueLoyaltyRequestAsync(username);
-        }
+        var loyaltyClient = httpClientFactory.CreateClient("LoyaltyService");
+        request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/loyalties/degrade");
+        request.Headers.Add("X-User-Name", username);
+        var loyaltyResponse = await loyaltyClient.SendAsync(request);
 
         return NoContent();
-    }
-
-    private async Task EnqueueLoyaltyRequestAsync(string username)
-    {
-        var db = redis.GetDatabase();
-        await db.ListRightPushAsync("loyalty-queue", username);
     }
 }

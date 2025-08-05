@@ -1,4 +1,6 @@
-namespace GatewayService.Models.Dto;
+using Contracts.Dto;
+
+namespace GatewayService.Models;
 
 public class PaginationResponse
 {

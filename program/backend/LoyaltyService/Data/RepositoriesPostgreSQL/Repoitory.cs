@@ -1,5 +1,6 @@
 namespace LoyaltyService.Data.RepositoriesPostgreSQL;
 
+using Contracts;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;

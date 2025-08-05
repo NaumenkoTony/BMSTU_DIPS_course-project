@@ -1,3 +1,4 @@
+using Contracts;
 using PaymentService.Models.DomainModels;
 
 namespace PaymentService.Data;

@@ -1,4 +1,6 @@
 namespace LoyaltyService.Data;
+
+using Contracts;
 using LoyaltyService.Models.DomainModels;
 
 public interface ILoyalityRepository : IRepository<Loyalty>

@@ -1,7 +1,6 @@
 namespace LoyaltyService.Controllers;
 
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http;
 
 public class HealthController() : ControllerBase
 {

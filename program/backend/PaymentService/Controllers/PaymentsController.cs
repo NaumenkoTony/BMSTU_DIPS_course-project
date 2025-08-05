@@ -1,10 +1,10 @@
 namespace PaymentService.Controllers;
 
 using AutoMapper;
+using Contracts.Dto;
 using Microsoft.AspNetCore.Mvc;
 using PaymentService.Data;
 using PaymentService.Models.DomainModels;
-using PaymentService.Models.Dto;
 
 public class PaymentsController(IPaymentRepository repository, IMapper mapper) : Controller
 {

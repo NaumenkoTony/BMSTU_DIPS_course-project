@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace PaymentService.Models.DomainModels;
+﻿namespace PaymentService.Models.DomainModels;
 
 public partial class Payment
 {

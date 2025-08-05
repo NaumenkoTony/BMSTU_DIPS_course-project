@@ -1,8 +1,6 @@
-using LoyaltyService.Models.DomainModels;
+namespace GatewayService.Models;
 
-namespace LoyaltyService.Models.Dto;
-
-public class LoyaltyResponse
+public class LoyaltyInfoResponse
 {
     public required string Status { get; set; }
     public int Discount { get; set; }

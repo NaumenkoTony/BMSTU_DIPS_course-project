@@ -1,6 +1,6 @@
-namespace ReservationService.Models.Dto;
+namespace Contracts.Dto;
 
-public partial class HotelResponse
+public class HotelResponse
 {
     public required string Id { get; set; }
     

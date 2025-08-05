@@ -1,6 +1,6 @@
-namespace PaymentService.Models.Dto;
+namespace Contracts.Dto;
 
-public partial class PaymentRequest
+public class PaymentRequest
 {
     public required string Status { get; set; }
 

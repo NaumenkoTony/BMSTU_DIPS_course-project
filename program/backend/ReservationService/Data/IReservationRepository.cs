@@ -1,4 +1,6 @@
 namespace ReservationService.Data;
+
+using Contracts;
 using ReservationService.Models.DomainModels;
 
 public interface IReservationRepository : IRepository<Reservation>

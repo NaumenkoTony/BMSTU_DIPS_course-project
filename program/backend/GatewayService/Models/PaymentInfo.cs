@@ -1,4 +1,5 @@
-namespace GatewayService.Models.Dto;
+namespace GatewayService.Models;
+
 public partial class PaymentInfo
 {
     public required string Status { get; set; }

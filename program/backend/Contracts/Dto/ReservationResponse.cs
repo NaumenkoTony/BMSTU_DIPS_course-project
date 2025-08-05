@@ -1,7 +1,9 @@
-namespace ReservationService.Models.Dto;
+namespace Contracts.Dto;
 
-public partial class ReservationRequest
+public class ReservationResponse
 {
+    public required string ReservationUid { get; set; }
+
     public required string Username { get; set; }
 
     public required string PaymentUid { get; set; }
@@ -12,5 +14,5 @@ public partial class ReservationRequest
 
     public required string StartDate { get; set; }
 
-    public required string EndData { get; set; }
+    public required string EndDate { get; set; }
 }

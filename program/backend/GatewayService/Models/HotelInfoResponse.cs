@@ -1,9 +1,7 @@
-namespace GatewayService.Models.ReservationServiceDto;
+namespace GatewayService.Models;
 
-public partial class HotelServiceResponse
+public partial class HotelInfoResponse
 {
-    public required string Id { get; set; }
-    
     public required string HotelUid { get; set; }
 
     public required string Name { get; set; }

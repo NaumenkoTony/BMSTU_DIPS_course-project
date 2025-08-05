@@ -1,6 +1,6 @@
-namespace GatewayService.Models.Dto;
+namespace GatewayService.Models;
 
-public partial class ReservationResponse
+public partial class AggregatedReservationResponse
 {
     public required string ReservationUid { get; set; }
 

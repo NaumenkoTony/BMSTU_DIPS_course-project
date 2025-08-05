@@ -1,8 +1,8 @@
-namespace PaymentService.Mapping;
+namespace PaymentService;
 
 using AutoMapper;
+using Contracts.Dto;
 using PaymentService.Models.DomainModels;
-using PaymentService.Models.Dto;
 
 public class MappingProfile : Profile
 {

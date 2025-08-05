@@ -1,5 +1,5 @@
 ﻿
-namespace GatewayService.Models.Dto;
+namespace GatewayService.Models;
 
 public partial class Payment
 {

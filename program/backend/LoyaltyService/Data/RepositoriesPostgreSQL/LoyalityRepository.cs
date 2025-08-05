@@ -2,8 +2,8 @@ namespace LoyaltyService.Data.RepositoriesPostgreSQL;
 
 using LoyaltyService.Models.DomainModels;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 using System.Threading.Tasks;
+
 public class LoyalityRepository(LoyaltiesContext context) : Repository<Loyalty>(context), ILoyalityRepository
 {
     private LoyaltiesContext db = context;

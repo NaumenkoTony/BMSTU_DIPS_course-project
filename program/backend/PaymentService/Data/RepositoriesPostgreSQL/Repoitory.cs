@@ -1,7 +1,7 @@
-namespace ReservationService.Data.RepositoriesPostgreSQL;
+namespace PaymentService.Data.RepositoriesPostgreSQL;
 
+using Contracts;
 using Microsoft.EntityFrameworkCore;
-using PaymentService.Data;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

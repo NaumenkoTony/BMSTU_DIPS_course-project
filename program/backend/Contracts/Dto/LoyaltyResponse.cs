@@ -1,6 +1,6 @@
-namespace GatewayService.Models.Dto;
+﻿namespace Contracts.Dto;
 
-public class LoyaltyInfoResponse
+public class LoyaltyResponse
 {
     public required string Status { get; set; }
     public int Discount { get; set; }

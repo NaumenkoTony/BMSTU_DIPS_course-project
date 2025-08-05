@@ -1,8 +1,8 @@
-namespace LoyaltyService.Mapping;
+namespace LoyaltyService;
 
 using AutoMapper;
+using Contracts.Dto;
 using LoyaltyService.Models.DomainModels;
-using LoyaltyService.Models.Dto;
 public class MappingProfile : Profile
 {
     public MappingProfile()

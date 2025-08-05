@@ -1,8 +1,8 @@
 namespace LoyaltyService.Controllers;
 
 using AutoMapper;
+using Contracts.Dto;
 using LoyaltyService.Data;
-using LoyaltyService.Models.Dto;
 using Microsoft.AspNetCore.Mvc;
 
 public class LoyaltiesController(ILoyalityRepository repository, IMapper mapper) : Controller

@@ -1,4 +1,5 @@
-namespace GatewayService.Models.Dto;
+namespace GatewayService.Models;
+
 public enum LoyaltyStatus
 {
     BRONZE,
