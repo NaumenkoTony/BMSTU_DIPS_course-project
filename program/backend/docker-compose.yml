@@ -2,8 +2,8 @@ services:
   loyalty_service:
     container_name: LoyaltyService
     build:
-      context: ./LoyaltyService
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./LoyaltyService/Dockerfile
     image: tonynm/loyalty_service
     restart: on-failure
     depends_on:
@@ -28,8 +28,8 @@ services:
   payment_service:
     container_name: PaymentService
     build:
-      context: ./PaymentService
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./PaymentService/Dockerfile
     depends_on:
       - payment_database
     image: tonynm/payment_service
@@ -54,8 +54,8 @@ services:
   reservation_service:
     container_name: ReservationService
     build:
-      context: ./ReservationService
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./ReservationService/Dockerfile
     depends_on:
       - reservation_database
     image: tonynm/reservation_service
@@ -80,8 +80,8 @@ services:
   identity_service:
     container_name: IdentityService
     build:
-      context: ./IdentityService
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./IdentityService/Dockerfile
     depends_on:
       - identity_database
     image: tonynm/identity_service
@@ -105,8 +105,8 @@ services:
   gateway_service:
     container_name: GatewayService
     build:
-      context: ./GatewayService
-      dockerfile: Dockerfile    
+      context: .
+      dockerfile: ./GatewayService/Dockerfile    
     depends_on:
       - reservation_database
       - reservation_service
