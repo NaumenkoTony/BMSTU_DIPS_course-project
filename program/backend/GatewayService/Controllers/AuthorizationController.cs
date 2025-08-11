@@ -13,45 +13,36 @@ public class AuthorizationController(ILogger<AuthorizationController> logger, IC
     private readonly IConfiguration config = config;
 
 
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] Models.LoginRequest request)
+    [HttpGet("login")]
+    public IActionResult Login()
     {
-        if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password))
-            return BadRequest("Username and password are required.");
+        var redirectUri = "http://gateway_service:port/api/v1/authorize/callback";
+        var authUrl = $"http://identity_service:8000/authorize" +
+                    $"?response_type=code" +
+                    $"&client_id=gateway-client" +
+                    $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
+                    $"&scope=openid profile email";
 
-        var domain = $"https://{config["Auth:Domain"]}/";
-        var apiIdentifier = config["Auth:Api"];
-        var clientId = config["Auth:ClientId"];
-        var clientSecret = config["Auth:ClientSecret"];
-
-        var client = new HttpClient();
-        var response = await client.PostAsync("http://identity_service:8000/connect/token",
-        new FormUrlEncodedContent(new Dictionary<string, string>
-        {
-            { "grant_type", "password" },
-            { "username", request.Username },
-            { "password", request.Password },
-            { "client_id", "gateway-client" },
-            { "client_secret", "secret" },
-            { "scope", "openid profile email" }
-        }));
-
-        if (!response.IsSuccessStatusCode)
-        {
-            logger.LogWarning("Login failed for user {Username}. Response: {StatusCode} - {ReasonPhrase}",
-                request.Username, response.StatusCode, response.ReasonPhrase);
-            return Unauthorized("Invalid username or password.");
-        }
-
-        var tokenResponse = await response.Content.ReadAsStringAsync();
-        return Ok(tokenResponse);
+        return Redirect(authUrl);
     }
 
-    [AllowAnonymous]
-    [HttpPost("callback")]
-    public IActionResult Callback()
+    [HttpGet("callback")]
+    public async Task<IActionResult> Callback([FromQuery] string code)
     {
-        logger.LogInformation("Callback received.");
-        return Ok("Callback received.");
+        if (string.IsNullOrEmpty(code))
+            return BadRequest("Authorization code is missing.");
+
+        var tokenResponse = await new HttpClient().PostAsync("http://identity_service:8000/token",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                { "grant_type", "authorization_code" },
+                { "code", code },
+                { "redirect_uri", "http://gateway_service:port/api/v1/authorize/callback" },
+                { "client_id", "gateway-client" },
+                { "client_secret", "secret" }
+            }));
+
+        var content = await tokenResponse.Content.ReadAsStringAsync();
+        return Content(content, "application/json");
     }
 }

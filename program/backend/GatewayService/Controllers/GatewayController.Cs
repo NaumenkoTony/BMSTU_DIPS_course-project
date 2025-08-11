@@ -21,9 +21,9 @@ public class GatewayController(IHttpClientFactory httpClientFactory, IMapper map
     private readonly ILogger<GatewayController> logger = logger;
     private readonly IConnectionMultiplexer redis = redis;
 
-    private readonly CircuitBreaker reservationServiceCircuitBreaker = new CircuitBreaker(5, TimeSpan.FromSeconds(60));
-    private readonly CircuitBreaker loyaltyServiceCircuitBreaker = new CircuitBreaker(5, TimeSpan.FromSeconds(60));
-    private readonly CircuitBreaker PaymentServiceCircuitBreaker = new CircuitBreaker(5, TimeSpan.FromSeconds(60));
+    private readonly CircuitBreaker reservationServiceCircuitBreaker = new(5, TimeSpan.FromSeconds(60));
+    private readonly CircuitBreaker loyaltyServiceCircuitBreaker = new(5, TimeSpan.FromSeconds(60));
+    private readonly CircuitBreaker PaymentServiceCircuitBreaker = new(5, TimeSpan.FromSeconds(60));
 
     private async Task<AggregatedReservationResponse> CreateReservationResponseAsync(ReservationResponse reservationServiceResponse)
     {

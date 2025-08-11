@@ -1,56 +1,106 @@
-using Microsoft.AspNetCore.Identity;
+using System.Security.Cryptography;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore;
-using OpenIddict.Abstractions;
-using IdentityService.Models;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Identity;
 using IdentityService.Data;
+using IdentityService.Models;
+using IdentityService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 builder.Services.AddDbContext<IdentityContext>(options =>
-{
-    options.UseNpgsql(builder.Configuration.GetConnectionString("IdentityService"));
-    options.UseOpenIddict();
-});
+    options.UseNpgsql(builder.Configuration.GetConnectionString("IdentityService")));
 
-builder.Services.AddIdentity<User, IdentityRole>()
+builder.Services.AddIdentity<User, Role>(options =>
+    {
+        options.Password.RequireDigit = false;
+        options.Password.RequiredLength = 6;
+        options.User.RequireUniqueEmail = true;
+    })
     .AddEntityFrameworkStores<IdentityContext>()
     .AddDefaultTokenProviders();
 
-builder.Services.AddOpenIddict()
-    .AddCore(opt =>
+var rsa = RSA.Create(2048);
+var keyParameters = rsa.ExportParameters(true);
+var rsaSecurityKey = new RsaSecurityKey(keyParameters)
+{
+    KeyId = Guid.NewGuid().ToString()
+};
+builder.Services.AddSingleton<RsaSecurityKey>(rsaSecurityKey);
+
+builder.Services.AddSingleton<IJwksService, JwksService>(); // ➡ JWKS endpoint для публикации публичного ключа
+builder.Services.AddScoped<ITokenService, TokenService>(); // ➡ Формирование ID и Access токенов
+builder.Services.AddScoped<IClientStore, ClientStore>(); // ➡ Валидация client_id, redirect_uri, scopes
+builder.Services.AddScoped<IAuthorizationCodeStore, AuthorizationCodeStore>(); // ➡ Создание и проверка authorization code
+builder.Services.AddScoped<IProfileService, ProfileService>(); // ➡ Формирование claims для токенов и /userinfo
+builder.Services.AddScoped<IConsentService, ConsentService>(); // ➡ Логика экрана согласия на выдачу scopes
+
+builder.Services.AddAuthentication(options =>
     {
-        opt.UseEntityFrameworkCore()
-           .UseDbContext<IdentityContext>();
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     })
-    .AddServer(opt =>
+    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
     {
-        opt.AllowAuthorizationCodeFlow()
-            .RequireProofKeyForCodeExchange();
-
-        opt.SetAuthorizationEndpointUris("/connect/authorize")
-            .SetTokenEndpointUris("/connect/token")
-            .SetUserInfoEndpointUris("/connect/userinfo");
-
-        opt.RegisterScopes("openid", "profile", "email");
-
-        opt.AddDevelopmentEncryptionCertificate()
-            .AddDevelopmentSigningCertificate();
-            
-        opt.AcceptAnonymousClients();
-
-        opt.UseAspNetCore()
-            .EnableAuthorizationEndpointPassthrough()
-            .EnableTokenEndpointPassthrough()
-            .EnableUserInfoEndpointPassthrough();
+        options.LoginPath = "/account/login";
+        options.LogoutPath = "/account/logout";
+        options.Cookie.Name = "idsrv.session";
+    })
+    .AddJwtBearer("Bearer", options =>
+    {
+        options.RequireHttpsMetadata = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Issuer"] ?? "http://identity_service:8000",
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            IssuerSigningKey = rsaSecurityKey,
+            ValidateIssuerSigningKey = true
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = ctx =>
+            {
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddControllersWithViews();
-builder.Services.AddRazorPages();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+builder.Services.AddDataProtection()
+    .SetApplicationName("HotelBookingIdentityProvider");
 
 var app = builder.Build();
-app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<IdentityContext>();
+    db.Database.Migrate();
+
+    var clientStore = scope.ServiceProvider.GetRequiredService<IClientStore>();
+    await ClientSeeder.EnsureSeededAsync(clientStore, db);
+}
+
+// 9️⃣ Middleware pipeline
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+else
+{
+    app.UseExceptionHandler("/Home/Error");
+}
 
 app.UseStaticFiles();
 app.UseRouting();
@@ -59,35 +109,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapRazorPages();
-
-await SeedAdminAsync(app);
+app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
 app.Run();
-
-async Task SeedAdminAsync(WebApplication app)
-{
-    using var scope = app.Services.CreateScope();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-
-    if (!await roleManager.RoleExistsAsync("Admin"))
-        await roleManager.CreateAsync(new IdentityRole("Admin"));
-
-    var adminEmail = "admin@example.com";
-    var adminUser = await userManager.FindByEmailAsync(adminEmail);
-
-    if (adminUser == null)
-    {
-        var user = new User
-        {
-            UserName = adminEmail,
-            Email = adminEmail,
-            FirstName = "Admin",
-            LastName = "User"
-        };
-
-        await userManager.CreateAsync(user, "Admin");
-        await userManager.AddToRoleAsync(user, "Admin");
-    }
-}
