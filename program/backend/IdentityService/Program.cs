@@ -37,7 +37,8 @@ builder.Services.AddSingleton<RsaSecurityKey>(rsaSecurityKey);
 builder.Services.AddSingleton<IJwksService, JwksService>(); // ➡ JWKS endpoint для публикации публичного ключа
 builder.Services.AddScoped<ITokenService, TokenService>(); // ➡ Формирование ID и Access токенов
 builder.Services.AddScoped<IClientStore, ClientStore>(); // ➡ Валидация client_id, redirect_uri, scopes
-builder.Services.AddScoped<IAuthorizationCodeStore, AuthorizationCodeStore>(); // ➡ Создание и проверка authorization code
+builder.Services.AddScoped<IAuthorizationCodeStore, AuthorizationCodeStore>(); // ➡ Создание и проверка authorization codebuilder.Services.AddSingleton<IJwksService, JwksService>();
+builder.Services.AddSingleton<IJwksService, JwksService>();
 builder.Services.AddScoped<IProfileService, ProfileService>(); // ➡ Формирование claims для токенов и /userinfo
 builder.Services.AddScoped<IConsentService, ConsentService>(); // ➡ Логика экрана согласия на выдачу scopes
 
@@ -78,6 +79,11 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDataProtection()
     .SetApplicationName("HotelBookingIdentityProvider");
+
+builder.Services.AddIdentity<User, Role>()
+    .AddEntityFrameworkStores<IdentityContext>()
+    .AddDefaultTokenProviders();
+
 
 var app = builder.Build();
 
