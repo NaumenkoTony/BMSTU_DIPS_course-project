@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using IdentityService.Services;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 using System.Web;
 using IdentityService.Models;
 
@@ -22,23 +23,22 @@ namespace IdentityService.Controllers
         }
 
         [HttpGet("authorize")]
-        public IActionResult Authorize(
+        public async Task<IActionResult> Authorize(
             [FromQuery] string response_type,
             [FromQuery] string client_id,
             [FromQuery] string redirect_uri,
             [FromQuery] string scope,
             [FromQuery] string state)
         {
-            // Проверка client_id и redirect_uri
-            var client = _clientStore.FindClient(client_id);
-            if (client == null || client.RedirectUri != redirect_uri)
-                return BadRequest("Invalid client or redirect_uri");
+            var client = await _clientStore.FindClientByIdAsync(client_id);
+            if (client == null)
+                return BadRequest("Unknown client id");
 
-            // В данном примере - показываем страницу логина
-            // Если пользователь уже залогинен — можно сразу перейти к выдаче кода
-            if (!User.Identity.IsAuthenticated)
+            if (!_clientStore.ValidateRedirectUri(client, redirect_uri))
+                return BadRequest("Invalid redirect_uri");
+
+            if (User.Identity?.IsAuthenticated != true)
             {
-                // Сохраняем параметры запроса в TempData для POST login
                 TempData["response_type"] = response_type;
                 TempData["client_id"] = client_id;
                 TempData["redirect_uri"] = redirect_uri;
@@ -48,7 +48,6 @@ namespace IdentityService.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            // Если пользователь залогинен, выдаём код авторизации
             return IssueAuthorizationCode(User, client, redirect_uri, scope, state);
         }
 

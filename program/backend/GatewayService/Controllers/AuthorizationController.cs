@@ -17,11 +17,13 @@ public class AuthorizationController(ILogger<AuthorizationController> logger, IC
     public IActionResult Login()
     {
         var redirectUri = "http://gateway_service:port/api/v1/authorize/callback";
+        var state = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
         var authUrl = $"http://identity_service:8000/authorize" +
                     $"?response_type=code" +
                     $"&client_id=gateway-client" +
                     $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
-                    $"&scope=openid profile email";
+                    $"&scope=openid profile email" +
+                    $"state={Uri.EscapeDataString(state)}";
 
         return Redirect(authUrl);
     }
