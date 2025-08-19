@@ -1,70 +1,56 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Identity;
 using IdentityService.Models;
-using IdentityService.JWTGenerator;
-using Microsoft.Extensions.Options;
+using System.Threading.Tasks;
+using System.Security.Claims;
 
-namespace IdentityService.Controllers;
-
-[ApiController]
-[Route("api/[controller]")]
-public class AccountController : ControllerBase
+namespace IdentityService.Controllers
 {
-    private readonly UserManager<User> _userManager;
-    private readonly SignInManager<User> _signInManager;
-    private readonly RoleManager<IdentityRole> _roleManager;
-    private readonly IOptions<JwtSettings> _jwtSettings;
-     
-
-    public AccountController(
-        UserManager<User> userManager,
-        SignInManager<User> signInManager,
-        RoleManager<IdentityRole> roleManager,  
-        IOptions<JwtSettings> jwtSettings)
+    public class AccountController : Controller
     {
-        _userManager = userManager;
-        _signInManager = signInManager;
-        _roleManager = roleManager;
-        _jwtSettings = jwtSettings;
-    }
+        private readonly SignInManager<User> _signInManager;
+        private readonly UserManager<User> _userManager;
 
-    [Authorize(Roles = "Admin")]
-    [HttpPost("register")]
-    public async Task<IActionResult> Register(RegisterRequest request)
-    {
-        var user = new User
+        public AccountController(SignInManager<User> signInManager, UserManager<User> userManager)
         {
-            UserName = request.Email,
-            Email = request.Email,
-            FirstName = request.FirstName,
-            LastName = request.LastName
-        };
+            _signInManager = signInManager;
+            _userManager   = userManager;
+        }
 
-        var result = await _userManager.CreateAsync(user, request.Password);
-        if (!result.Succeeded)
-            return BadRequest(result.Errors);
+        [HttpGet("account/login")]
+        public IActionResult Login() => View();
 
-        var role = string.IsNullOrWhiteSpace(request.Role) ? "User" : request.Role;
+        [HttpPost("account/login")]
+        public async Task<IActionResult> Login(string username, string password)
+        {
+            var user = await _userManager.FindByNameAsync(username);
+            if (user is null)
+            {
+                ModelState.AddModelError("", "Invalid username or password");
+                return View();
+            }
 
-        if (!await _roleManager.RoleExistsAsync("User"))
-            await _roleManager.CreateAsync(new IdentityRole("User"));
+            var result = await _signInManager.PasswordSignInAsync(user, password, isPersistent: false, lockoutOnFailure: false);
+            if (!result.Succeeded)
+            {
+                ModelState.AddModelError("", "Invalid username or password");
+                return View();
+            }
 
-        await _userManager.AddToRoleAsync(user, "User");
+            var response_type = TempData["response_type"]?.ToString() ?? "code";
+            var client_id     = TempData["client_id"]?.ToString()     ?? "";
+            var redirect_uri  = TempData["redirect_uri"]?.ToString()  ?? "";
+            var scope         = TempData["scope"]?.ToString()         ?? "openid";
+            var state         = TempData["state"]?.ToString()         ?? "";
 
-        return Ok("User registered successfully");
-    }
+            return Redirect($"/authorize?response_type={Uri.EscapeDataString(response_type)}&client_id={Uri.EscapeDataString(client_id)}&redirect_uri={Uri.EscapeDataString(redirect_uri)}&scope={Uri.EscapeDataString(scope)}&state={Uri.EscapeDataString(state)}");
+        }
 
-    public async Task<IActionResult> Login(LoginRequest request)
-    {
-        var result = await _signInManager.PasswordSignInAsync(request.Email, request.Password, true, false);
-        if (!result.Succeeded)
-            return Unauthorized("Invalid credentials");
-
-        var user = await _userManager.FindByEmailAsync(request.Email);
-
-        var token = Jwt.GenerateJwtToken(user, _jwtSettings.Value);
-
-        return Ok(new { Token = token });
+        [HttpPost("account/logout")]
+        public async Task<IActionResult> Logout()
+        {
+            await _signInManager.SignOutAsync();
+            return RedirectToAction("Login");
+        }
     }
 }

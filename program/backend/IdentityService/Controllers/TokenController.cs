@@ -2,64 +2,58 @@ using Microsoft.AspNetCore.Mvc;
 using IdentityService.Services;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Security.Claims;
 
 namespace IdentityService.Controllers
 {
     [Route("[controller]")]
-    public class TokenController : Controller
+    [ApiController]
+    public class TokenController : ControllerBase
     {
         private readonly IAuthorizationCodeStore _codeStore;
         private readonly IClientStore _clientStore;
         private readonly ITokenService _tokenService;
-        private readonly UserManager<User> _userManager;
 
-        public TokenController(
-            IAuthorizationCodeStore codeStore,
-            IClientStore clientStore,
-            ITokenService tokenService,
-            UserManager<User> userManager)
+        public TokenController(IAuthorizationCodeStore codeStore, IClientStore clientStore, ITokenService tokenService)
         {
             _codeStore = codeStore;
             _clientStore = clientStore;
             _tokenService = tokenService;
-            _userManager = userManager;
         }
 
         [HttpPost("token")]
-        public async Task<IActionResult> Token([FromForm] string grant_type, [FromForm] string code,
-            [FromForm] string redirect_uri, [FromForm] string client_id, [FromForm] string client_secret)
+        public async Task<IActionResult> Exchange([FromForm] string grant_type,
+                                                [FromForm] string code,
+                                                [FromForm] string redirect_uri,
+                                                [FromForm] string client_id,
+                                                [FromForm] string client_secret)
         {
             if (grant_type != "authorization_code")
-                return BadRequest("Unsupported grant_type");
+                return BadRequest(new { error = "unsupported_grant_type" });
 
-            var client = _clientStore.FindClient(client_id);
+            var client = await _clientStore.FindClientByIdAsync(client_id);
             if (client == null || client.ClientSecret != client_secret)
-                return BadRequest("Invalid client credentials");
+                return Unauthorized(new { error = "invalid_client" });
 
             var authCode = await _codeStore.FindCodeAsync(code);
-            if (authCode == null || authCode.ClientId != client_id || authCode.RedirectUri != redirect_uri || authCode.Expiration < DateTime.UtcNow)
-                return BadRequest("Invalid or expired authorization code");
+            if (authCode == null || authCode.RedirectUri != redirect_uri || authCode.Expiration < DateTime.UtcNow)
+                return BadRequest(new { error = "invalid_grant" });
 
-            var user = await _userManager.FindByIdAsync(authCode.UserId);
-            if (user == null)
-                return BadRequest("User not found");
+            var scopes = authCode.Scopes.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-            // Удаляем код после использования
+            var accessToken = await _tokenService.CreateAccessTokenAsync(authCode.UserId, "resource_server", Enumerable.Empty<Claim>(), scopes);
+
+            var idToken = await _tokenService.CreateIdTokenAsync(authCode.UserId, client.ClientId, Enumerable.Empty<Claim>(), scopes);
+
             await _codeStore.RemoveCodeAsync(code);
-
-            var scopes = authCode.Scopes.Split(' ');
-
-            var claims = await _userManager.GetClaimsAsync(user);
-
-            var idToken = await _tokenService.CreateIdTokenAsync(user.Id, client_id, claims, scopes);
-            var accessToken = await _tokenService.CreateAccessTokenAsync(user.Id, client_id, claims, scopes);
 
             return Ok(new
             {
-                id_token = idToken,
                 access_token = accessToken,
+                id_token = idToken,
                 token_type = "Bearer",
-                expires_in = 3600
+                expires_in = 3600,
+                scope = string.Join(" ", scopes)
             });
         }
     }

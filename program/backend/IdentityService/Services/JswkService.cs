@@ -11,7 +11,6 @@ public class JwksService : IJwksService
 
     public object GetJwks()
     {
-        // Создаем JSON Web Key из RSA public key
         var parameters = _rsaSecurityKey.Rsa.ExportParameters(false);
 
         var e = Base64UrlEncoder.Encode(parameters.Exponent);

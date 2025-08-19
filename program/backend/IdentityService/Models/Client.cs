@@ -20,5 +20,5 @@ public class Client
 
     public bool RequirePkce { get; set; } = true;
 
-    public bool IsPublic => string.IsNullOrEmpty(ClientSecret);
+    public bool IsPublic { get; set; }
 }

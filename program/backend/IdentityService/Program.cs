@@ -3,11 +3,11 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using IdentityService.Data;
 using IdentityService.Models;
 using IdentityService.Services;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,20 +27,16 @@ builder.Services.AddIdentity<User, Role>(options =>
     .AddDefaultTokenProviders();
 
 var rsa = RSA.Create(2048);
-var keyParameters = rsa.ExportParameters(true);
-var rsaSecurityKey = new RsaSecurityKey(keyParameters)
+var rsaSecurityKey = new RsaSecurityKey(rsa.ExportParameters(true))
 {
     KeyId = Guid.NewGuid().ToString()
 };
 builder.Services.AddSingleton<RsaSecurityKey>(rsaSecurityKey);
 
-builder.Services.AddSingleton<IJwksService, JwksService>(); // ➡ JWKS endpoint для публикации публичного ключа
-builder.Services.AddScoped<ITokenService, TokenService>(); // ➡ Формирование ID и Access токенов
-builder.Services.AddScoped<IClientStore, ClientStore>(); // ➡ Валидация client_id, redirect_uri, scopes
-builder.Services.AddScoped<IAuthorizationCodeStore, AuthorizationCodeStore>(); // ➡ Создание и проверка authorization codebuilder.Services.AddSingleton<IJwksService, JwksService>();
 builder.Services.AddSingleton<IJwksService, JwksService>();
-builder.Services.AddScoped<IProfileService, ProfileService>(); // ➡ Формирование claims для токенов и /userinfo
-builder.Services.AddScoped<IConsentService, ConsentService>(); // ➡ Логика экрана согласия на выдачу scopes
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IClientStore, ClientStore>();
+builder.Services.AddScoped<IAuthorizationCodeStore, AuthorizationCodeStore>();
 
 builder.Services.AddAuthentication(options =>
     {
@@ -64,26 +60,11 @@ builder.Services.AddAuthentication(options =>
             IssuerSigningKey = rsaSecurityKey,
             ValidateIssuerSigningKey = true
         };
-        options.Events = new JwtBearerEvents
-        {
-            OnMessageReceived = ctx =>
-            {
-                return Task.CompletedTask;
-            }
-        };
     });
 
 builder.Services.AddControllersWithViews();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
 builder.Services.AddDataProtection()
     .SetApplicationName("HotelBookingIdentityProvider");
-
-builder.Services.AddIdentity<User, Role>()
-    .AddEntityFrameworkStores<IdentityContext>()
-    .AddDefaultTokenProviders();
-
 
 var app = builder.Build();
 
@@ -92,20 +73,25 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<IdentityContext>();
     db.Database.Migrate();
 
-    var clientStore = scope.ServiceProvider.GetRequiredService<IClientStore>();
-    await ClientSeeder.EnsureSeededAsync(clientStore, db);
+    db = scope.ServiceProvider.GetRequiredService<IdentityContext>();
+    await ClientSeeder.EnsureSeededAsync(db);
 }
 
-// 9️⃣ Middleware pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
-    app.UseSwagger();
-    app.UseSwaggerUI();
 }
 else
 {
     app.UseExceptionHandler("/Home/Error");
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<IdentityContext>();
+    db.Database.Migrate();
+
+    await ClientSeeder.EnsureSeededAsync(db);
 }
 
 app.UseStaticFiles();

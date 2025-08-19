@@ -8,18 +8,20 @@ using IdentityService.Models;
 
 namespace IdentityService.Controllers
 {
-    [Route("[controller]")]
+    [Route("")]
     public class AuthorizationController : Controller
     {
         private readonly IClientStore _clientStore;
         private readonly IAuthorizationCodeStore _codeStore;
         private readonly UserManager<User> _userManager;
+        ILogger<AuthorizationController> _logger;
 
-        public AuthorizationController(IClientStore clientStore, IAuthorizationCodeStore codeStore, UserManager<User> userManager)
+        public AuthorizationController(IClientStore clientStore, IAuthorizationCodeStore codeStore, UserManager<User> userManager, ILogger<AuthorizationController> logger)
         {
             _clientStore = clientStore;
             _codeStore = codeStore;
             _userManager = userManager;
+            _logger = logger;
         }
 
         [HttpGet("authorize")]
@@ -35,7 +37,14 @@ namespace IdentityService.Controllers
                 return BadRequest("Unknown client id");
 
             if (!_clientStore.ValidateRedirectUri(client, redirect_uri))
+            {
+                _logger.LogWarning("Invalid redirect_uri. Client: {ClientRedirectUris}, Request: {RequestRedirectUri}", client.RedirectUris, redirect_uri);
                 return BadRequest("Invalid redirect_uri");
+            }
+
+            var requestedScopes = (scope ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (!_clientStore.ValidateScopes(client, requestedScopes))
+                return BadRequest("Invalid or unauthorized scopes");
 
             if (User.Identity?.IsAuthenticated != true)
             {
@@ -48,24 +57,35 @@ namespace IdentityService.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            return IssueAuthorizationCode(User, client, redirect_uri, scope, state);
+            return await IssueAuthorizationCodeAsync(User, client, redirect_uri, requestedScopes, state);
         }
 
-        private IActionResult IssueAuthorizationCode(ClaimsPrincipal user, Client client, string redirectUri, string scope, string state)
+        private async Task<IActionResult> IssueAuthorizationCodeAsync(
+            ClaimsPrincipal user,
+            Client client,
+            string redirectUri,
+            string[] scopes,
+            string? state)
         {
+            var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return Forbid("Authenticated principal has no NameIdentifier.");
+            }
+
             var code = Guid.NewGuid().ToString("N");
 
             var authCode = new AuthorizationCode
             {
-                Code = code,
-                ClientId = client.ClientId,
-                UserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "",
+                Code        = code,
+                ClientId    = client.ClientId,
+                UserId      = userId,
                 RedirectUri = redirectUri,
-                Scopes = scope,
-                Expiration = DateTime.UtcNow.AddMinutes(5)
+                Scopes      = string.Join(' ', scopes),
+                Expiration  = DateTime.UtcNow.AddMinutes(5)
             };
 
-            _codeStore.SaveCodeAsync(authCode).Wait();
+            await _codeStore.SaveCodeAsync(authCode);
 
             var uriBuilder = new UriBuilder(redirectUri);
             var query = HttpUtility.ParseQueryString(uriBuilder.Query);

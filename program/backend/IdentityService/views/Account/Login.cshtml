@@ -1,0 +1,19 @@
+@{
+    ViewData["Title"] = "Login";
+}
+<h2>Login</h2>
+<form method="post" action="/account/login">
+  <div>
+    <label>Username</label>
+    <input name="username" />
+  </div>
+  <div>
+    <label>Password</label>
+    <input name="password" type="password" />
+  </div>
+  <button type="submit">Sign in</button>
+</form>
+@if (!ViewData.ModelState.IsValid)
+{
+  <p style="color:red">Invalid username or password</p>
+}
