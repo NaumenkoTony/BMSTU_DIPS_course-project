@@ -1,27 +1,45 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 [ApiController]
 [Route(".well-known")]
 public class JwksController : ControllerBase
 {
     private readonly IJwksService _jwksService;
+    private readonly ILogger<JwksController> _logger;
 
-    public JwksController(IJwksService jwksService)
+    public JwksController(IJwksService jwksService, ILogger<JwksController> logger)
     {
         _jwksService = jwksService;
+        _logger = logger;
     }
 
     [HttpGet("jwks.json")]
     public IActionResult GetJwks()
     {
+        _logger.LogInformation("JWKS request from {RemoteIpAddress}. User-Agent: {UserAgent}", 
+            HttpContext.Connection.RemoteIpAddress, 
+            Request.Headers.UserAgent.ToString());
+        
+        _logger.LogDebug("JWKS requested at {Timestamp}", DateTime.UtcNow);
+        
         var keys = _jwksService.GetJwks();
+        
+        _logger.LogInformation("JWKS returned {KeyCount} keys. Key IDs: {KeyIds}", 
+            keys.Keys?.Count ?? 0,
+            string.Join(", ", keys.Keys?.Select(k => k.Kid) ?? Array.Empty<string>()));
+        
         return Ok(keys);
     }
 
     [HttpGet("openid-configuration")]
     public IActionResult GetConfiguration()
     {
+        _logger.LogInformation("OpenID configuration request from {RemoteIpAddress}", 
+            HttpContext.Connection.RemoteIpAddress);
+
         var issuer = $"{Request.Scheme}://{Request.Host}";
+        _logger.LogDebug("Using issuer: {Issuer}", issuer);
 
         var config = new
         {
@@ -36,6 +54,8 @@ public class JwksController : ControllerBase
             id_token_signing_alg_values_supported = new[] { "RS256" }
         };
 
+        _logger.LogInformation("OpenID configuration returned for issuer {Issuer}", issuer);
+        
         return Ok(config);
     }
 }

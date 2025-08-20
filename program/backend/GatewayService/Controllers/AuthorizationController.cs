@@ -32,21 +32,34 @@ public class AuthorizationController(ILogger<AuthorizationController> logger, IC
     [HttpGet("callback")]
     public async Task<IActionResult> Callback([FromQuery] string code)
     {
-        logger.LogInformation("Callback received. Code: {Code}}", code);
-        if (string.IsNullOrEmpty(code))
-            return BadRequest("Authorization code is missing.");
+        logger.LogInformation("Callback received. Code: {Code}", code);
+        
+        try
+        {
+            var tokenUrl = "http://identity_service:8000/token";
+            logger.LogInformation("Sending token request to: {TokenUrl}", tokenUrl);
+            
+            var response = await new HttpClient().PostAsync(tokenUrl,
+                new FormUrlEncodedContent(new Dictionary<string, string>
+                {
+                    { "grant_type", "authorization_code" },
+                    { "code", code },
+                    { "redirect_uri", "http://localhost:8080/api/v1/authorize/callback" },
+                    { "client_id", "gateway-client" },
+                    { "client_secret", "secret" }
+                }));
 
-        var tokenResponse = await new HttpClient().PostAsync("http://identity_service:8000/token",
-            new FormUrlEncodedContent(new Dictionary<string, string>
-            {
-                { "grant_type", "authorization_code" },
-                { "code", code },
-                { "redirect_uri", "http://localhost:8080/api/v1/authorize/callback" },
-                { "client_id", "gateway-client" },
-                { "client_secret", "secret" }
-            }));
-
-        var content = await tokenResponse.Content.ReadAsStringAsync();
-        return Content(content, "application/json");
+            logger.LogInformation("Token response status: {StatusCode}", response.StatusCode);
+            
+            var content = await response.Content.ReadAsStringAsync();
+            logger.LogInformation("Token response: {Content}", content);
+            
+            return Content(content, "application/json");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error during token request");
+            return StatusCode(500, "Internal server error");
+        }
     }
 }

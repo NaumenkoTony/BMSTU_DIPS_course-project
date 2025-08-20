@@ -6,19 +6,22 @@ using System.Security.Claims;
 
 namespace IdentityService.Controllers
 {
-    [Route("[controller]")]
+    [Route("")]
     [ApiController]
     public class TokenController : ControllerBase
     {
         private readonly IAuthorizationCodeStore _codeStore;
         private readonly IClientStore _clientStore;
         private readonly ITokenService _tokenService;
+        private readonly ILogger<TokenController> _logger;
 
-        public TokenController(IAuthorizationCodeStore codeStore, IClientStore clientStore, ITokenService tokenService)
+        public TokenController(IAuthorizationCodeStore codeStore, IClientStore clientStore, ITokenService tokenService,
+        ILogger<TokenController> logger)
         {
             _codeStore = codeStore;
             _clientStore = clientStore;
             _tokenService = tokenService;
+            _logger = logger;
         }
 
         [HttpPost("token")]
@@ -28,33 +31,86 @@ namespace IdentityService.Controllers
                                                 [FromForm] string client_id,
                                                 [FromForm] string client_secret)
         {
+            _logger.LogInformation("Token exchange request received. Grant type: {GrantType}, Client: {ClientId}", 
+                grant_type, client_id);
+
             if (grant_type != "authorization_code")
+            {
+                _logger.LogWarning("Unsupported grant type: {GrantType}", grant_type);
                 return BadRequest(new { error = "unsupported_grant_type" });
+            }
 
+            _logger.LogDebug("Looking up client: {ClientId}", client_id);
             var client = await _clientStore.FindClientByIdAsync(client_id);
-            if (client == null || client.ClientSecret != client_secret)
+            if (client == null)
+            {
+                _logger.LogWarning("Client not found: {ClientId}", client_id);
                 return Unauthorized(new { error = "invalid_client" });
+            }
 
+            if (client.ClientSecret != client_secret)
+            {
+                _logger.LogWarning("Invalid client secret for client: {ClientId}", client_id);
+                return Unauthorized(new { error = "invalid_client" });
+            }
+
+            _logger.LogDebug("Client validation successful: {ClientId}", client_id);
+
+            _logger.LogDebug("Looking up authorization code: {Code}", code);
             var authCode = await _codeStore.FindCodeAsync(code);
-            if (authCode == null || authCode.RedirectUri != redirect_uri || authCode.Expiration < DateTime.UtcNow)
+            if (authCode == null)
+            {
+                _logger.LogWarning("Authorization code not found: {Code}", code);
                 return BadRequest(new { error = "invalid_grant" });
+            }
+
+            if (authCode.RedirectUri != redirect_uri)
+            {
+                _logger.LogWarning("Redirect URI mismatch. Expected: {Expected}, Received: {Received}", 
+                    authCode.RedirectUri, redirect_uri);
+                return BadRequest(new { error = "invalid_grant" });
+            }
+
+            if (authCode.Expiration < DateTime.UtcNow)
+            {
+                _logger.LogWarning("Authorization code expired. Code: {Code}, Expiration: {Expiration}", 
+                    code, authCode.Expiration);
+                return BadRequest(new { error = "invalid_grant" });
+            }
+
+            _logger.LogInformation("Authorization code validated successfully for user: {UserId}", authCode.UserId);
 
             var scopes = authCode.Scopes.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            _logger.LogDebug("Requested scopes: {Scopes}", string.Join(", ", scopes));
 
-            var accessToken = await _tokenService.CreateAccessTokenAsync(authCode.UserId, "resource_server", Enumerable.Empty<Claim>(), scopes);
-
-            var idToken = await _tokenService.CreateIdTokenAsync(authCode.UserId, client.ClientId, Enumerable.Empty<Claim>(), scopes);
-
-            await _codeStore.RemoveCodeAsync(code);
-
-            return Ok(new
+            try
             {
-                access_token = accessToken,
-                id_token = idToken,
-                token_type = "Bearer",
-                expires_in = 3600,
-                scope = string.Join(" ", scopes)
-            });
+                _logger.LogDebug("Creating access token for user: {UserId}", authCode.UserId);
+                var accessToken = await _tokenService.CreateAccessTokenAsync(authCode.UserId, "resource_server", Enumerable.Empty<Claim>(), scopes);
+                
+                _logger.LogDebug("Creating ID token for user: {UserId}", authCode.UserId);
+                var idToken = await _tokenService.CreateIdTokenAsync(authCode.UserId, client.ClientId, Enumerable.Empty<Claim>(), scopes);
+
+                _logger.LogDebug("Removing used authorization code: {Code}", code);
+                await _codeStore.RemoveCodeAsync(code);
+
+                _logger.LogInformation("Token exchange successful for user: {UserId}. Scopes: {Scopes}", 
+                    authCode.UserId, string.Join(", ", scopes));
+
+                return Ok(new
+                {
+                    access_token = accessToken,
+                    id_token = idToken,
+                    token_type = "Bearer",
+                    expires_in = 3600,
+                    scope = string.Join(" ", scopes)
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during token creation for user: {UserId}", authCode.UserId);
+                return StatusCode(500, new { error = "server_error", error_description = "Internal server error during token creation" });
+            }
         }
     }
 }

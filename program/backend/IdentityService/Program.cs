@@ -27,13 +27,16 @@ builder.Services.AddIdentity<User, Role>(options =>
     .AddDefaultTokenProviders();
 
 var rsa = RSA.Create(2048);
-var rsaSecurityKey = new RsaSecurityKey(rsa.ExportParameters(true))
+var rsaKey = new RsaSecurityKey(rsa)
 {
-    KeyId = Guid.NewGuid().ToString()
+    KeyId = Guid.NewGuid().ToString("N")
 };
-builder.Services.AddSingleton<RsaSecurityKey>(rsaSecurityKey);
 
+builder.Services.AddSingleton<RsaSecurityKey>(rsaKey);
 builder.Services.AddSingleton<IJwksService, JwksService>();
+
+builder.Services.AddAuthorization();
+
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IClientStore, ClientStore>();
 builder.Services.AddScoped<IAuthorizationCodeStore, AuthorizationCodeStore>();
@@ -57,7 +60,7 @@ builder.Services.AddAuthentication(options =>
             ValidIssuer = builder.Configuration["Issuer"] ?? "http://identity_service:8000",
             ValidateAudience = false,
             ValidateLifetime = true,
-            IssuerSigningKey = rsaSecurityKey,
+            IssuerSigningKey = rsaKey,
             ValidateIssuerSigningKey = true
         };
     });
@@ -92,6 +95,13 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 
     await ClientSeeder.EnsureSeededAsync(db);
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
+    await IdentitySeeder.SeedRolesAndAdminAsync(userManager, roleManager);
 }
 
 app.UseStaticFiles();

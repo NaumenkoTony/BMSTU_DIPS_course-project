@@ -4,6 +4,5 @@ using System.IdentityModel.Tokens.Jwt;
 
 public interface IJwksService
 {
-    object GetJwks();
+    JwksResult GetJwks();
 }
-
