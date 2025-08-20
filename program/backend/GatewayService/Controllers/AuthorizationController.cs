@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using System.Text.Json;
 
 [Route("/api/v1/authorize")]
 [ApiController]
@@ -54,7 +55,23 @@ public class AuthorizationController(ILogger<AuthorizationController> logger, IC
             var content = await response.Content.ReadAsStringAsync();
             logger.LogInformation("Token response: {Content}", content);
             
-            return Content(content, "application/json");
+            var tokenResponse = JsonSerializer.Deserialize<JsonElement>(content);
+            var accessToken = tokenResponse.GetProperty("access_token").GetString();
+            
+            Response.Cookies.Append("access_token", accessToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = false,
+                Expires = DateTimeOffset.Now.AddHours(1)
+            });
+            
+            return Ok(new
+            {
+                access_token = accessToken,
+                token_type = "Bearer",
+                expires_in = 3600,
+                scope = "openid profile email"
+            });
         }
         catch (Exception ex)
         {

@@ -3,6 +3,8 @@ using IdentityService.Services;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Identity;
+using IdentityService.Models;
 
 namespace IdentityService.Controllers
 {
@@ -13,14 +15,19 @@ namespace IdentityService.Controllers
         private readonly IAuthorizationCodeStore _codeStore;
         private readonly IClientStore _clientStore;
         private readonly ITokenService _tokenService;
+        private readonly UserManager<User> _userManager;
         private readonly ILogger<TokenController> _logger;
 
-        public TokenController(IAuthorizationCodeStore codeStore, IClientStore clientStore, ITokenService tokenService,
-        ILogger<TokenController> logger)
+        public TokenController(IAuthorizationCodeStore codeStore, 
+                             IClientStore clientStore, 
+                             ITokenService tokenService,
+                             UserManager<User> userManager,
+                             ILogger<TokenController> logger)
         {
             _codeStore = codeStore;
             _clientStore = clientStore;
             _tokenService = tokenService;
+            _userManager = userManager;
             _logger = logger;
         }
 
@@ -80,22 +87,47 @@ namespace IdentityService.Controllers
 
             _logger.LogInformation("Authorization code validated successfully for user: {UserId}", authCode.UserId);
 
+            var user = await _userManager.FindByIdAsync(authCode.UserId);
+            if (user == null)
+            {
+                _logger.LogWarning("User not found: {UserId}", authCode.UserId);
+                return BadRequest(new { error = "invalid_grant", error_description = "User not found" });
+            }
+
             var scopes = authCode.Scopes.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             _logger.LogDebug("Requested scopes: {Scopes}", string.Join(", ", scopes));
 
             try
             {
-                _logger.LogDebug("Creating access token for user: {UserId}", authCode.UserId);
-                var accessToken = await _tokenService.CreateAccessTokenAsync(authCode.UserId, "resource_server", Enumerable.Empty<Claim>(), scopes);
+                var customClaims = new[]
+                {
+                    new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim("preferred_username", user.UserName), // Стандартный OIDC claim
+                    new Claim("name", $"{user.FirstName} {user.LastName}".Trim())
+                }.Where(c => !string.IsNullOrEmpty(c.Value)).ToList();
+
+                _logger.LogDebug("Creating access token for user: {UserId} with claims: {Claims}", 
+                    authCode.UserId, string.Join(", ", customClaims.Select(c => c.Type)));
+
+                var accessToken = await _tokenService.CreateAccessTokenAsync(
+                    authCode.UserId, 
+                    "resource_server", 
+                    customClaims, 
+                    scopes);
                 
                 _logger.LogDebug("Creating ID token for user: {UserId}", authCode.UserId);
-                var idToken = await _tokenService.CreateIdTokenAsync(authCode.UserId, client.ClientId, Enumerable.Empty<Claim>(), scopes);
+                var idToken = await _tokenService.CreateIdTokenAsync(
+                    authCode.UserId, 
+                    client.ClientId, 
+                    customClaims, 
+                    scopes);
 
                 _logger.LogDebug("Removing used authorization code: {Code}", code);
                 await _codeStore.RemoveCodeAsync(code);
 
-                _logger.LogInformation("Token exchange successful for user: {UserId}. Scopes: {Scopes}", 
-                    authCode.UserId, string.Join(", ", scopes));
+                _logger.LogInformation("Token exchange successful for user: {UserName} ({Email}). Scopes: {Scopes}", 
+                    user.UserName, user.Email, string.Join(", ", scopes));
 
                 return Ok(new
                 {

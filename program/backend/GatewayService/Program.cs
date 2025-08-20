@@ -1,4 +1,5 @@
 using System.Text.Json;
+using GatewayService.TokenService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
@@ -10,29 +11,33 @@ builder.Logging.AddDebug();
 
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
+builder.Services.AddScoped<AuthorizationHandler>();
+
 builder.Services.AddHttpClient("LoyaltyService", client =>
 {
     client.BaseAddress = new Uri("http://loyalty_service:8050");
-});
+}).AddHttpMessageHandler<AuthorizationHandler>();
 
 builder.Services.AddHttpClient("PaymentService", client =>
 {
     client.BaseAddress = new Uri("http://payment_service:8060");
-});
+}).AddHttpMessageHandler<AuthorizationHandler>();
 
 builder.Services.AddHttpClient("ReservationService", client =>
 {
     client.BaseAddress = new Uri("http://reservation_service:8070");
-});
+}).AddHttpMessageHandler<AuthorizationHandler>();
 
 builder.Services.AddAutoMapper(typeof(Program));
-
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.Authority = "http://identity_service:8000";
-        options.Audience = "HotelReservationService";
+        options.Audience = "resource_server";
         options.RequireHttpsMetadata = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -71,6 +76,21 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Conn
 builder.Services.AddHostedService<LoyaltyQueueProcessor>();
 
 var app = builder.Build();
+
+app.Use(async (context, next) =>
+{
+    if (context.Request.Cookies.TryGetValue("access_token", out var token) &&
+        string.IsNullOrEmpty(context.Request.Headers["Authorization"]))
+    {
+        context.Request.Headers.Authorization = $"Bearer {token}";
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        logger.LogDebug("Added Authorization header from cookie for: {Path}", context.Request.Path);
+    }
+    await next();
+});
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

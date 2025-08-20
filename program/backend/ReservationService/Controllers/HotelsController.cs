@@ -1,10 +1,12 @@
 using AutoMapper;
 using Contracts.Dto;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ReservationService.Data;
 
 namespace ReservationService.Controllers;
 
+[Authorize]
 public class HotelsController(IHotelRepository repository, IMapper mapper) : Controller
 {
     private readonly IHotelRepository repository = repository;
@@ -13,7 +15,7 @@ public class HotelsController(IHotelRepository repository, IMapper mapper) : Con
     [Route("api/v1/[controller]")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<HotelResponse>>> GetAsync([FromQuery] int page = 1, [FromQuery] int size = 10)
-    {   
+    {
         var hotels = await repository.GetHotelsAsync(page - 1, size);
         if (hotels == null)
         {
@@ -26,7 +28,7 @@ public class HotelsController(IHotelRepository repository, IMapper mapper) : Con
     [Route("api/v1/[controller]/{uid}")]
     [HttpGet]
     public async Task<ActionResult<HotelResponse>> GetAsync(string uid)
-    {   
+    {
         return Ok(mapper.Map<HotelResponse>(await repository.GetByUidAsync(uid)));
     }
 }

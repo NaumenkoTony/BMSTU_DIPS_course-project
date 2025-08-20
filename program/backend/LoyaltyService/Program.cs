@@ -4,9 +4,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authorization;
+using LoyaltyService.TokenService;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 builder.Services.AddDbContext<LoyaltiesContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("LoyaltyService")));

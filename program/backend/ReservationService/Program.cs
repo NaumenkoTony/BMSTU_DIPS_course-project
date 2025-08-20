@@ -3,9 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using ReservationService.Data;
 using ReservationService.Data.RepositoriesPostgreSQL;
+using ReservationService.TokenService;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
