@@ -9,7 +9,7 @@ INSERT INTO loyalty (
 ) 
 VALUES (
     1, 
-    'Test Max', 
+    'Test', 
     25,
     'GOLD', 
     10

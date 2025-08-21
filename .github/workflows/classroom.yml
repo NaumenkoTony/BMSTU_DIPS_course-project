@@ -36,7 +36,6 @@ jobs:
           cd program/backend
           ./scripts/test-script.sh
         env:
-          VARIANT: v2
           SERVICE_NAME: loyalty_service
           PORT_NUMBER: 8050
 

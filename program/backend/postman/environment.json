@@ -1,0 +1,34 @@
+{
+	"id": "ec373c4f-f1e2-4d5c-a7ec-cab7c7136014",
+	"name": "[DIPS_course-project] Hotels Booking System",
+	"values": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"enabled": true
+		},
+		{
+		"key": "username",
+		"value": "test",
+		"enabled": true
+		},
+		{
+		"key": "password",
+		"value": "Test123!",
+		"enabled": true
+		},
+		{
+		"key": "client_id",
+		"value": "gateway-client",
+		"enabled": true
+		},
+		{
+		"key": "client_secret",
+		"value": "JDgvvoMQxxC7IWdpkBP8a4MkQE1KxjNTZQ0o2_8avjbfj7zIcGRyMGBReydOCZx3",
+		"enabled": true
+		}
+	],
+	"_postman_variable_scope": "environment",
+	"_postman_exported_at": "2021-10-15T18:18:49.371Z",
+	"_postman_exported_using": "Postman/9.0.5"
+}
