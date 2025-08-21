@@ -1,10 +1,11 @@
 using System.Net.Http;
 using StackExchange.Redis;
 
-class LoyaltyQueueProcessor(IHttpClientFactory httpClientFactory, IConnectionMultiplexer redis) : BackgroundService
+class LoyaltyQueueProcessor(IHttpClientFactory httpClientFactory, IInternalTokenService internalTokenService, IConnectionMultiplexer redis) : BackgroundService
 {
     private readonly IConnectionMultiplexer redis = redis;
     private readonly IHttpClientFactory httpClientFactory = httpClientFactory;
+    private readonly IInternalTokenService internalTokenService = internalTokenService;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -22,9 +23,9 @@ class LoyaltyQueueProcessor(IHttpClientFactory httpClientFactory, IConnectionMul
 
                 var loyaltyClient = httpClientFactory.CreateClient("LoyaltyService");
                 var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/loyalties/degrade");
-                request.Headers.Add("X-User-Name", username);
 
                 var response = await loyaltyClient.SendAsync(request, stoppingToken);
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", internalTokenService.GenerateServiceToken());
 
                 if (!response.IsSuccessStatusCode)
                 {

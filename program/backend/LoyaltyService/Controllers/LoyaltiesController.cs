@@ -32,6 +32,7 @@ public class LoyaltiesController(ILoyalityRepository repository, IMapper mapper,
     }
 
 
+    [Authorize(AuthenticationSchemes = "IdpScheme, InternalScheme")]
     [Route("/api/v1/[controller]/degrade")]
     [HttpGet]
     public async Task<ActionResult> DegradeLoyality()

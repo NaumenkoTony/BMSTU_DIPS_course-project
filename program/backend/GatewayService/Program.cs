@@ -15,6 +15,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 builder.Services.AddScoped<AuthorizationHandler>();
+builder.Services.AddScoped<IInternalTokenService, InternalTokenService>();
 
 builder.Services.AddHttpClient("LoyaltyService", client =>
 {
