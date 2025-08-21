@@ -8,11 +8,9 @@ using System.Text.Json;
 
 [Route("/api/v1/authorize")]
 [ApiController]
-public class AuthorizationController(ILogger<AuthorizationController> logger, IConfiguration config) : ControllerBase
+public class AuthorizationController(ILogger<AuthorizationController> logger) : ControllerBase
 {
     private readonly ILogger<AuthorizationController> logger = logger;
-    private readonly IConfiguration config = config;
-
 
     [HttpGet("login")]
     public IActionResult Login()
@@ -34,12 +32,12 @@ public class AuthorizationController(ILogger<AuthorizationController> logger, IC
     public async Task<IActionResult> Callback([FromQuery] string code)
     {
         logger.LogInformation("Callback received. Code: {Code}", code);
-        
+
         try
         {
             var tokenUrl = "http://identity_service:8000/token";
             logger.LogInformation("Sending token request to: {TokenUrl}", tokenUrl);
-            
+
             var response = await new HttpClient().PostAsync(tokenUrl,
                 new FormUrlEncodedContent(new Dictionary<string, string>
                 {
@@ -51,20 +49,20 @@ public class AuthorizationController(ILogger<AuthorizationController> logger, IC
                 }));
 
             logger.LogInformation("Token response status: {StatusCode}", response.StatusCode);
-            
+
             var content = await response.Content.ReadAsStringAsync();
             logger.LogInformation("Token response: {Content}", content);
-            
+
             var tokenResponse = JsonSerializer.Deserialize<JsonElement>(content);
             var accessToken = tokenResponse.GetProperty("access_token").GetString();
-            
+
             Response.Cookies.Append("access_token", accessToken, new CookieOptions
             {
                 HttpOnly = true,
                 Secure = false,
                 Expires = DateTimeOffset.Now.AddHours(1)
             });
-            
+
             return Ok(new
             {
                 access_token = accessToken,
@@ -79,4 +77,28 @@ public class AuthorizationController(ILogger<AuthorizationController> logger, IC
             return StatusCode(500, "Internal server error");
         }
     }
+
+    [HttpGet("directlogin")]
+    public IActionResult GetTokenDirectly([FromBody] DirectLoginRequest request)
+    {
+        logger.LogInformation("directlogin endpoint called");
+        var redirectUri = "http://localhost:8080/api/v1/authorize/callback";
+        var state = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+        var authUrl = $"http://localhost:8000/directauthorize" +
+                    $"?response_type=code" +
+                    $"&client_id=gateway-client" +
+                    $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
+                    $"&scope=openid profile email" +
+                    $"&state={Uri.EscapeDataString(state)}" +
+                    $"&login={request.Username}" +
+                    $"&password={request.Password}";
+        logger.LogInformation("Redirect URI: {RedirectUri}", redirectUri);
+        return Redirect(authUrl);
+    }
+}
+
+public class DirectLoginRequest
+{
+    public required string Username { get; set; }
+    public required string Password { get; set; }
 }

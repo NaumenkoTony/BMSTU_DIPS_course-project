@@ -17,9 +17,13 @@ public static class IdentitySeeder
             await roleManager.CreateAsync(new Role { Name = "User" });
         }
 
+        if (!await roleManager.RoleExistsAsync("TestUser"))
+        {
+            await roleManager.CreateAsync(new Role { Name = "TestUser" });
+        }
+
         var adminEmail = "admin@local";
         var adminUser = await userManager.FindByEmailAsync(adminEmail);
-
         if (adminUser == null)
         {
             var admin = new User
@@ -30,7 +34,6 @@ public static class IdentitySeeder
                 LastName = "Naumenko",
                 EmailConfirmed = true
             };
-
             var result = await userManager.CreateAsync(admin, "Admin123!");
             if (result.Succeeded)
             {
@@ -43,7 +46,32 @@ public static class IdentitySeeder
                     Console.WriteLine($"[Seeder ERROR] {error.Code}: {error.Description}");
                 }
             }
+        }
 
+        var testUserEmail = "test@local";
+        var testUser = await userManager.FindByEmailAsync(testUserEmail);
+        if (testUser == null)
+        {
+            var test = new User
+            {
+                UserName = "test",
+                Email = testUserEmail,
+                FirstName = "test",
+                LastName = "test",
+                EmailConfirmed = true
+            };
+            var result = await userManager.CreateAsync(test, "Test123!");
+            if (result.Succeeded)
+            {
+                await userManager.AddToRoleAsync(test, "TestUser");
+            }
+            else
+            {
+                foreach (var error in result.Errors)
+                {
+                    Console.WriteLine($"[Seeder ERROR] {error.Code}: {error.Description}");
+                }
+            }
         }
     }
 }
