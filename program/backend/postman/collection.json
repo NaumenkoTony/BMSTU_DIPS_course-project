@@ -20,7 +20,7 @@
 			"name": "Gateway API",
 			"item": [
 				{
-					"name": "[auth] Get Token via Direct Login",
+					"name": "[auth] Получить токен",
 					"event": [
 						{
 							"listen": "test",

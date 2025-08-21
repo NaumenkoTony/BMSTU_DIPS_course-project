@@ -20,6 +20,15 @@ timed() {
   LC_NUMERIC=C printf "\nTotal runtime: %02d min %02d seconds\n" "$dm" "$ds"
 }
 
+gatewayApi() {
+  newman run \
+    --delay-request=100 \
+    --folder=GatewayApi \
+    --export-environment postman/environment.json \
+    --environment postman/environment.json \
+    postman/collection.json
+}
+
 success() {
   newman run \
     --delay-request=100 \
@@ -54,6 +63,8 @@ start=$(date +%s)
 trap 'timed $start' EXIT
 
 printf "=== Start test scenario ===\n"
+
+gatewayApi
 
 # success execute
 success
