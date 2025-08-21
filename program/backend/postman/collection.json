@@ -33,7 +33,7 @@
 									"    const response = pm.response.json();",
 									"    pm.expect(response).to.have.property(\"access_token\");",
 									"    pm.expect(response.access_token).not.be.empty;",
-									"    pm.collectionVariables.set(\"authorizationToken\", response.access_token);",
+									"    pm.environment.set(\"authorizationToken\", response.access_token);",
 									"});"
 								],
 								"type": "text/javascript"
