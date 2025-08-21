@@ -26,7 +26,7 @@ success() {
     --folder=success \
     --export-environment postman/environment.json \
     --environment postman/environment.json \
-    /postman/collection.json
+    postman/collection.json
 }
 
 step() {
