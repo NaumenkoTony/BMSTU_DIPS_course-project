@@ -12,7 +12,7 @@ public static class ClientSeeder
             db.Clients.Add(new Client
             {
                 ClientId = "gateway-client",
-                ClientSecret = "secret",
+                ClientSecret = "JDgvvoMQxxC7IWdpkBP8a4MkQE1KxjNTZQ0o2_8avjbfj7zIcGRyMGBReydOCZx3",
                 RedirectUris = "http://localhost:8080/api/v1/authorize/callback|http://gateway_service:8080/api/v1/authorize/callback",
                 AllowedScopes = "openid|profile|email",
                 IsPublic = false

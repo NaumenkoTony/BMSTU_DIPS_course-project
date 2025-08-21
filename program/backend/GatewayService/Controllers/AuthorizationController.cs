@@ -47,7 +47,7 @@ public class AuthorizationController(ILogger<AuthorizationController> logger, IC
                     { "code", code },
                     { "redirect_uri", "http://localhost:8080/api/v1/authorize/callback" },
                     { "client_id", "gateway-client" },
-                    { "client_secret", "secret" }
+                    { "client_secret", "JDgvvoMQxxC7IWdpkBP8a4MkQE1KxjNTZQ0o2_8avjbfj7zIcGRyMGBReydOCZx3" }
                 }));
 
             logger.LogInformation("Token response status: {StatusCode}", response.StatusCode);
