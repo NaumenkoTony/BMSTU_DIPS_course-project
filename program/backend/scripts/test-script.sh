@@ -23,7 +23,7 @@ timed() {
 gatewayApi() {
   newman run \
     --delay-request=100 \
-    --folder=GatewayApi \
+    --folder=GatewayAPI \
     --export-environment postman/environment.json \
     --environment postman/environment.json \
     postman/collection.json

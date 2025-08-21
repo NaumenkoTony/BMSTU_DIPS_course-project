@@ -17,7 +17,7 @@
 	},
 	"item": [
 		{
-			"name": "Gateway API",
+			"name": "GatewayAPI",
 			"item": [
 				{
 					"name": "[auth] Получить токен",
