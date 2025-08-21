@@ -77,17 +77,17 @@ builder.Services.AddHostedService<LoyaltyQueueProcessor>();
 
 var app = builder.Build();
 
-app.Use(async (context, next) =>
-{
-    if (context.Request.Cookies.TryGetValue("access_token", out var token) &&
-        string.IsNullOrEmpty(context.Request.Headers["Authorization"]))
-    {
-        context.Request.Headers.Authorization = $"Bearer {token}";
-        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-        logger.LogDebug("Added Authorization header from cookie for: {Path}", context.Request.Path);
-    }
-    await next();
-});
+// app.Use(async (context, next) =>
+// {
+//     if (context.Request.Cookies.TryGetValue("access_token", out var token) &&
+//         string.IsNullOrEmpty(context.Request.Headers["Authorization"]))
+//     {
+//         context.Request.Headers.Authorization = $"Bearer {token}";
+//         var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+//         logger.LogDebug("Added Authorization header from cookie for: {Path}", context.Request.Path);
+//     }
+//     await next();
+// });
 
 app.UseAuthentication();
 app.UseAuthorization();

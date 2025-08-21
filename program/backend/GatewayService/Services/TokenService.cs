@@ -23,10 +23,10 @@ public class TokenService : ITokenService
 
     public string GetAccessToken()
     {
-        if (_httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("access_token", out var cookieToken) == true)
-        {
-            return cookieToken;
-        }
+        // if (_httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("access_token", out var cookieToken) == true)
+        // {
+        //     return cookieToken;
+        // }
 
         var authorizationHeader = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
 

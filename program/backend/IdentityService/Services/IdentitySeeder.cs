@@ -54,7 +54,7 @@ public static class IdentitySeeder
         {
             var test = new User
             {
-                UserName = "test",
+                UserName = "Test",
                 Email = testUserEmail,
                 FirstName = "test",
                 LastName = "test",

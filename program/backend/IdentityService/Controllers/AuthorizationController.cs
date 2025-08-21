@@ -14,13 +14,15 @@ namespace IdentityService.Controllers
         private readonly IClientStore _clientStore;
         private readonly IAuthorizationCodeStore _codeStore;
         private readonly UserManager<User> _userManager;
+        private readonly SignInManager<User> _signInManager;
         ILogger<AuthorizationController> _logger;
 
-        public AuthorizationController(IClientStore clientStore, IAuthorizationCodeStore codeStore, UserManager<User> userManager, ILogger<AuthorizationController> logger)
+        public AuthorizationController(IClientStore clientStore, IAuthorizationCodeStore codeStore, UserManager<User> userManager, SignInManager<User> signInManager, ILogger<AuthorizationController> logger)
         {
             _clientStore = clientStore;
             _codeStore = codeStore;
             _userManager = userManager;
+            _signInManager = signInManager;
             _logger = logger;
         }
 
@@ -59,6 +61,38 @@ namespace IdentityService.Controllers
 
             return await IssueAuthorizationCodeAsync(User, client, redirect_uri, requestedScopes, state);
         }
+        
+        [HttpGet("directauthorize")]
+        public async Task<IActionResult> DirectAuthorize(
+            [FromQuery] string response_type,
+            [FromQuery] string client_id,
+            [FromQuery] string redirect_uri,
+            [FromQuery] string scope,
+            [FromQuery] string state,
+            [FromQuery] string login,
+            [FromQuery] string password)
+        {
+            var client = await _clientStore.FindClientByIdAsync(client_id);
+            if (client == null)
+                return BadRequest("Unknown client id");
+
+            if (!_clientStore.ValidateRedirectUri(client, redirect_uri))
+                return BadRequest("Invalid redirect_uri");
+
+            var requestedScopes = (scope ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (!_clientStore.ValidateScopes(client, requestedScopes))
+                return BadRequest("Invalid or unauthorized scopes");
+
+            var user = await _userManager.FindByNameAsync(login);
+            if (user == null)
+                return Unauthorized("Invalid username or password");
+
+            var result = await _signInManager.PasswordSignInAsync(user, password, isPersistent: false, lockoutOnFailure: false);
+            if (!result.Succeeded)
+                ModelState.AddModelError("", "Invalid username or password");
+
+            return await IssueAuthorizationCodeAsync(User, client, redirect_uri, requestedScopes, state);
+        }
 
         private async Task<IActionResult> IssueAuthorizationCodeAsync(
             ClaimsPrincipal user,
@@ -77,12 +111,12 @@ namespace IdentityService.Controllers
 
             var authCode = new AuthorizationCode
             {
-                Code        = code,
-                ClientId    = client.ClientId,
-                UserId      = userId,
+                Code = code,
+                ClientId = client.ClientId,
+                UserId = userId,
                 RedirectUri = redirectUri,
-                Scopes      = string.Join(' ', scopes),
-                Expiration  = DateTime.UtcNow.AddMinutes(5)
+                Scopes = string.Join(' ', scopes),
+                Expiration = DateTime.UtcNow.AddMinutes(5)
             };
 
             await _codeStore.SaveCodeAsync(authCode);

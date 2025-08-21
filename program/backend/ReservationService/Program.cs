@@ -33,7 +33,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
+            ValidateIssuerSigningKey = true
         };
         options.Events = new JwtBearerEvents
         {
@@ -58,20 +58,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization();
-
 builder.Services.AddControllers();
-
 builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();
 
 app.MapControllers();
 

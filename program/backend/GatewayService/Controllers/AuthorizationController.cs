@@ -56,12 +56,12 @@ public class AuthorizationController(ILogger<AuthorizationController> logger) : 
             var tokenResponse = JsonSerializer.Deserialize<JsonElement>(content);
             var accessToken = tokenResponse.GetProperty("access_token").GetString();
 
-            Response.Cookies.Append("access_token", accessToken, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = false,
-                Expires = DateTimeOffset.Now.AddHours(1)
-            });
+            // Response.Cookies.Append("access_token", accessToken, new CookieOptions
+            // {
+            //     HttpOnly = true,
+            //     Secure = false,
+            //     Expires = DateTimeOffset.Now.AddHours(1)
+            // });
 
             return Ok(new
             {
@@ -78,7 +78,7 @@ public class AuthorizationController(ILogger<AuthorizationController> logger) : 
         }
     }
 
-    [HttpGet("directlogin")]
+    [HttpPost("directlogin")]
     public IActionResult GetTokenDirectly([FromBody] DirectLoginRequest request)
     {
         logger.LogInformation("directlogin endpoint called");
