@@ -602,11 +602,11 @@ ILogger<GatewayController> logger, IConnectionMultiplexer redis) : ControllerBas
             PaymentServiceCircuitBreaker.RecordFailure();
             return StatusCode(503, new { message = "Payment Service unavailable" });
         }
-
-        string username = tokenService.GetUsernameFromJWT();
+        
+        var accessToken = tokenService.GetAccessToken();
         if (!loyaltyServiceCircuitBreaker.AllowRequest())
         {
-            await EnqueueLoyaltyRequestAsync(username);
+            await EnqueueLoyaltyRequestAsync(accessToken);
             return NoContent();
         }
 
@@ -618,20 +618,20 @@ ILogger<GatewayController> logger, IConnectionMultiplexer redis) : ControllerBas
 
             if (!loyaltyResponse.IsSuccessStatusCode)
             {
-                await EnqueueLoyaltyRequestAsync(username);
+                await EnqueueLoyaltyRequestAsync(accessToken);
             }
         }
         catch (Exception)
         {
-            await EnqueueLoyaltyRequestAsync(username);
+            await EnqueueLoyaltyRequestAsync(accessToken);
         }
 
         return NoContent();
     }
 
-    private async Task EnqueueLoyaltyRequestAsync(string username)
+    private async Task EnqueueLoyaltyRequestAsync(string accessToken)
     {
         var db = redis.GetDatabase();
-        await db.ListRightPushAsync("loyalty-queue", username);
+        await db.ListRightPushAsync("loyalty-queue", accessToken);
     }
 }

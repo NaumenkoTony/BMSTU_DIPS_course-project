@@ -1,4 +1,5 @@
 using System.Net.Http;
+using System.Net.Http.Headers;
 using StackExchange.Redis;
 
 class LoyaltyQueueProcessor(IHttpClientFactory httpClientFactory, IInternalTokenService internalTokenService, IConnectionMultiplexer redis) : BackgroundService
@@ -12,32 +13,32 @@ class LoyaltyQueueProcessor(IHttpClientFactory httpClientFactory, IInternalToken
         var db = redis.GetDatabase();
         while (!stoppingToken.IsCancellationRequested)
         {
-            string? username = await db.ListLeftPopAsync("loyalty-queue");
+            string? accessToken = await db.ListLeftPopAsync("loyalty-queue");
             try
             {
-                if (username == null)
+                if (accessToken == null)
                 {
+                    Console.WriteLine("Invalid token in queue");
                     await Task.Delay(1000, stoppingToken);
                     continue;
                 }
 
                 var loyaltyClient = httpClientFactory.CreateClient("LoyaltyService");
                 var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/loyalties/degrade");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
                 var response = await loyaltyClient.SendAsync(request, stoppingToken);
-                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", internalTokenService.GenerateServiceToken());
-
                 if (!response.IsSuccessStatusCode)
                 {
-                    await db.ListRightPushAsync("loyalty-queue", username);
+                    await db.ListRightPushAsync("loyalty-queue", accessToken);
                 }
             }
             catch (Exception ex)
             {
-                if (!string.IsNullOrEmpty(username))
+                if (!string.IsNullOrEmpty(accessToken))
                 {
-                    await db.ListRightPushAsync("loyalty-queue", username);
-                    Console.WriteLine($"Ошибка при обработке {username}. Возвращен в очередь: {ex.Message}");
+                    await db.ListRightPushAsync("loyalty-queue", accessToken);
+                    Console.WriteLine($"LoyaltyQueueProcessor error {accessToken}. Return to queue: {ex.Message}");
                 }
             }
         }

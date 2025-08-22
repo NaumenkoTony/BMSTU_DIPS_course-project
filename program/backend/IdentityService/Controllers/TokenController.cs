@@ -103,7 +103,7 @@ namespace IdentityService.Controllers
                 {
                     new Claim(ClaimTypes.Name, user.UserName),
                     new Claim(ClaimTypes.Email, user.Email),
-                    new Claim("preferred_username", user.UserName), // Стандартный OIDC claim
+                    new Claim("preferred_username", user.UserName),
                     new Claim("name", $"{user.FirstName} {user.LastName}".Trim())
                 }.Where(c => !string.IsNullOrEmpty(c.Value)).ToList();
 
