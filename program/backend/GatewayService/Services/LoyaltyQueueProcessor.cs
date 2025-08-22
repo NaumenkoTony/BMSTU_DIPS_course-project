@@ -18,7 +18,6 @@ class LoyaltyQueueProcessor(IHttpClientFactory httpClientFactory, IInternalToken
             {
                 if (accessToken == null)
                 {
-                    Console.WriteLine("Invalid token in queue");
                     await Task.Delay(1000, stoppingToken);
                     continue;
                 }

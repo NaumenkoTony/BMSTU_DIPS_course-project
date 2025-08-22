@@ -19,12 +19,8 @@ builder.Services.AddScoped<ILoyalityRepository, LoyalityRepository>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer("IdpScheme", options =>
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+.AddJwtBearer(options =>
 {
     options.Authority = "http://identity_service:8000";
     options.Audience = "resource_server";
@@ -41,45 +37,19 @@ builder.Services.AddAuthentication(options =>
         OnAuthenticationFailed = context =>
         {
             var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-            logger.LogError("IDP Auth failed: " + context.Exception.Message);
+            logger.LogError("Authentication failed: " + context.Exception.Message);
             return Task.CompletedTask;
         },
         OnChallenge = context =>
         {
             var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-            logger.LogWarning("IDP Auth challenge triggered: {Error}, {ErrorDescription}", context.Error, context.ErrorDescription);
+            logger.LogWarning("Authentication challenge triggered: {Error}, {ErrorDescription}", context.Error, context.ErrorDescription);
             return Task.CompletedTask;
         },
         OnTokenValidated = context =>
         {
             var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-            logger.LogInformation("IDP token validated successfully.");
-            return Task.CompletedTask;
-        }
-    };
-})
-.AddJwtBearer("InternalScheme", options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = false,
-        ValidateAudience = false,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes("internal-secret-key"))
-    };
-    options.Events = new JwtBearerEvents
-    {
-        OnAuthenticationFailed = context =>
-        {
-            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-            logger.LogError("Internal Auth failed: " + context.Exception.Message);
-            return Task.CompletedTask;
-        },
-        OnTokenValidated = context =>
-        {
-            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-            logger.LogInformation("Internal token validated successfully.");
+            logger.LogInformation("Token validated successfully.");
             return Task.CompletedTask;
         }
     };
