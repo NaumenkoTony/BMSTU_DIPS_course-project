@@ -22,6 +22,11 @@ builder.Services.AddHttpClient("LoyaltyService", client =>
     client.BaseAddress = new Uri("http://loyalty_service:8050");
 }).AddHttpMessageHandler<AuthorizationHandler>();
 
+builder.Services.AddHttpClient("LoyaltyQueueService", client =>
+{
+    client.BaseAddress = new Uri("http://loyalty_service:8050");
+});
+
 builder.Services.AddHttpClient("PaymentService", client =>
 {
     client.BaseAddress = new Uri("http://payment_service:8060");
@@ -31,6 +36,7 @@ builder.Services.AddHttpClient("ReservationService", client =>
 {
     client.BaseAddress = new Uri("http://reservation_service:8070");
 }).AddHttpMessageHandler<AuthorizationHandler>();
+
 
 builder.Services.AddAutoMapper(typeof(Program));
 

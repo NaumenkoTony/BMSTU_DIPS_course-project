@@ -22,7 +22,7 @@ class LoyaltyQueueProcessor(IHttpClientFactory httpClientFactory, IInternalToken
                     continue;
                 }
 
-                var loyaltyClient = httpClientFactory.CreateClient("LoyaltyService");
+                var loyaltyClient = httpClientFactory.CreateClient("LoyaltyQueueService");
                 var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/loyalties/degrade");
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
