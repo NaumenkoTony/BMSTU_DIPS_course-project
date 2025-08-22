@@ -1,4 +1,5 @@
 using System.Net.Http;
+using System.Net.Http.Headers;
 using StackExchange.Redis;
 
 class LoyaltyQueueProcessor(IHttpClientFactory httpClientFactory, IConnectionMultiplexer redis) : BackgroundService
@@ -16,13 +17,14 @@ class LoyaltyQueueProcessor(IHttpClientFactory httpClientFactory, IConnectionMul
             {
                 if (accessToken == null)
                 {
+                    Console.WriteLine("Invalid token in queue");
                     await Task.Delay(1000, stoppingToken);
                     continue;
                 }
 
                 var loyaltyClient = httpClientFactory.CreateClient("LoyaltyService");
                 var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/loyalties/degrade");
-                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
                 var response = await loyaltyClient.SendAsync(request, stoppingToken);
                 if (!response.IsSuccessStatusCode)
@@ -35,7 +37,7 @@ class LoyaltyQueueProcessor(IHttpClientFactory httpClientFactory, IConnectionMul
                 if (!string.IsNullOrEmpty(accessToken))
                 {
                     await db.ListRightPushAsync("loyalty-queue", accessToken);
-                    Console.WriteLine($"LoyaltyQueueProcessor error. Return to queue: {ex.Message}");
+                    Console.WriteLine($"LoyaltyQueueProcessor error {accessToken}. Return to queue: {ex.Message}");
                 }
             }
         }

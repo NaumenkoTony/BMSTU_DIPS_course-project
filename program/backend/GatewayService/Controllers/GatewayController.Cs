@@ -602,8 +602,8 @@ ILogger<GatewayController> logger, IConnectionMultiplexer redis) : ControllerBas
             PaymentServiceCircuitBreaker.RecordFailure();
             return StatusCode(503, new { message = "Payment Service unavailable" });
         }
-
-        string accessToken = tokenService.GetAccessToken();
+        
+        var accessToken = tokenService.GetAccessToken();
         if (!loyaltyServiceCircuitBreaker.AllowRequest())
         {
             await EnqueueLoyaltyRequestAsync(accessToken);
