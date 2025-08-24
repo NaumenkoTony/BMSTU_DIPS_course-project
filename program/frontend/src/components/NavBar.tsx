@@ -1,23 +1,57 @@
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import { Link as RouterLink } from 'react-router-dom';
-import Box from '@mui/material/Box';
+import { Group, Button, Box } from "@mantine/core";
+import { Link } from "react-router-dom";
+import "./NavBar.css";
 
-export default function NavBar() {
+interface NavBarProps {
+  isAuthenticated: boolean;
+  isAdmin: boolean;
+  onLogout: () => void;
+}
+
+export default function NavBar({ isAuthenticated, isAdmin, onLogout }: NavBarProps) {
   return (
-    <AppBar position="static">
-      <Toolbar>
-        <Typography variant="h6" sx={{ flexGrow: 1 }}>
-          Локус 
-        </Typography>
-        <Box>
-          <Button color="inherit" component={RouterLink} to="/">Отели</Button>
-          <Button color="inherit" component={RouterLink} to="/reservations">Бронирования</Button>
-          <Button color="inherit" component={RouterLink} to="/profile">Профиль</Button>
-        </Box>
-      </Toolbar>
-    </AppBar>
+    <Box className="navbar">
+      <div className="navbar-content">
+        <Button variant="subtle" component={Link} to="/" className="nav-btn logo">
+          Локус
+        </Button>
+        
+        {isAuthenticated && (
+          <Group 
+            gap="xs"
+            className="nav-links"
+            align="center"
+            >
+            <Button variant="subtle" component={Link} to="/" className="nav-btn">
+              Отели
+            </Button>
+            <Button variant="subtle" component={Link} to="/reservations" className="nav-btn">
+              Бронирования
+            </Button>
+            <Button variant="subtle" component={Link} to="/profile" className="nav-btn">
+              Профиль
+            </Button>
+            <Button variant="subtle" component={Link} to="/loyalty" className="nav-btn">
+              Лояльность
+            </Button>
+            
+            {isAdmin && (
+              <Group gap="xs">
+                <Button variant="subtle" component={Link} to="/reports" className="nav-btn">
+                  Отчёты
+                </Button>
+                <Button variant="subtle" component={Link} to="/admin/create-user" className="nav-btn">
+                  Создать пользователя
+                </Button>
+              </Group>
+            )}
+            
+            <Button color="red" onClick={onLogout} className="nav-btn">
+              Выйти
+            </Button>
+          </Group>
+        )}
+      </div>
+    </Box>
   );
 }

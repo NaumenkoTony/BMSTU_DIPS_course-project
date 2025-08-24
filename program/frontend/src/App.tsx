@@ -1,51 +1,75 @@
-import { ThemeProvider, CssBaseline, Container, createTheme } from '@mui/material';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import NavBar from './components/NavBar';
-import HotelsPage from './pages/HotelsPage';
-import ReservationsPage from './pages/ReservationsPage';
-import ProfilePage from './pages/ProfilePage';
-import LoginPage from './pages/LoginPage';
-import LoyaltyPage from './pages/LoyaltyPage';
+import { Container } from "@mantine/core";
+import { Routes, Route } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { jwtDecode } from "jwt-decode";
 
-const mainTheme = createTheme({
-  palette: {
-    primary: {
-      main: '#1a237e',
-      light: '#534bae',
-      dark: '#000051',
-    },
-    secondary: {
-      main: '#ffd700',
-      light: '#ffff54',
-      dark: '#c8a600',
-    },
-    background: {
-      default: '#f5f5f5',
-      paper: '#ffffff',
-    },
-  },
-  typography: {
-    fontFamily: '"Playfair Display", "Georgia", serif',
-  },
-});
+import NavBar from "./components/NavBar";
+import HotelsPage from "./pages/HotelsPage";
+import ReservationsPage from "./pages/ReservationsPage";
+import ProfilePage from "./pages/ProfilePage";
+import LoyaltyPage from "./pages/LoyaltyPage";
+import LoginPage from "./pages/LoginPage";
+
+interface DecodedToken {
+  exp: number;
+  [key: string]: any;
+}
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const decoded = jwtDecode<DecodedToken>(token);
+        const now = Date.now() / 1000;
+
+        if (decoded.exp && decoded.exp > now) {
+          setIsAuthenticated(true);
+          const role =
+            decoded[
+              "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+            ];
+          if (role && (role === "Admin" || (Array.isArray(role) && role.includes("Admin")))) {
+            setIsAdmin(true);
+          }
+        } else {
+          localStorage.removeItem("token");
+        }
+      } catch {
+        localStorage.removeItem("token");
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setIsAdmin(false);
+    localStorage.removeItem("token");
+  };
+
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
+
   return (
-    <ThemeProvider theme={mainTheme}>
-      <CssBaseline />
-      <BrowserRouter>
-        <NavBar />
-        <Container sx={{ mt: 4 }}>
-          <Routes>
-            <Route path="/" element={<HotelsPage />} />
-            <Route path="/reservations" element={<ReservationsPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/loyalty" element={<LoyaltyPage />} />
-            <Route path="/login" element={<LoginPage />} />
-          </Routes>
-        </Container>
-      </BrowserRouter>
-    </ThemeProvider>
+    <>
+      <NavBar
+        isAuthenticated={isAuthenticated}
+        isAdmin={isAdmin}
+        onLogout={handleLogout}
+      />
+      <Container mt="lg">
+        <Routes>
+          <Route path="/" element={<HotelsPage />} />
+          <Route path="/reservations" element={<ReservationsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/loyalty" element={<LoyaltyPage />} />
+        </Routes>
+      </Container>
+    </>
   );
 }
 

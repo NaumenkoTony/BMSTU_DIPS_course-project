@@ -106,6 +106,12 @@ namespace IdentityService.Controllers
                     new Claim("preferred_username", user.UserName),
                     new Claim("name", $"{user.FirstName} {user.LastName}".Trim())
                 }.Where(c => !string.IsNullOrEmpty(c.Value)).ToList();
+                
+                var roles = await _userManager.GetRolesAsync(user);
+                foreach (var role in roles)
+                {
+                    customClaims.Add(new Claim(ClaimTypes.Role, role));
+                }
 
                 _logger.LogDebug("Creating access token for user: {UserId} with claims: {Claims}", 
                     authCode.UserId, string.Join(", ", customClaims.Select(c => c.Type)));
