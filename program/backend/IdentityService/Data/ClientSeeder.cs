@@ -19,6 +19,18 @@ public static class ClientSeeder
             });
         }
 
+        if (!await db.Clients.AnyAsync(c => c.ClientId == "gateway-client"))
+        {
+            db.Clients.Add(new Client
+            {
+                ClientId = "locus-frontend-client",
+                ClientSecret = "96fe1ef451dec6af6d87e58d09372fee837092f52c1b8da24213d6c972c4f7c1",
+                RedirectUris = "http://localhost:8080/api/v1/authorize/callback|http://gateway_service:8080/api/v1/authorize/callback",
+                AllowedScopes = "openid|profile|email",
+                IsPublic = false
+            });
+        }
+
         if (!await db.Clients.AnyAsync(c => c.ClientId == "test-client"))
         {
             db.Clients.Add(new Client

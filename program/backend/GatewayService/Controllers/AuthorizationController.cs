@@ -18,6 +18,7 @@ public class AuthorizationController(ILogger<AuthorizationController> logger) : 
         logger.LogInformation("Login endpoint called");
         var redirectUri = "http://localhost:8080/api/v1/authorize/callback";
         var state = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+        HttpContext.Session.SetString("oauth_state", state);
         var authUrl = $"http://localhost:8000/authorize" +
                     $"?response_type=code" +
                     $"&client_id=gateway-client" +
@@ -29,10 +30,17 @@ public class AuthorizationController(ILogger<AuthorizationController> logger) : 
     }
 
     [HttpGet("callback")]
-    public async Task<IActionResult> Callback([FromQuery] string code)
+    public async Task<IActionResult> Callback([FromQuery] string code, [FromQuery] string state)
     {
         logger.LogInformation("Callback received. Code: {Code}", code);
 
+        var savedState = HttpContext.Session.GetString("oauth_state");
+        if (string.IsNullOrEmpty(savedState) || savedState != state)
+        {
+            logger.LogWarning("Invalid state parameter. Expected: {Expected}, Got: {Actual}", savedState, state);
+            return BadRequest("Invalid state parameter");
+        }
+        HttpContext.Session.Remove("oauth_state");
         try
         {
             var tokenUrl = "http://identity_service:8000/token";
@@ -56,13 +64,6 @@ public class AuthorizationController(ILogger<AuthorizationController> logger) : 
             var tokenResponse = JsonSerializer.Deserialize<JsonElement>(content);
             var accessToken = tokenResponse.GetProperty("access_token").GetString();
 
-            // Response.Cookies.Append("access_token", accessToken, new CookieOptions
-            // {
-            //     HttpOnly = true,
-            //     Secure = false,
-            //     Expires = DateTimeOffset.Now.AddHours(1)
-            // });
-
             return Ok(new
             {
                 access_token = accessToken,
@@ -84,6 +85,7 @@ public class AuthorizationController(ILogger<AuthorizationController> logger) : 
         logger.LogInformation("directlogin endpoint called");
         var redirectUri = "http://localhost:8080/api/v1/authorize/callback";
         var state = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+        HttpContext.Session.SetString("oauth_state", state);
         var authUrl = $"http://localhost:8000/directauthorize" +
                     $"?response_type=code" +
                     $"&client_id=gateway-client" +
