@@ -6,6 +6,7 @@ using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
@@ -37,6 +38,15 @@ builder.Services.AddHttpClient("ReservationService", client =>
     client.BaseAddress = new Uri("http://reservation_service:8070");
 }).AddHttpMessageHandler<AuthorizationHandler>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 
 builder.Services.AddMemoryCache();
 builder.Services.AddAutoMapper(typeof(Program));
@@ -96,6 +106,9 @@ var app = builder.Build();
 //     }
 //     await next();
 // });
+
+
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();

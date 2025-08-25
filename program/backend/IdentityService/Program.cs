@@ -14,6 +14,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 builder.Services.AddDbContext<IdentityContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("IdentityService")));
 
@@ -103,6 +113,8 @@ using (var scope = app.Services.CreateScope())
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
     await IdentitySeeder.SeedRolesAndAdminAsync(userManager, roleManager);
 }
+
+app.UseCors("AllowAll");
 
 app.UseStaticFiles();
 app.UseRouting();
