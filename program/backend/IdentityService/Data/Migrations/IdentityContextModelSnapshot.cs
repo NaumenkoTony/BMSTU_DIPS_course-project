@@ -3,20 +3,17 @@ using System;
 using IdentityService.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace IdentityService.Migrations
+namespace IdentityService.Data.Migrations
 {
     [DbContext(typeof(IdentityContext))]
-    [Migration("20250819202332_InitialIdentity")]
-    partial class InitialIdentity
+    partial class IdentityContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -32,6 +29,12 @@ namespace IdentityService.Migrations
 
                     b.Property<string>("ClientId")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CodeChallenge")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CodeChallengeMethod")
                         .HasColumnType("text");
 
                     b.Property<DateTime>("Expiration")
@@ -51,6 +54,8 @@ namespace IdentityService.Migrations
 
                     b.HasKey("Code");
 
+                    b.HasIndex("Expiration");
+
                     b.ToTable("AuthorizationCodes");
                 });
 
@@ -69,7 +74,6 @@ namespace IdentityService.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("ClientSecret")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("IsPublic")
@@ -84,27 +88,10 @@ namespace IdentityService.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ClientId")
+                        .IsUnique();
+
                     b.ToTable("Clients");
-                });
-
-            modelBuilder.Entity("IdentityService.Models.RefreshToken", b =>
-                {
-                    b.Property<string>("Token")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ClientId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("Expiration")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Token");
-
-                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("IdentityService.Models.Role", b =>
@@ -205,23 +192,6 @@ namespace IdentityService.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
-                });
-
-            modelBuilder.Entity("IdentityService.Models.UserConsent", b =>
-                {
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ClientId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Scopes")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("UserId", "ClientId");
-
-                    b.ToTable("UserConsents");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>

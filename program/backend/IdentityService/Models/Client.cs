@@ -18,7 +18,7 @@ public class Client
 
     public string AllowedScopes { get; set; } = "openid|profile|email";
 
-    public bool RequirePkce { get; set; } = true;
+    public bool RequirePkce { get; set; }
 
     public bool IsPublic { get; set; }
 }

@@ -37,8 +37,8 @@ namespace IdentityService.Controllers
                                                 [FromForm] string code,
                                                 [FromForm] string redirect_uri,
                                                 [FromForm] string client_id,
-                                                [FromForm] string client_secret,
-                                                [FromForm] string code_verifier)
+                                                [FromForm] string? client_secret,
+                                                [FromForm] string? code_verifier)
         {
             _logger.LogInformation("Token exchange request received. Grant type: {GrantType}, Client: {ClientId}",
                 grant_type, client_id);
@@ -70,7 +70,7 @@ namespace IdentityService.Controllers
                 if (client.ClientSecret != client_secret)
                     return Unauthorized(new { error = "invalid_client" });
             }
-            else
+            if (client.RequirePkce)
             {
                 if (string.IsNullOrEmpty(authCode.CodeChallenge))
                     return BadRequest(new { error = "invalid_request", error_description = "Missing PKCE for public client" });

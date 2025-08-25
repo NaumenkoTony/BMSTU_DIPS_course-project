@@ -4,10 +4,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace IdentityService.Migrations
+namespace IdentityService.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialIdentity : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -62,7 +62,9 @@ namespace IdentityService.Migrations
                     UserId = table.Column<string>(type: "text", nullable: false),
                     RedirectUri = table.Column<string>(type: "text", nullable: false),
                     Scopes = table.Column<string>(type: "text", nullable: false),
-                    Expiration = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    Expiration = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CodeChallenge = table.Column<string>(type: "text", nullable: true),
+                    CodeChallengeMethod = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -75,7 +77,7 @@ namespace IdentityService.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ClientId = table.Column<string>(type: "text", nullable: false),
-                    ClientSecret = table.Column<string>(type: "text", nullable: false),
+                    ClientSecret = table.Column<string>(type: "text", nullable: true),
                     RedirectUris = table.Column<string>(type: "text", nullable: false),
                     AllowedScopes = table.Column<string>(type: "text", nullable: false),
                     RequirePkce = table.Column<bool>(type: "boolean", nullable: false),
@@ -84,33 +86,6 @@ namespace IdentityService.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Clients", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "RefreshTokens",
-                columns: table => new
-                {
-                    Token = table.Column<string>(type: "text", nullable: false),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ClientId = table.Column<string>(type: "text", nullable: false),
-                    Expiration = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_RefreshTokens", x => x.Token);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "UserConsents",
-                columns: table => new
-                {
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ClientId = table.Column<string>(type: "text", nullable: false),
-                    Scopes = table.Column<string>(type: "text", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UserConsents", x => new { x.UserId, x.ClientId });
                 });
 
             migrationBuilder.CreateTable(
@@ -255,6 +230,17 @@ namespace IdentityService.Migrations
                 table: "AspNetUsers",
                 column: "NormalizedUserName",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AuthorizationCodes_Expiration",
+                table: "AuthorizationCodes",
+                column: "Expiration");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Clients_ClientId",
+                table: "Clients",
+                column: "ClientId",
+                unique: true);
         }
 
         /// <inheritdoc />
@@ -280,12 +266,6 @@ namespace IdentityService.Migrations
 
             migrationBuilder.DropTable(
                 name: "Clients");
-
-            migrationBuilder.DropTable(
-                name: "RefreshTokens");
-
-            migrationBuilder.DropTable(
-                name: "UserConsents");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
