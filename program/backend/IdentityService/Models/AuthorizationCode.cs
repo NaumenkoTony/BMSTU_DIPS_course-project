@@ -4,10 +4,13 @@ using System.ComponentModel.DataAnnotations;
 
 public class AuthorizationCode
 {
-    public string Code { get; set; } = null!;
-    public string ClientId { get; set; } = null!;
-    public string UserId { get; set; } = null!;
-    public string RedirectUri { get; set; } = null!;
-    public string Scopes { get; set; } = null!;
-    public DateTime Expiration { get; set; }
+    public required string Code { get; set; }
+    public required string ClientId { get; set; }
+    public required string UserId { get; set; }
+    public required string RedirectUri { get; set; }
+    public required string Scopes { get; set; }
+    public required DateTime Expiration { get; set; }
+
+    public string? CodeChallenge { get; set; }
+    public string? CodeChallengeMethod { get; set; } 
 }

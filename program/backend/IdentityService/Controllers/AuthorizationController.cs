@@ -32,7 +32,9 @@ namespace IdentityService.Controllers
             [FromQuery] string client_id,
             [FromQuery] string redirect_uri,
             [FromQuery] string scope,
-            [FromQuery] string state)
+            [FromQuery] string state,
+            [FromQuery] string code_challenge,
+            [FromQuery] string code_challenge_method = "plain")
         {
             var client = await _clientStore.FindClientByIdAsync(client_id);
             if (client == null)
@@ -55,13 +57,15 @@ namespace IdentityService.Controllers
                 TempData["redirect_uri"] = redirect_uri;
                 TempData["scope"] = scope;
                 TempData["state"] = state;
+                TempData["code_challenge"] = code_challenge;
+                TempData["code_challenge_method"] = code_challenge_method;
 
                 return RedirectToAction("Login", "Account");
             }
 
-            return await IssueAuthorizationCodeAsync(User, client, redirect_uri, requestedScopes, state);
+            return await IssueAuthorizationCodeAsync(User, client, redirect_uri, requestedScopes, state, code_challenge, code_challenge_method);
         }
-        
+
         [HttpGet("directauthorize")]
         public async Task<IActionResult> DirectAuthorize(
             [FromQuery] string response_type,
@@ -99,7 +103,9 @@ namespace IdentityService.Controllers
             Client client,
             string redirectUri,
             string[] scopes,
-            string? state)
+            string state,
+            string? codeChallenge = null,
+            string? codeChallengeMethod = null)
         {
             var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrWhiteSpace(userId))
@@ -116,7 +122,9 @@ namespace IdentityService.Controllers
                 UserId = userId,
                 RedirectUri = redirectUri,
                 Scopes = string.Join(' ', scopes),
-                Expiration = DateTime.UtcNow.AddMinutes(5)
+                Expiration = DateTime.UtcNow.AddMinutes(5),
+                CodeChallenge = codeChallenge,
+                CodeChallengeMethod = codeChallengeMethod
             };
 
             await _codeStore.SaveCodeAsync(authCode);
