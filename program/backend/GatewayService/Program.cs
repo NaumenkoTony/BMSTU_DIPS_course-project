@@ -38,6 +38,7 @@ builder.Services.AddHttpClient("ReservationService", client =>
 }).AddHttpMessageHandler<AuthorizationHandler>();
 
 
+builder.Services.AddMemoryCache();
 builder.Services.AddAutoMapper(typeof(Program));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

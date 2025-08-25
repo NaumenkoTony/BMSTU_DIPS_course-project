@@ -5,12 +5,14 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using System.Text.Json;
+using Microsoft.Extensions.Caching.Memory;
 
 [Route("/api/v1/authorize")]
 [ApiController]
-public class AuthorizationController(ILogger<AuthorizationController> logger) : ControllerBase
+public class AuthorizationController(IMemoryCache memoryCache, ILogger<AuthorizationController> logger) : ControllerBase
 {
     private readonly ILogger<AuthorizationController> logger = logger;
+    private readonly IMemoryCache memoryCache = memoryCache;
 
     [HttpGet("login")]
     public IActionResult Login()
@@ -18,7 +20,7 @@ public class AuthorizationController(ILogger<AuthorizationController> logger) : 
         logger.LogInformation("Login endpoint called");
         var redirectUri = "http://localhost:8080/api/v1/authorize/callback";
         var state = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
-        HttpContext.Session.SetString("oauth_state", state);
+        this.memoryCache.Set("oauth_state", state, TimeSpan.FromMinutes(5));
         var authUrl = $"http://localhost:8000/authorize" +
                     $"?response_type=code" +
                     $"&client_id=gateway-client" +
@@ -34,13 +36,18 @@ public class AuthorizationController(ILogger<AuthorizationController> logger) : 
     {
         logger.LogInformation("Callback received. Code: {Code}", code);
 
-        var savedState = HttpContext.Session.GetString("oauth_state");
-        if (string.IsNullOrEmpty(savedState) || savedState != state)
+        if (!this.memoryCache.TryGetValue("oauth_state", out string savedState))
         {
-            logger.LogWarning("Invalid state parameter. Expected: {Expected}, Got: {Actual}", savedState, state);
+            logger.LogWarning("State not found in cache");
             return BadRequest("Invalid state parameter");
         }
-        HttpContext.Session.Remove("oauth_state");
+        if (savedState != state)
+        {
+            logger.LogWarning("State mismatch. Expected: {Expected}, Actual: {Actual}", 
+                savedState, state);
+            return BadRequest("Invalid state parameter");
+        }
+        this.memoryCache.Remove("oauth_state");
         try
         {
             var tokenUrl = "http://identity_service:8000/token";
@@ -85,7 +92,7 @@ public class AuthorizationController(ILogger<AuthorizationController> logger) : 
         logger.LogInformation("directlogin endpoint called");
         var redirectUri = "http://localhost:8080/api/v1/authorize/callback";
         var state = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
-        HttpContext.Session.SetString("oauth_state", state);
+        this.memoryCache.Set("oauth_state", state, TimeSpan.FromMinutes(5));
         var authUrl = $"http://localhost:8000/directauthorize" +
                     $"?response_type=code" +
                     $"&client_id=gateway-client" +
