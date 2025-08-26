@@ -22,7 +22,7 @@ export function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   const handleLogin = (token: string) => {
-    localStorage.setItem("token", token);
+    localStorage.setItem("access_token", token);
     setIsAuthenticated(true);
 
     try {
