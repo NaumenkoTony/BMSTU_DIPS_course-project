@@ -1,3 +1,319 @@
-export default function LoginPage() {
-  return <h1>Login Page (redirect to IDP)</h1>;
+import { useEffect, useMemo, useState } from "react";
+import { getHotels, type HotelResponse, type PaginationResponse } from "../api/hotelsClient";
+import "./HotelsPage.css";
+
+interface HotelsPaginationResponse {
+  items: HotelResponse[];
+  totalElements: number;
+  totalPages: number;
+}
+const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
+  const [filters, setFilters] = useState({
+    country: '',
+    city: '',
+    address: '',
+    name: '',
+    minStars: '',
+    maxPrice: ''
+  });
+
+  const filteredHotels = useMemo(() => {
+    return hotels.filter(hotel => {
+      return (
+        (filters.country === '' || hotel.country.toLowerCase().includes(filters.country.toLowerCase())) &&
+        (filters.city === '' || hotel.city.toLowerCase().includes(filters.city.toLowerCase())) &&
+        (filters.minStars === '' || (hotel.stars && hotel.stars >= Number(filters.minStars))) &&
+        (filters.maxPrice === '' || (hotel.price && hotel.price <= Number(filters.maxPrice)))
+      );
+    });
+  }, [hotels, filters]);
+
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters({
+    country: '',
+    city: '',
+    address: '',
+    name: '',
+    minStars: '',
+    maxPrice: ''
+    });
+  };
+
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof HotelResponse | null;
+    direction: 'asc' | 'desc';
+  }>({ key: null, direction: 'asc' });
+
+  const sortedAndFilteredHotels = useMemo(() => {
+    let filtered = hotels.filter(hotel => {
+      return (
+        (filters.country === '' || hotel.country.toLowerCase().includes(filters.country.toLowerCase())) &&
+        (filters.city === '' || hotel.city.toLowerCase().includes(filters.city.toLowerCase())) &&
+        (filters.address === '' || (hotel.address && hotel.address.toLowerCase().includes(filters.address.toLowerCase()))) &&
+        (filters.name === '' || hotel.name.toLowerCase().includes(filters.name.toLowerCase())) &&
+        (filters.minStars === '' || (hotel.stars && hotel.stars >= Number(filters.minStars))) &&
+        (filters.maxPrice === '' || (hotel.price && hotel.price <= Number(filters.maxPrice)))
+      );
+    });
+
+    if (sortConfig.key) {
+      filtered.sort((a, b) => {
+        let aValue = a[sortConfig.key!];
+        let bValue = b[sortConfig.key!];
+
+        if (aValue === undefined || aValue === null) aValue = '';
+        if (bValue === undefined || bValue === null) bValue = '';
+
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          return sortConfig.direction === 'asc' 
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+        } else {
+          return sortConfig.direction === 'asc'
+            ? (aValue as number) - (bValue as number)
+            : (bValue as number) - (aValue as number);
+        }
+      });
+    }
+
+    return filtered;
+  }, [hotels, filters, sortConfig]);
+
+  const handleSort = (key: keyof HotelResponse) => {
+    setSortConfig(prev => {
+      if (prev.key === key) {
+        if (prev.direction === 'asc') {
+          return { key, direction: 'desc' };
+        } else {
+          return { key: null, direction: 'asc' };
+        }
+      }
+      return { key, direction: 'asc' };
+    });
+  };
+
+  const getSortIndicator = (key: keyof HotelResponse) => {
+    if (sortConfig.key !== key) return '↕';
+    return sortConfig.direction === 'asc' ? '↑' : '↓';
+  };
+
+  return (
+    <div className="hotels-container">
+      {/* Заголовок и фильтры */}
+      <div className="table-header">
+        <h2>Отели</h2>
+        <div className="filters-row">
+          <div className="filter-input">
+            <input
+              type="text"
+              value={filters.country}
+              onChange={(e) => handleFilterChange('country', e.target.value)}
+              placeholder="Страна..."
+              className="filter-field"
+            />
+          </div>
+          
+          <div className="filter-input">
+            <input
+              type="text"
+              value={filters.city}
+              onChange={(e) => handleFilterChange('city', e.target.value)}
+              placeholder="Город..."
+              className="filter-field"
+            />
+          </div>
+          
+          <div className="filter-input">
+            <select
+              value={filters.minStars}
+              onChange={(e) => handleFilterChange('minStars', e.target.value)}
+              className="filter-field"
+            >
+              <option value="">Звезды</option>
+              <option value="1">1★+</option>
+              <option value="2">2★+</option>
+              <option value="3">3★+</option>
+              <option value="4">4★+</option>
+              <option value="5">5★</option>
+            </select>
+          </div>
+          
+          <div className="filter-input">
+            <input
+              type="number"
+              value={filters.maxPrice}
+              onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+              placeholder="Цена до..."
+              className="filter-field"
+            />
+          </div>
+          
+          <div className="filter-actions">
+            <button onClick={clearFilters} className="clear-filters-btn">
+              Очистить фильтры
+            </button>
+            <span className="results-badge">
+              Найдено: {sortedAndFilteredHotels.length}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Таблица */}
+      <div className="table-wrapper">
+        <table className="hotels-table">
+          <thead>
+            <tr>
+              <th onClick={() => handleSort('country')} className="sortable">
+                Страна {getSortIndicator('country')}
+              </th>
+              <th onClick={() => handleSort('city')} className="sortable">
+                Город {getSortIndicator('city')}
+              </th>
+              <th onClick={() => handleSort('name')} className="sortable">
+                Отель {getSortIndicator('name')}
+              </th>
+              <th onClick={() => handleSort('stars')} className="sortable text-left">
+                Звезды {getSortIndicator('stars')}
+              </th>
+              <th onClick={() => handleSort('price')} className="sortable text-left">
+                Стоимость за ночь {getSortIndicator('price')}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedAndFilteredHotels.map((hotel) => (
+              <tr key={hotel.id} className="hotel-row">
+                <td>
+                  <div className="country-cell">
+                    <span className="country-name">{hotel.country}</span>
+                  </div>
+                </td>
+                <td>
+                  <div className="city-cell">
+                    {hotel.city}
+                  </div>
+                </td>
+                <td>
+                  <div className="hotel-name-cell">
+                    <div className="hotel-name">{hotel.name}</div>
+                    {hotel.address && <div className="hotel-address">{hotel.address}</div>}
+                  </div>
+                </td>
+                <td className="text-center">
+                  <div className="stars-cell">
+                    {hotel.stars ? (
+                      <div className="stars-rating">
+                        <span className="stars-active">
+                          {'★'.repeat(Math.floor(hotel.stars))}
+                        </span>
+                        <span className="stars-inactive">
+                          {'☆'.repeat(5 - Math.floor(hotel.stars))}
+                        </span>
+                        <span className="stars-count">({hotel.stars})</span>
+                      </div>
+                    ) : (
+                      <span className="no-stars">—</span>
+                    )}
+                  </div>
+                </td>
+                <td className="text-right">
+                  <div className="price-cell">
+                    {hotel.price ? (
+                      <>
+                        <span className="price">{hotel.price.toLocaleString('ru-RU')}</span>
+                        <span className="currency">₽</span>
+                      </>
+                    ) : (
+                      <span className="no-price">—</span>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+export default function HotelsPage() {
+  const [hotelsData, setHotelsData] = useState<HotelsPaginationResponse>({ 
+    items: [], 
+    totalElements: 0, 
+    totalPages: 0 
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
+  useEffect(() => {
+    const fetchHotels = async () => {
+      try {
+        setLoading(true);
+        const data = await getHotels(currentPage, pageSize);
+        setHotelsData({
+          items: data.items,
+          totalElements: data.totalElements,
+          totalPages: Math.ceil(data.totalElements / pageSize)
+        });
+      } catch (err) {
+        console.error("Error loading hotels:", err);
+        setError("Не удалось загрузить отели. Попробуйте позже.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHotels();
+  }, [currentPage]);
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
+  if (loading) {
+    return <div className="hotels-loading">Загрузка отелей...</div>;
+  }
+
+  if (error) {
+    return <div className="hotels-error">{error}</div>;
+  }
+
+  return (
+    <div className="hotels-page">
+      <HotelsTable hotels={hotelsData.items} />
+      
+      {}
+      {hotelsData.totalPages > 1 && (
+        <div className="pagination">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="pagination-btn"
+          >
+            ← Назад
+          </button>
+          
+          <span className="pagination-info">
+            Страница {currentPage} из {hotelsData.totalPages}
+          </span>
+          
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === hotelsData.totalPages}
+            className="pagination-btn"
+          >
+            Вперед →
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }

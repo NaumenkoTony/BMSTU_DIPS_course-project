@@ -59,9 +59,11 @@ export function App() {
   }, []);
 
   const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("token_type");
+    localStorage.removeItem("expires_in");
     setIsAuthenticated(false);
     setIsAdmin(false);
-    localStorage.removeItem("access_token");
   };
 
   if (isLoading) {
@@ -75,16 +77,14 @@ export function App() {
   return (
     <>
       <NavBar isAuthenticated={isAuthenticated} isAdmin={isAdmin} onLogout={handleLogout} />
-      <Container mt="lg">
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/callback" element={<CallbackPage onLogin={handleLogin} />} />
-          <Route path="/" element={isAuthenticated ? <HotelsPage /> : <LoginPage />} />
-          <Route path="/reservations" element={isAuthenticated ? <ReservationsPage /> : <LoginPage />} />
-          <Route path="/profile" element={isAuthenticated ? <ProfilePage /> : <LoginPage />} />
-          <Route path="/loyalty" element={isAuthenticated ? <LoyaltyPage /> : <LoginPage />} />
-        </Routes>
-      </Container>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/callback" element={<CallbackPage onLogin={handleLogin} />} />
+        <Route path="/" element={isAuthenticated ? <HotelsPage /> : <LoginPage />} />
+        <Route path="/reservations" element={isAuthenticated ? <ReservationsPage /> : <LoginPage />} />
+        <Route path="/profile" element={isAuthenticated ? <ProfilePage /> : <LoginPage />} />
+        <Route path="/loyalty" element={isAuthenticated ? <LoyaltyPage /> : <LoginPage />} />
+      </Routes>
     </>
   );
 }

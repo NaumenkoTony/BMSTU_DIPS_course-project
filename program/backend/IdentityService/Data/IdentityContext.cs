@@ -36,8 +36,8 @@ namespace IdentityService.Data
                 entity.Property(c => c.RedirectUri).IsRequired();
                 entity.Property(c => c.Scopes).IsRequired();
                 entity.Property(c => c.Expiration).IsRequired();
-                entity.Property(c => c.CodeChallenge);
-                entity.Property(c => c.CodeChallengeMethod);
+                entity.Property(c => c.CodeChallenge).IsRequired(false);;
+                entity.Property(c => c.CodeChallengeMethod).IsRequired(false);;
                 
                 entity.HasIndex(c => c.Expiration);
             });

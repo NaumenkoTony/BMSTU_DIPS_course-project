@@ -5,26 +5,34 @@
   top: 0;
   z-index: 1000;
   padding: 0 0px;
+  overflow-x: auto;
+  white-space: nowrap;
 }
 
 .navbar-content {
-  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
   height: 60px;
-  padding-right: 10px;
+  padding: 0 16px;
+  min-width: min-content;
+  flex-shrink: 0;
 }
 
 .nav-links {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
+  gap: 4px;
 }
 
 .nav-btn {
   font-weight: 500;
   transition: all 0.2s ease-in-out;
   white-space: nowrap;
+  flex-shrink: 0;
+  padding: 8px 12px;
 }
 
 .nav-btn:hover {
@@ -35,4 +43,14 @@
 .logo {
   font-weight: 700;
   font-size: 1.2em;
+  flex-shrink: 0;
+}
+
+.navbar::-webkit-scrollbar {
+  display: none;
+}
+
+.navbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

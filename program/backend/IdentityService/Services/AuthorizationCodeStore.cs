@@ -10,14 +10,19 @@ using System.Threading.Tasks;
 public class AuthorizationCodeStore : IAuthorizationCodeStore
 {
     private readonly IdentityContext _context;
+    private readonly ILogger<AuthorizationCodeStore> _logger;
 
-    public AuthorizationCodeStore(IdentityContext context)
+    public AuthorizationCodeStore(IdentityContext context, ILogger<AuthorizationCodeStore> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public async Task SaveCodeAsync(AuthorizationCode code)
     {
+        _logger.LogInformation("Saving code: {Code}, Challenge: {Challenge}, Method: {Method}", 
+        code.Code, code.CodeChallenge, code.CodeChallengeMethod);
+
         _context.AuthorizationCodes.Add(code);
         await _context.SaveChangesAsync();
     }

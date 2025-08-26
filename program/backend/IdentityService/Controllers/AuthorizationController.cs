@@ -115,6 +115,7 @@ namespace IdentityService.Controllers
 
             var code = Guid.NewGuid().ToString("N");
 
+            _logger.LogInformation("Before save - Challenge: {Challenge}, Method: {Method}", codeChallenge, codeChallengeMethod);
             var authCode = new AuthorizationCode
             {
                 Code = code,

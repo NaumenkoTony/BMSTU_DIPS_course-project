@@ -1,0 +1,282 @@
+.hotels-page {
+  padding: 20px;
+  margin: 0 auto;
+}
+
+.hotels-table th {
+  background: #f8f9fa;
+  padding: 16px 12px;
+  font-weight: 600;
+  color: #495057;
+  text-align: left;
+  border-bottom: 2px solid #e9ecef;
+  position: sticky;
+  top: 0;
+  min-width: 120px;
+}
+
+.hotels-table th:nth-child(1) { min-width: 150px; }
+.hotels-table th:nth-child(2) { min-width: 120px; }
+.hotels-table th:nth-child(3) { min-width: 200px; }
+.hotels-table th:nth-child(4) { min-width: 150px; }
+.hotels-table th:nth-child(5) { min-width: 150px; }
+
+.hotels-loading,
+.hotels-error {
+  text-align: center;
+  padding: 40px;
+  font-size: 18px;
+}
+
+.hotels-error {
+  color: #dc3545;
+}
+
+.hotels-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  width: calc(100% - 40px);
+  margin: 0 20px;
+}
+
+.table-header {
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  min-width: 120px;
+}
+
+.table-header h2 {
+  margin: 0 0 16px 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.filters-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-input {
+  flex: 1;
+  min-width: 120px;
+}
+
+.filter-field {
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+}
+
+.filter-field:focus {
+  outline: none;
+  background: white;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
+.clear-filters-btn {
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  background: transparent;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.clear-filters-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.results-badge {
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.hotels-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.hotels-table th {
+  background: #f8f9fa;
+  padding: 16px 12px;
+  font-weight: 600;
+  color: #495057;
+  text-align: left;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.hotels-table th.text-center {
+  text-align: center;
+}
+
+.hotels-table th.text-right {
+  text-align: right;
+}
+
+.hotels-table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid #e9ecef;
+  vertical-align: middle;
+}
+
+.hotel-row:hover {
+  background: #f8f9fa;
+}
+
+.country-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+
+.hotel-name {
+  font-weight: 600;
+  color: #2c3e50;
+  line-height: 1.4;
+}
+
+.stars-cell {
+  display: flex;
+  justify-content: center;
+  justify-content: left;
+}
+
+.stars-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: left;
+}
+
+.stars-active {
+  color: #ffc107;
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+
+.stars-inactive {
+  color: #dee2e6;
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+
+.stars-count {
+  color: #6c757d;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.no-stars {
+  color: #adb5bd;
+  font-style: italic;
+}
+
+.price-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  justify-content: left;
+}
+
+.price {
+  font-weight: 700;
+  color: #28a745;
+  font-size: 16px;
+}
+
+.currency {
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.no-price {
+  color: #adb5bd;
+  font-style: italic;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding: 16px;
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  border: 1px solid #007bff;
+  border-radius: 6px;
+  background: white;
+  color: #007bff;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #007bff;
+  color: white;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-group label {
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: white;
+  font-size: 12px;
+}
+
+.filter-actions {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+}
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sortable:hover {
+  background: #e9ecef;
+}

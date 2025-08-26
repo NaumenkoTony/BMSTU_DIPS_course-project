@@ -38,12 +38,14 @@ namespace IdentityService.Controllers
             }
 
             var response_type = TempData["response_type"]?.ToString() ?? "code";
-            var client_id     = TempData["client_id"]?.ToString()     ?? "";
-            var redirect_uri  = TempData["redirect_uri"]?.ToString()  ?? "";
-            var scope         = TempData["scope"]?.ToString()         ?? "openid";
-            var state         = TempData["state"]?.ToString()         ?? "";
+            var client_id = TempData["client_id"]?.ToString() ?? "";
+            var redirect_uri = TempData["redirect_uri"]?.ToString() ?? "";
+            var scope = TempData["scope"]?.ToString() ?? "openid";
+            var state = TempData["state"]?.ToString() ?? "";
+            var code_challenge = TempData["code_challenge"]?.ToString() ?? "";
+            var code_challenge_method = TempData["code_challenge_method"]?.ToString() ?? "";
 
-            return Redirect($"/authorize?response_type={Uri.EscapeDataString(response_type)}&client_id={Uri.EscapeDataString(client_id)}&redirect_uri={Uri.EscapeDataString(redirect_uri)}&scope={Uri.EscapeDataString(scope)}&state={Uri.EscapeDataString(state)}");
+            return Redirect($"/authorize?response_type={Uri.EscapeDataString(response_type)}&client_id={Uri.EscapeDataString(client_id)}&redirect_uri={Uri.EscapeDataString(redirect_uri)}&scope={Uri.EscapeDataString(scope)}&state={Uri.EscapeDataString(state)}&code_challenge={Uri.EscapeDataString(code_challenge)}&code_challenge_method={Uri.EscapeDataString(code_challenge_method)}");
         }
 
         [HttpPost("account/logout")]

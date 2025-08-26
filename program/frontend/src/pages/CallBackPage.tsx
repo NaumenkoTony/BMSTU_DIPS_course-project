@@ -16,17 +16,17 @@ export function CallbackPage({ onLogin }: CallbackPageProps) {
   const navigate = useNavigate();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [error, setError] = useState<string | null>(null);
-  const isExecutingRef = useRef(false); // ← Используем useRef
+  const isMountedRef = useRef(true);
+  const hasExecutedRef = useRef(false);
 
   useEffect(() => {
     const exchangeCodeForToken = async () => {
-      // Защита от двойного выполнения
-      if (isExecutingRef.current) {
+      if (hasExecutedRef.current) {
         console.log("Already executing, skipping...");
         return;
       }
       
-      isExecutingRef.current = true;
+      hasExecutedRef.current = true;
       console.log("Starting token exchange...");
 
       try {
@@ -69,7 +69,6 @@ export function CallbackPage({ onLogin }: CallbackPageProps) {
 
         console.log("Token request data:", Object.fromEntries(formData.entries()));
         
-        // Добавляем обработку сетевых ошибок
         const tokenResponse = await fetch(TOKEN_URL, {
           method: "POST",
           headers: {
@@ -80,6 +79,11 @@ export function CallbackPage({ onLogin }: CallbackPageProps) {
           console.error("Fetch error:", fetchError);
           throw new Error(`Network error: ${fetchError.message}`);
         });
+
+        if (!isMountedRef.current) {
+          console.log('Component unmounted, skipping state updates');
+          return;
+        }
 
         console.log("Token response status:", tokenResponse.status);
         
@@ -92,34 +96,30 @@ export function CallbackPage({ onLogin }: CallbackPageProps) {
         const tokenData = await tokenResponse.json();
         console.log("Token data received:", tokenData);
 
-        // Сохраняем токен
         localStorage.setItem("access_token", tokenData.access_token);
         localStorage.setItem("token_type", tokenData.token_type);
         localStorage.setItem("expires_in", tokenData.expires_in.toString());
 
-        // Вызываем callback для обновления состояния в App
         onLogin(tokenData.access_token);
         
-        // Очищаем сессию
-        sessionStorage.removeItem("pkce_verifier");
-        sessionStorage.removeItem("auth_state");
-
         setStatus("success");
         console.log("Login successful, redirecting to home...");
 
-        // Короткая задержка перед редиректом
-        setTimeout(() => navigate("/"), 2000);
+        setTimeout(() => {
+          sessionStorage.removeItem("pkce_verifier");
+          sessionStorage.removeItem("auth_state");
+          navigate("/");
+        }, 2000);
 
       } catch (err) {
         console.error("Callback error:", err);
         setError(err instanceof Error ? err.message : "Unknown error");
         setStatus("error");
 
-        // Очищаем сессию при ошибке
         sessionStorage.removeItem("pkce_verifier");
         sessionStorage.removeItem("auth_state");
       } finally {
-        isExecutingRef.current = false;
+        isMountedRef.current = false;
       }
     };
 

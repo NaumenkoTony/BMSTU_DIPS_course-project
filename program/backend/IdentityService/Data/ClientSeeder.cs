@@ -25,7 +25,7 @@ public static class ClientSeeder
             db.Clients.Add(new Client
             {
                 ClientId = "locus-frontend-client",
-                RedirectUris = "http://localhost:80/callback|http://localhost:5173/callback",
+                RedirectUris = "http://localhost:80/callback|http://localhost:5173/callback|http://localhost:4173/callback",
                 AllowedScopes = "openid|profile|email",
                 RequirePkce = true,
                 IsPublic = true
