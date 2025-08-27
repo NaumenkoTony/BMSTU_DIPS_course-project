@@ -70,7 +70,7 @@ namespace IdentityService.Services
 
             claims.AddRange(userClaims);
 
-            return Task.FromResult(CreateToken(userId, audience, claims, TimeSpan.FromMinutes(15)));
+            return Task.FromResult(CreateToken(userId, audience, claims, TimeSpan.FromMinutes(60)));
         }
     }
 }

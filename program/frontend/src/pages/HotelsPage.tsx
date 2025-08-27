@@ -17,29 +17,18 @@ const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
     maxPrice: ''
   });
 
-  const filteredHotels = useMemo(() => {
-    return hotels.filter(hotel => {
-      return (
-        (filters.country === '' || hotel.country.toLowerCase().includes(filters.country.toLowerCase())) &&
-        (filters.city === '' || hotel.city.toLowerCase().includes(filters.city.toLowerCase())) &&
-        (filters.minStars === '' || (hotel.stars && hotel.stars >= Number(filters.minStars))) &&
-        (filters.maxPrice === '' || (hotel.price && hotel.price <= Number(filters.maxPrice)))
-      );
-    });
-  }, [hotels, filters]);
-
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
   const clearFilters = () => {
     setFilters({
-    country: '',
-    city: '',
-    address: '',
-    name: '',
-    minStars: '',
-    maxPrice: ''
+      country: '',
+      city: '',
+      address: '',
+      name: '',
+      minStars: '',
+      maxPrice: ''
     });
   };
 
@@ -69,7 +58,7 @@ const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
         if (bValue === undefined || bValue === null) bValue = '';
 
         if (typeof aValue === 'string' && typeof bValue === 'string') {
-          return sortConfig.direction === 'asc' 
+          return sortConfig.direction === 'asc'
             ? aValue.localeCompare(bValue)
             : bValue.localeCompare(aValue);
         } else {
@@ -103,7 +92,6 @@ const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
 
   return (
     <div className="hotels-container">
-      {/* Заголовок и фильтры */}
       <div className="table-header">
         <h2>Отели</h2>
         <div className="filters-row">
@@ -116,7 +104,7 @@ const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
               className="filter-field"
             />
           </div>
-          
+
           <div className="filter-input">
             <input
               type="text"
@@ -126,7 +114,7 @@ const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
               className="filter-field"
             />
           </div>
-          
+
           <div className="filter-input">
             <select
               value={filters.minStars}
@@ -141,7 +129,7 @@ const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
               <option value="5">5★</option>
             </select>
           </div>
-          
+
           <div className="filter-input">
             <input
               type="number"
@@ -151,7 +139,7 @@ const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
               className="filter-field"
             />
           </div>
-          
+
           <div className="filter-actions">
             <button onClick={clearFilters} className="clear-filters-btn">
               Очистить фильтры
@@ -163,7 +151,6 @@ const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
         </div>
       </div>
 
-      {/* Таблица */}
       <div className="table-wrapper">
         <table className="hotels-table">
           <thead>
@@ -243,15 +230,15 @@ const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
 };
 
 export default function HotelsPage() {
-  const [hotelsData, setHotelsData] = useState<HotelsPaginationResponse>({ 
-    items: [], 
-    totalElements: 0, 
-    totalPages: 0 
+  const [hotelsData, setHotelsData] = useState<HotelsPaginationResponse>({
+    items: [],
+    totalElements: 0,
+    totalPages: 0
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     const fetchHotels = async () => {
@@ -272,11 +259,18 @@ export default function HotelsPage() {
     };
 
     fetchHotels();
-  }, [currentPage]);
+  }, [currentPage, pageSize]);
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
+
+  const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newSize = Number(e.target.value);
+    setPageSize(newSize);
+    setCurrentPage(1);
+  };
+
 
   if (loading) {
     return <div className="hotels-loading">Загрузка отелей...</div>;
@@ -286,34 +280,111 @@ export default function HotelsPage() {
     return <div className="hotels-error">{error}</div>;
   }
 
+  const PaginationNumbers = () => {
+    const totalPages = hotelsData.totalPages;
+    const current = currentPage;
+
+    let startPage = Math.max(1, current - 3);
+    let endPage = Math.min(totalPages, current + 3);
+
+    if (current <= 4) {
+      endPage = Math.min(7, totalPages);
+    }
+
+    if (current >= totalPages - 3) {
+      startPage = Math.max(1, totalPages - 6);
+    }
+
+    const pages = [];
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    return (
+      <div className="pagination-numbers">
+        {startPage > 1 && (
+          <>
+            <button onClick={() => handlePageChange(1)} className="pagination-number">1</button>
+            {startPage > 2 && <span className="pagination-ellipsis">...</span>}
+          </>
+        )}
+
+        {pages.map(page => (
+          <button
+            key={page}
+            className={`pagination-number ${currentPage === page ? "active" : ""}`}
+            onClick={() => handlePageChange(page)}
+          >
+            {page}
+          </button>
+        ))}
+
+        {endPage < totalPages && (
+          <>
+            {endPage < totalPages - 1 && <span className="pagination-ellipsis">...</span>}
+            <button onClick={() => handlePageChange(totalPages)} className="pagination-number">
+              {totalPages}
+            </button>
+          </>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="hotels-page">
       <HotelsTable hotels={hotelsData.items} />
-      
-      {}
-      {hotelsData.totalPages > 1 && (
-        <div className="pagination">
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="pagination-btn"
-          >
-            ← Назад
-          </button>
-          
-          <span className="pagination-info">
-            Страница {currentPage} из {hotelsData.totalPages}
-          </span>
-          
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === hotelsData.totalPages}
-            className="pagination-btn"
-          >
-            Вперед →
-          </button>
+
+      <div className="pagination-controls">
+        <div className="page-size-select">
+          <label>
+            Показывать по:{" "}
+            <select value={pageSize} onChange={handlePageSizeChange}>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={hotelsData.totalElements || 999999}>Все</option>
+            </select>
+          </label>
         </div>
-      )}
+        {hotelsData.totalPages > 1 && (
+          <div className="pagination">
+            <button
+              onClick={() => handlePageChange(1)}
+              disabled={currentPage === 1}
+              className="pagination-btn"
+            >
+              «
+            </button>
+
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="pagination-btn"
+            >
+              ←
+            </button>
+
+            <PaginationNumbers />
+
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === hotelsData.totalPages}
+              className="pagination-btn"
+            >
+              →
+            </button>
+
+            <button
+              onClick={() => handlePageChange(hotelsData.totalPages)}
+              disabled={currentPage === hotelsData.totalPages}
+              className="pagination-btn"
+            >
+              »
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

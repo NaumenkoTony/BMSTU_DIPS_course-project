@@ -7,14 +7,18 @@ using ReservationService.Models.DomainModels;
 
 public class HotelRepository(ReservationsContext context) : Repository<Hotel>(context), IHotelRepository
 {
-    private ReservationsContext db = context;    
+    private ReservationsContext db = context;
 
-    public async Task<IEnumerable<Hotel>> GetHotelsAsync(int page, int size)
+    public async Task<(IEnumerable<Hotel> Items, int TotalCount)> GetHotelsAsync(int page, int size)
     {
-        return await db.Hotels
-                       .Skip(page * size)
-                       .Take(size)
-                       .ToListAsync();
+        var totalCount = await db.Hotels.CountAsync();
+
+        var items = await db.Hotels
+                            .Skip(page * size)
+                            .Take(size)
+                            .ToListAsync();
+                       
+        return (items, totalCount);
     }
 
     public async Task<Hotel?> GetByUidAsync(string uid)

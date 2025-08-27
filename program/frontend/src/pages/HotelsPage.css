@@ -213,14 +213,7 @@
   font-style: italic;
 }
 
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  margin-top: 24px;
-  padding: 16px;
-}
+
 
 .pagination-btn {
   padding: 8px 16px;
@@ -280,3 +273,62 @@
 .sortable:hover {
   background: #e9ecef;
 }
+
+.pagination-controls {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-size-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.page-size-select label {
+  font-weight: 500;
+  color: #333;
+}
+
+.page-size-select select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.page-size-select select:hover {
+  border-color: #007bff;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.pagination-numbers {
+  display: flex;
+  gap: 4px;
+}
+
+.pagination-number {
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+}
+
+.pagination-number.active {
+  background: #007bff;
+  color: white;
+  font-weight: bold;
+}
+

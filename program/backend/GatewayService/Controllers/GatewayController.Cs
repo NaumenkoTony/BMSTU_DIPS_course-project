@@ -121,7 +121,7 @@ ILogger<GatewayController> logger, IConnectionMultiplexer redis) : ControllerBas
             }
             reservationServiceCircuitBreaker.RecordSuccess();
             var hotelsJsonString = await hotelsResponse.Content.ReadAsStringAsync();
-            var hotelsServiceResponse = JsonConvert.DeserializeObject<List<HotelResponse>>(hotelsJsonString);
+            var hotelsServiceResponse = JsonConvert.DeserializeObject<PaginatedResponse<HotelResponse>>(hotelsJsonString);
             if (hotelsServiceResponse == null)
             {
                 return StatusCode(503, new { message = "Error parsing hotel data" });
@@ -131,8 +131,8 @@ ILogger<GatewayController> logger, IConnectionMultiplexer redis) : ControllerBas
             {
                 Page = page,
                 PageSize = size,
-                TotalElements = hotelsServiceResponse.Count,
-                Items = mapper.Map<List<HotelResponse>>(hotelsServiceResponse)
+                TotalElements = hotelsServiceResponse.TotalCount,
+                Items = mapper.Map<List<HotelResponse>>(hotelsServiceResponse.Items)
             };
 
             return Ok(pagedResponse);

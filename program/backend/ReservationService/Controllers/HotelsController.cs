@@ -16,14 +16,23 @@ public class HotelsController(IHotelRepository repository, IMapper mapper) : Con
     [HttpGet]
     public async Task<ActionResult<IEnumerable<HotelResponse>>> GetAsync([FromQuery] int page = 1, [FromQuery] int size = 10)
     {
-        var hotels = await repository.GetHotelsAsync(page - 1, size);
-        if (hotels == null)
-        {
-            return NoContent();
-        }
-
-        return Ok(mapper.Map<IEnumerable<HotelResponse>>(hotels));
+        var (hotels, totalCount) = await repository.GetHotelsAsync(page - 1, size);
+    
+    if (hotels == null || !hotels.Any())
+    {
+        return NoContent();
     }
+
+    var response = new PaginatedResponse<HotelResponse>
+    {
+        Items = mapper.Map<IEnumerable<HotelResponse>>(hotels),
+        TotalCount = totalCount,
+        PageNumber = page,
+        PageSize = size
+    };
+
+    return Ok(response);
+}
 
     [Route("api/v1/[controller]/{uid}")]
     [HttpGet]
