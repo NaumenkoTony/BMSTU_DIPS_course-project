@@ -11,3 +11,5 @@ services:
       - VITE_TOKEN_URL=http://localhost:8000/token
       - VITE_CLIENT_ID=locus-frontend-client
       - VITE_REDIRECT_URI=http://localhost:80/callback
+      - VITE_IDP_API_URL=http://localhost:8000
+      - VITE_API_URL=http://localhost:8080/api/v1

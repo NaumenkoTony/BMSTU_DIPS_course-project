@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text.Json;
 using GatewayService.TokenService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -38,6 +39,11 @@ builder.Services.AddHttpClient("ReservationService", client =>
     client.BaseAddress = new Uri("http://reservation_service:8070");
 }).AddHttpMessageHandler<AuthorizationHandler>();
 
+builder.Services.AddHttpClient("IdentityService", client =>
+{
+    client.BaseAddress = new Uri("http://identity_service:8000");
+}).AddHttpMessageHandler<AuthorizationHandler>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -62,7 +68,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,
-            ValidateIssuerSigningKey = true
+            ValidateIssuerSigningKey = true,
+            RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
         };
         options.Events = new JwtBearerEvents
         {

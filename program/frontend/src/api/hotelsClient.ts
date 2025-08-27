@@ -16,6 +16,12 @@ export interface PaginationResponse<T> {
   items: T[];
 }
 
+export interface HotelsPaginationResponse {
+  items: HotelResponse[];
+  totalElements: number;
+  totalPages: number;
+}
+
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api/v1";
 
 export async function getHotels(page: number = 1, pageSize: number = 10): Promise<PaginationResponse<HotelResponse>> {

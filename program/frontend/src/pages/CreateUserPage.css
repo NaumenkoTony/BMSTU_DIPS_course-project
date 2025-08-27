@@ -1,0 +1,41 @@
+.create-user-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.create-user-title {
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  min-width: 120px;
+  font-size: 24px;
+  border-bottom: 2px solid #e9ecef;
+  border-radius: 12px 12px 0 0 
+}
+
+.create-user-form {
+  background: white;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.create-user-alert {
+  margin-bottom: 1.5rem;
+}
+
+.create-user-input {
+  margin-bottom: 1rem;
+}
+
+.create-user-button {
+  margin-top: 1rem;
+  height: 3rem;
+  font-weight: 600;
+  font-size: 14px;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  transition: all 0.2s ease-in-out;
+}

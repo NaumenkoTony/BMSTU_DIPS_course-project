@@ -8,6 +8,7 @@ using IdentityService.Data;
 using IdentityService.Models;
 using IdentityService.Services;
 using Microsoft.AspNetCore.DataProtection;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,28 +53,94 @@ builder.Services.AddScoped<IClientStore, ClientStore>();
 builder.Services.AddScoped<IAuthorizationCodeStore, AuthorizationCodeStore>();
 
 builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = "smart"; // Используем умную схему
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddPolicyScheme("smart", "Smart authentication scheme", options =>
+{
+    options.ForwardDefaultSelector = context =>
     {
-        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    })
-    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
-    {
-        options.LoginPath = "/account/login";
-        options.LogoutPath = "/account/logout";
-        options.Cookie.Name = "idsrv.session";
-    })
-    .AddJwtBearer("Bearer", options =>
-    {
-        options.RequireHttpsMetadata = false;
-        options.TokenValidationParameters = new TokenValidationParameters
+        var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+        if (authHeader?.StartsWith("Bearer ") == true)
         {
-            ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["Issuer"] ?? "http://identity_service:8000",
-            ValidateAudience = false,
-            ValidateLifetime = true,
-            IssuerSigningKey = rsaKey,
-            ValidateIssuerSigningKey = true
-        };
-    });
+            return "Bearer";
+        }
+        
+        return CookieAuthenticationDefaults.AuthenticationScheme;
+    };
+})
+.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+{
+    options.LoginPath = "/account/login";
+    options.LogoutPath = "/account/logout";
+    options.Cookie.Name = "idsrv.session";
+    
+    options.Events.OnRedirectToLogin = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api") ||
+            context.Request.Path.StartsWithSegments("/admin"))
+        {
+            context.Response.StatusCode = 401;
+            return Task.CompletedTask;
+        }
+        context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
+    
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api") ||
+            context.Request.Path.StartsWithSegments("/admin"))
+        {
+            context.Response.StatusCode = 403;
+            return Task.CompletedTask;
+        }
+        context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
+})
+.AddJwtBearer("Bearer", options =>
+{
+    options.Authority = builder.Configuration["Issuer"] ?? "http://identity_service:8000";
+    options.Audience = "resource_server";
+    options.RequireHttpsMetadata = false;
+    
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidIssuer = builder.Configuration["Issuer"] ?? "http://identity_service:8000",
+        ValidateAudience = true,
+        ValidAudience = "resource_server",
+        ValidateLifetime = true,
+        IssuerSigningKey = rsaKey,
+        ValidateIssuerSigningKey = true,
+        RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+    };
+    
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogError("JWT Authentication failed: " + context.Exception.Message);
+            return Task.CompletedTask;
+        },
+        OnChallenge = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogWarning("JWT Authentication challenge: {Error}", context.Error);
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogInformation("JWT Token validated for user: {User}", 
+                context.Principal?.Identity?.Name);
+            return Task.CompletedTask;
+        }
+    };
+});
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddDataProtection()

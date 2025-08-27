@@ -1,12 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { getHotels, type HotelResponse, type PaginationResponse } from "../api/hotelsClient";
+import { getHotels, type HotelResponse, type HotelsPaginationResponse } from "../api/HotelsClient";
 import "./HotelsPage.css";
 
-interface HotelsPaginationResponse {
-  items: HotelResponse[];
-  totalElements: number;
-  totalPages: number;
-}
+
 const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
   const [filters, setFilters] = useState({
     country: '',
