@@ -14,3 +14,18 @@ VALUES (
     'GOLD', 
     10
 );
+
+INSERT INTO loyalty (
+    id, 
+    username, 
+    reservation_count, 
+    status, 
+    discount
+) 
+VALUES (
+    2, 
+    'admin',
+    0,
+    'BRONZE', 
+    0
+);

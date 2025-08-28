@@ -332,3 +332,12 @@
   font-weight: bold;
 }
 
+.book-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.book-btn:hover { opacity: 0.9; }

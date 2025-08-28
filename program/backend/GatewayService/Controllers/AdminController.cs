@@ -9,7 +9,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 [Route("/api/v1")]
 [ApiController]
-[Authorize(Roles = "Admin")]
+[Authorize]
 public class AdminController(IMemoryCache memoryCache, IHttpClientFactory httpClientFactory, ILogger<AdminController> logger) : ControllerBase
 {
     private readonly ILogger<AdminController> _logger = logger;

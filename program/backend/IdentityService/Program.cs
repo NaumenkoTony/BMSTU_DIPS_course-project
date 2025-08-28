@@ -54,7 +54,7 @@ builder.Services.AddScoped<IAuthorizationCodeStore, AuthorizationCodeStore>();
 
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultScheme = "smart"; // Используем умную схему
+    options.DefaultScheme = "smart";
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddPolicyScheme("smart", "Smart authentication scheme", options =>
@@ -100,47 +100,41 @@ builder.Services.AddAuthentication(options =>
         return Task.CompletedTask;
     };
 })
-.AddJwtBearer("Bearer", options =>
-{
-    options.Authority = builder.Configuration["Issuer"] ?? "http://identity_service:8000";
-    options.Audience = "resource_server";
-    options.RequireHttpsMetadata = false;
-    
-    options.TokenValidationParameters = new TokenValidationParameters
+.AddJwtBearer(options =>
     {
-        ValidateIssuer = true,
-        ValidIssuer = builder.Configuration["Issuer"] ?? "http://identity_service:8000",
-        ValidateAudience = true,
-        ValidAudience = "resource_server",
-        ValidateLifetime = true,
-        IssuerSigningKey = rsaKey,
-        ValidateIssuerSigningKey = true,
-        RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-    };
-    
-    options.Events = new JwtBearerEvents
-    {
-        OnAuthenticationFailed = context =>
+        options.Authority = "http://identity_service:8000";
+        options.Audience = "resource_server";
+        options.RequireHttpsMetadata = false;
+        options.TokenValidationParameters = new TokenValidationParameters
         {
-            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-            logger.LogError("JWT Authentication failed: " + context.Exception.Message);
-            return Task.CompletedTask;
-        },
-        OnChallenge = context =>
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+        };
+        options.Events = new JwtBearerEvents
         {
-            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-            logger.LogWarning("JWT Authentication challenge: {Error}", context.Error);
-            return Task.CompletedTask;
-        },
-        OnTokenValidated = context =>
-        {
-            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-            logger.LogInformation("JWT Token validated for user: {User}", 
-                context.Principal?.Identity?.Name);
-            return Task.CompletedTask;
-        }
-    };
-});
+            OnAuthenticationFailed = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogError("Authentication failed: " + context.Exception.Message);
+                return Task.CompletedTask;
+            },
+            OnChallenge = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogWarning("Authentication challenge triggered: {Error}, {ErrorDescription}", context.Error, context.ErrorDescription);
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogInformation("Token validated successfully.");
+                return Task.CompletedTask;
+            }
+        };
+    });
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddDataProtection()

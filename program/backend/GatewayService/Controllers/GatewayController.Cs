@@ -144,7 +144,6 @@ ILogger<GatewayController> logger, IConnectionMultiplexer redis) : ControllerBas
         }
     }
 
-
     [Route("/api/v1/me")]
     [HttpGet]
     public async Task<ActionResult<UserInfoResponse>> GetInfoAsync()
@@ -263,13 +262,12 @@ ILogger<GatewayController> logger, IConnectionMultiplexer redis) : ControllerBas
 
     [Route("api/v1/reservations")]
     [HttpPost]
-    public async Task<ActionResult<LoyaltyInfoResponse>> BookHotel([FromBody] CreateReservationRequest createReservationRequest)
+    public async Task<ActionResult<CreateReservationResponse>> BookHotel([FromBody] CreateReservationRequest createReservationRequest)
     {
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
-
 
         if (!reservationServiceCircuitBreaker.AllowRequest())
         {

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { getHotels, type HotelResponse, type HotelsPaginationResponse } from "../api/HotelsClient";
+import BookHotelForm from "../components/BookHotelForm";
 import "./HotelsPage.css";
+import type { CreateReservationResponse } from "../api/ReservationsClient";
 
 
 const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
@@ -85,6 +87,18 @@ const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
     if (sortConfig.key !== key) return '↕';
     return sortConfig.direction === 'asc' ? '↑' : '↓';
   };
+  
+  const [bookModalOpen, setBookModalOpen] = useState(false);
+  const [selectedHotel, setSelectedHotel] = useState<HotelResponse | null>(null);
+
+  const handleOpenBook = (hotel: HotelResponse) => {
+    setSelectedHotel(hotel);
+    setBookModalOpen(true);
+  };
+
+  const handleBooked = (info: CreateReservationResponse) => {
+    console.log("Booked", info);
+  };
 
   return (
     <div className="hotels-container">
@@ -166,6 +180,9 @@ const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
               <th onClick={() => handleSort('price')} className="sortable text-left">
                 Стоимость за ночь {getSortIndicator('price')}
               </th>
+              <th>
+                Бронирование
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -216,8 +233,20 @@ const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
                     )}
                   </div>
                 </td>
+                <td>
+                  <button className="book-btn" onClick={() => handleOpenBook(hotel)}>Забронировать</button>
+                </td>
               </tr>
             ))}
+            {selectedHotel && (
+              <BookHotelForm
+                hotelUid={selectedHotel.hotelUid}
+                hotelName={selectedHotel.name}
+                opened={bookModalOpen}
+                onClose={() => setBookModalOpen(false)}
+                onBooked={handleBooked}
+              />
+            )}
           </tbody>
         </table>
       </div>

@@ -1,0 +1,226 @@
+.reservations-page {
+  margin-top: 2rem;
+  padding: 0 1rem;
+}
+
+.reservations-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.reservation-card {
+  transition: all 0.3s ease;
+  border: 1px solid #e9ecef;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  position: relative;
+}
+
+.reservation-card.cancelled-card {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-color: #d1d5db;
+  opacity: 0.8;
+}
+
+.reservation-card.cancelled-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.02) 0%, rgba(0, 0, 0, 0.05) 100%);
+  pointer-events: none;
+}
+
+.reservation-card.cancelled-card .price,
+.reservation-card.cancelled-card .hotel-name,
+.reservation-card.cancelled-card .hotel-address {
+  color: #6b7280 !important;
+  opacity: 0.7;
+}
+
+.reservation-card {
+  transition: all 0.3s ease;
+  border: 1px solid #e9ecef;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  position: relative;
+}
+
+.active-card {
+  border-color: #10b981;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.active-card::before {
+  content: '🎯 Сейчас в отеле';
+  position: absolute;
+  top: -10px;
+  right: 16px;
+  background: #10b981;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  z-index: 1;
+}
+
+.upcoming-card {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+
+.completed-card {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-color: #94a3b8;
+  filter: grayscale(0.4);
+  opacity: 0.8;
+}
+
+.cancelled-card {
+  background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+  border-color: #bdbdbd;
+  filter: grayscale(0.6);
+  opacity: 0.7;
+}
+
+.completed-card:hover,
+.cancelled-card:hover {
+  transform: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: default;
+}
+
+.active-card:hover,
+.upcoming-card:hover,
+.future-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.completed-card .hotel-name,
+.completed-card .hotel-address,
+.completed-card .price,
+.completed-card .date-item text,
+.completed-card .rating-badge,
+.cancelled-card .hotel-name,
+.cancelled-card .hotel-address,
+.cancelled-card .price,
+.cancelled-card .date-item text,
+.cancelled-card .rating-badge {
+  color: #6b7280 !important;
+  opacity: 0.8;
+}
+
+.price-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.status-badge {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  border-color: #9ca3af;
+  color: #9ca3af;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.hotel-info {
+  flex: 1;
+}
+
+.hotel-name {
+  color: #2d3748;
+  margin-bottom: 0.25rem;
+  line-height: 1.3;
+}
+
+.hotel-address {
+  line-height: 1.4;
+}
+
+.hotel-rating {
+  margin-left: 1rem;
+}
+
+.rating-badge {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #2d3748;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dates-section {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 12px;
+  margin: 1rem 0;
+}
+
+.date-item {
+  text-align: center;
+}
+
+.date-arrow {
+  color: #667eea;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.status-section {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.status-badge {
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.price-section {
+  text-align: left;
+}
+
+.price {
+  color: #2d3748;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.cancel-btn {
+  border: 2px solid #e53e3e;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background-color: #e53e3e;
+  color: white;
+  transform: scale(1.05);
+}
