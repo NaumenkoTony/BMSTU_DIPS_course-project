@@ -9,8 +9,28 @@
   width: 100%;
   max-width: 400px;
   text-align: center;
+  background: white;
+  border: 1px solid #e2e8f0;
+}
+
+.login-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.login-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+}
+
+.login-button:hover {
+  opacity: 0.9 !important;
+  transform: translateY(-1px) !important;
 }
 
 .login-hint {
-  color: #666;
+  color: #6c757d;
 }

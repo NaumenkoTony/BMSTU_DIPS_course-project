@@ -6,9 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace IdentityService.Controllers;
 
-[Route("[controller]")]
+[Authorize(Roles = "Admin", AuthenticationSchemes = "Bearer")]
 [ApiController]
-[Authorize(Roles = "Admin")]
+[Route("[controller]")]
 public class AdminController : ControllerBase
 {
     private readonly UserManager<User> _userManager;

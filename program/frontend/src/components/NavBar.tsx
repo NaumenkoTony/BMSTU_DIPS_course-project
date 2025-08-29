@@ -28,12 +28,6 @@ export default function NavBar({ isAuthenticated, isAdmin, onLogout }: NavBarPro
             <Button variant="subtle" component={Link} to="/reservations" className="nav-btn">
               Бронирования
             </Button>
-            <Button variant="subtle" component={Link} to="/profile" className="nav-btn">
-              Профиль
-            </Button>
-            <Button variant="subtle" component={Link} to="/loyalty" className="nav-btn">
-              Лояльность
-            </Button>
             
             {isAdmin && (
               <Group gap="xs">
@@ -45,6 +39,10 @@ export default function NavBar({ isAuthenticated, isAdmin, onLogout }: NavBarPro
                 </Button>
               </Group>
             )}
+
+            <Button variant="subtle" component={Link} to="/profile" className="nav-btn">
+              Профиль
+            </Button>
             
             <Button color="red" onClick={onLogout} className="nav-btn">
               Выйти

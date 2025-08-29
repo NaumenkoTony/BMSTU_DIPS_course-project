@@ -9,7 +9,8 @@
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   min-width: 120px;
-  font-size: 24px;
+  font-weight: 500;
+  font-size: 26px;
   border-bottom: 2px solid #e9ecef;
   border-radius: 12px 12px 0 0 
 }

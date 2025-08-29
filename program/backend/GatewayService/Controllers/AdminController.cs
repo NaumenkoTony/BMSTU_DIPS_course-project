@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using System.Text.Json;
 using Microsoft.Extensions.Caching.Memory;
+using Contracts.Dto;
+using System.Text;
 
 [Route("/api/v1")]
 [ApiController]
@@ -17,59 +19,31 @@ public class AdminController(IMemoryCache memoryCache, IHttpClientFactory httpCl
     private readonly IHttpClientFactory httpClientFactory = httpClientFactory;
 
     [HttpPost("create-user")]
-    public async Task<IActionResult> CreateUser([FromBody] JsonElement request)
+    public async Task<IActionResult> CreateUser()
     {
-        _logger.LogInformation("Proxying create-user request to IdentityService");
+        using var reader = new StreamReader(Request.Body);
+        var rawBody = await reader.ReadToEndAsync();
 
-        try
-        {
-            var identityService = httpClientFactory.CreateClient("IdentityService");
-            
-            var authHeader = Request.Headers["Authorization"].ToString();
-            if (string.IsNullOrEmpty(authHeader))
-            {
-                return Unauthorized(new { error = "Authorization header is required" });
-            }
+        Console.WriteLine("Gateway received body:");
+        Console.WriteLine(rawBody);
 
-            var content = new StringContent(
-                JsonSerializer.Serialize(request),
-                System.Text.Encoding.UTF8,
-                "application/json"
-            );
+        var content = new StringContent(rawBody, Encoding.UTF8, "application/json");
 
-            var requestMessage = new HttpRequestMessage(HttpMethod.Post, "admin/create-user")
-            {
-                Content = content
-            };
-            requestMessage.Headers.Add("Authorization", authHeader);
+        var client = httpClientFactory.CreateClient("IdentityService");
 
-            var response = await identityService.SendAsync(requestMessage);
+        Console.WriteLine("Sending body to IdentityService:");
+        Console.WriteLine(await content.ReadAsStringAsync());
 
-            var responseContent = await response.Content.ReadAsStringAsync();
-            
-            _logger.LogInformation("IdentityService response: {StatusCode}, Content: {Content}", 
-                response.StatusCode, responseContent);
+        var response = await client.PostAsync("admin/create-user", content);
 
-            if (response.IsSuccessStatusCode)
-            {
-                return Content(responseContent, "application/json");
-            }
-            else
-            {
-                return StatusCode((int)response.StatusCode, responseContent);
-            }
-        }
-        catch (HttpRequestException ex)
-        {
-            _logger.LogError(ex, "Failed to connect to IdentityService");
-            return StatusCode(503, new { error = "Identity service is unavailable" });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error in create-user proxy");
-            return StatusCode(500, new { error = "Internal server error" });
-        }
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        Console.WriteLine($"IdentityService response: {response.StatusCode}");
+        Console.WriteLine(responseContent);
+
+        return StatusCode((int)response.StatusCode, responseContent);
     }
+
 
     [HttpGet("users/roles")]
     public async Task<IActionResult> GetAvailableRoles()

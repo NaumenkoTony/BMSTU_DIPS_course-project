@@ -1,30 +1,18 @@
+.title {
+  font-weight: 500;
+  font-size: 32px;
+}
+
 .hotels-page {
   padding: 20px;
-  margin: 0 auto;
+  background: #f8fafc;
+  min-height: 100vh;
 }
-
-.hotels-table th {
-  background: #f8f9fa;
-  padding: 16px 12px;
-  font-weight: 600;
-  color: #495057;
-  text-align: left;
-  border-bottom: 2px solid #e9ecef;
-  position: sticky;
-  top: 0;
-  min-width: 120px;
-}
-
-.hotels-table th:nth-child(1) { min-width: 150px; }
-.hotels-table th:nth-child(2) { min-width: 120px; }
-.hotels-table th:nth-child(3) { min-width: 200px; }
-.hotels-table th:nth-child(4) { min-width: 150px; }
-.hotels-table th:nth-child(5) { min-width: 150px; }
 
 .hotels-loading,
 .hotels-error {
   text-align: center;
-  padding: 40px;
+  padding: 60px;
   font-size: 18px;
 }
 
@@ -34,73 +22,100 @@
 
 .hotels-container {
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  width: calc(100% - 40px);
-  margin: 0 20px;
+  margin-bottom: 24px;
 }
 
 .table-header {
-  padding: 20px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  min-width: 120px;
+  padding: 0;
+}
+
+.header-content {
+  padding: 24px;
 }
 
 .table-header h2 {
-  margin: 0 0 16px 0;
-  font-size: 24px;
-  font-weight: 600;
+  margin: 0 0 20px 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
 }
 
 .filters-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   flex-wrap: wrap;
 }
 
 .filter-input {
   flex: 1;
-  min-width: 120px;
+  min-width: 180px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.filter-icon {
+  position: absolute;
+  left: 12px;
+  color: #6c757d;
+  z-index: 1;
 }
 
 .filter-field {
   width: 100%;
-  padding: 8px 12px;
+  padding: 12px 12px 12px 40px;
   border: none;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.95);
   font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .filter-field:focus {
   outline: none;
   background: white;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
+.filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;
 }
 
 .clear-filters-btn {
-  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
+  border-radius: 8px;
   background: transparent;
   color: white;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .clear-filters-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .results-badge {
-  padding: 6px 12px;
+  padding: 8px 16px;
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
+  border-radius: 20px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .table-wrapper {
@@ -114,74 +129,51 @@
 
 .hotels-table th {
   background: #f8f9fa;
-  padding: 16px 12px;
+  padding: 20px 16px;
   font-weight: 600;
-  color: #495057;
+  color: #2d3748;
   text-align: left;
   border-bottom: 2px solid #e9ecef;
-}
-
-.hotels-table th.text-center {
-  text-align: center;
-}
-
-.hotels-table th.text-right {
-  text-align: right;
+  font-size: 14px;
 }
 
 .hotels-table td {
-  padding: 16px 12px;
+  padding: 20px 16px;
   border-bottom: 1px solid #e9ecef;
   vertical-align: middle;
+  font-size: 14px;
 }
 
 .hotel-row:hover {
   background: #f8f9fa;
 }
 
-.country-cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 500;
-}
-
-
 .hotel-name {
   font-weight: 600;
-  color: #2c3e50;
-  line-height: 1.4;
+  color: #2d3748;
+  font-size: 16px;
+  margin-bottom: 4px;
 }
 
-.stars-cell {
-  display: flex;
-  justify-content: center;
-  justify-content: left;
+.hotel-address {
+  color: #6c757d;
+  font-size: 14px;
 }
 
 .stars-rating {
   display: flex;
   align-items: center;
-  gap: 4px;
-  justify-content: left;
+  gap: 8px;
 }
 
-.stars-active {
+.star-icon {
   color: #ffc107;
-  font-size: 16px;
-  letter-spacing: 1px;
-}
-
-.stars-inactive {
-  color: #dee2e6;
-  font-size: 16px;
-  letter-spacing: 1px;
 }
 
 .stars-count {
-  color: #6c757d;
-  font-size: 12px;
-  margin-left: 4px;
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 16px;
 }
 
 .no-stars {
@@ -192,9 +184,7 @@
 .price-cell {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 4px;
-  justify-content: left;
 }
 
 .price {
@@ -213,21 +203,82 @@
   font-style: italic;
 }
 
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
 
+.sortable:hover {
+  background: #e9ecef;
+}
+
+.book-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.book-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.pagination-controls {
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.page-size-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  color: #2d3748;
+}
+
+.page-size-select select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 
 .pagination-btn {
-  padding: 8px 16px;
-  border: 1px solid #007bff;
-  border-radius: 6px;
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
   background: white;
-  color: #007bff;
+  color: #2d3748;
   cursor: pointer;
-  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background: #007bff;
+  background: #667eea;
   color: white;
+  border-color: #667eea;
 }
 
 .pagination-btn:disabled {
@@ -235,109 +286,33 @@
   cursor: not-allowed;
 }
 
-.pagination-info {
-  color: #6c757d;
-  font-weight: 500;
-}
-
-.filters-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.filter-group label {
-  font-weight: 500;
-  margin-bottom: 4px;
-  color: white;
-  font-size: 12px;
-}
-
-.filter-actions {
-  display: flex;
-  align-items: end;
-  gap: 12px;
-}
-
-.sortable {
-  cursor: pointer;
-  user-select: none;
-}
-
-.sortable:hover {
-  background: #e9ecef;
-}
-
-.pagination-controls {
-  margin-top: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.page-size-select {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-}
-
-.page-size-select label {
-  font-weight: 500;
-  color: #333;
-}
-
-.page-size-select select {
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  background: #fff;
-  font-size: 14px;
-  cursor: pointer;
-  transition: border-color 0.2s ease;
-}
-
-.page-size-select select:hover {
-  border-color: #007bff;
-}
-
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-}
-
 .pagination-numbers {
   display: flex;
-  gap: 4px;
+  gap: 6px;
 }
 
 .pagination-number {
-  padding: 4px 8px;
-  border: 1px solid #ccc;
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
   background: white;
   cursor: pointer;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
 .pagination-number.active {
-  background: #007bff;
+  background: #667eea;
   color: white;
-  font-weight: bold;
+  border-color: #667eea;
 }
 
-.book-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
-  border: none;
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
+.pagination-number:hover {
+  background: #f8f9fa;
 }
-.book-btn:hover { opacity: 0.9; }
+
+.pagination-ellipsis {
+  padding: 10px 6px;
+  color: #6c757d;
+  font-weight: 500;
+}

@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Container, TextInput, PasswordInput, Button, Select, Alert, LoadingOverlay } from "@mantine/core";
+import { Container, TextInput, PasswordInput, Button, Select, Alert, LoadingOverlay, Paper, Title } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { IconCheck, IconX } from "@tabler/icons-react";
+import { IconCheck, IconX, IconUserPlus } from "@tabler/icons-react";
 import { createUser, type CreateUserRequest } from "../api/AdminClient";
 import "./CreateUserPage.css";
 
-interface CreateUserForm extends CreateUserRequest {}
+interface CreateUserForm extends CreateUserRequest { }
 
 export default function CreateUserPage() {
   const [loading, setLoading] = useState(false);
@@ -25,7 +25,7 @@ export default function CreateUserPage() {
       email: (value) => !/^\S+@\S+$/.test(value) ? 'Некорректный email' : null,
       firstName: (value) => value.length < 2 ? 'Имя слишком короткое' : null,
       lastName: (value) => value.length < 2 ? 'Фамилия слишком короткая' : null,
-      password: (value) => value.length < 6 ? 'Пароль должен быть не менее 6 символов, одной заглавной буквы и спецсимвола' : null,
+      password: (value) => value.length < 6 ? 'Пароль должен быть не менее 6 символов' : null,
     },
   });
 
@@ -34,14 +34,19 @@ export default function CreateUserPage() {
     setMessage(null);
 
     try {
-      console.log(values)
-      const result = await createUser(values);
+      const payload: CreateUserForm = {
+        ...values,
+        roles: Array.isArray(values.roles) ? values.roles : [values.roles],
+      };
+
+      console.log('Submitting user:', payload);
+      const result = await createUser(payload);
       setMessage({ type: 'success', text: result.message });
       form.reset();
     } catch (error) {
-      setMessage({ 
-        type: 'error', 
-        text: error instanceof Error ? error.message : 'Неизвестная ошибка' 
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Неизвестная ошибка'
       });
     } finally {
       setLoading(false);
@@ -49,84 +54,109 @@ export default function CreateUserPage() {
   };
 
   return (
-    <Container className="create-user-container">
-      <LoadingOverlay visible={loading} />
-      
-      <h1 className="create-user-title">Создание пользователя</h1>
-      
-      {message && (
-        <Alert 
-          color={message.type === 'success' ? 'green' : 'red'} 
-          icon={message.type === 'success' ? <IconCheck /> : <IconX />}
-          className="create-user-alert"
-        >
-          {message.text}
-        </Alert>
-      )}
+    <div className="create-user-page">
+      <Container size="sm">
+        <Paper shadow="lg" p="xl" radius="lg" className="create-user-card">
+          <div className="create-user-header">
+            <div className="create-user-title">
+              Создание пользователя
+            </div>
+          </div>
 
-      <div className="create-user-form">
-        <form onSubmit={form.onSubmit(handleSubmit)}>
-          <TextInput
-            label="Имя пользователя"
-            placeholder="username"
-            required
-            className="create-user-input"
-            {...form.getInputProps('username')}
-          />
+          <LoadingOverlay visible={loading} />
 
-          <TextInput
-            label="Email"
-            placeholder="user@example.com"
-            type="email"
-            required
-            className="create-user-input"
-            {...form.getInputProps('email')}
-          />
+          {message && (
+            <Alert
+              color={message.type === 'success' ? 'green' : 'red'}
+              icon={message.type === 'success' ? <IconCheck /> : <IconX />}
+              className="create-user-alert"
+              radius="md"
+            >
+              {message.text}
+            </Alert>
+          )}
 
-          <TextInput
-            label="Имя"
-            placeholder="Иван"
-            required
-            className="create-user-input"
-            {...form.getInputProps('firstName')}
-          />
+          <div className="create-user-form">
+            <form onSubmit={form.onSubmit(handleSubmit)}>
+              <TextInput
+                label="Имя пользователя"
+                placeholder="username"
+                required
+                size="md"
+                className="create-user-input"
+                {...form.getInputProps('username')}
+              />
 
-          <TextInput
-            label="Фамилия"
-            placeholder="Иванов"
-            required
-            className="create-user-input"
-            {...form.getInputProps('lastName')}
-          />
+              <TextInput
+                label="Email"
+                placeholder="user@example.com"
+                type="email"
+                required
+                size="md"
+                className="create-user-input"
+                {...form.getInputProps('email')}
+              />
 
-          <PasswordInput
-            label="Пароль"
-            placeholder="Не менее 6 символов, одной заглавной буквы и спецсимвола"
-            required
-            className="create-user-input"
-            {...form.getInputProps('password')}
-          />
+              <TextInput
+                label="Имя"
+                placeholder="Иван"
+                required
+                size="md"
+                className="create-user-input"
+                {...form.getInputProps('firstName')}
+              />
 
-          <Select
-            label="Роли"
-            placeholder="Выберите роли"
-            data={['User', 'Admin']}
-            defaultValue={['User']}
-            multiple
-            className="create-user-input"
-            {...form.getInputProps('roles')}
-          />
+              <TextInput
+                label="Фамилия"
+                placeholder="Иванов"
+                required
+                size="md"
+                className="create-user-input"
+                {...form.getInputProps('lastName')}
+              />
 
-          <Button 
-            type="submit" 
-            loading={loading} 
-            fullWidth 
-            className="create-user-button"
-          >
-            Создать пользователя
-          </Button>
-        </form>
-      </div>
-    </Container>
+              <PasswordInput
+                label="Пароль"
+                placeholder="Не менее 6 символов"
+                required
+                size="md"
+                className="create-user-input"
+                {...form.getInputProps('password')}
+              />
+
+              <Select
+                label="Роли"
+                placeholder="Выберите роли"
+                data={['User', 'Admin']}
+                defaultValue={['User']}
+                multiple
+                className="create-user-input"
+                {...form.getInputProps('roles', { type: 'input' })}
+              />
+
+
+              <Button
+                type="submit"
+                loading={loading}
+                fullWidth
+                size="lg"
+                className="create-user-button"
+                styles={{
+                  root: {
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: '600',
+                    height: '48px'
+                  }
+                }}
+              >
+                Создать пользователя
+              </Button>
+            </form>
+          </div>
+        </Paper>
+      </Container>
+    </div>
   );
 }

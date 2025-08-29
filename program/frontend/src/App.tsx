@@ -7,7 +7,6 @@ import NavBar from "./components/NavBar";
 import HotelsPage from "./pages/HotelsPage";
 import ReservationsPage from "./pages/ReservationsPage";
 import ProfilePage from "./pages/ProfilePage";
-import LoyaltyPage from "./pages/LoyaltyPage";
 import LoginPage from "./pages/LoginPage";
 import { CallbackPage } from "./pages/CallBackPage";
 import CreateUserPage from "./pages/CreateUserPage";
@@ -59,13 +58,29 @@ export function App() {
     setIsLoading(false);
   }, []);
 
-  const handleLogout = () => {
+  
+  const AUTH_URL = import.meta.env.VITE_AUTH_URL || "http://localhost:8000/";
+
+  const handleLogout = async () => {
+  try {
+    const response = await fetch(AUTH_URL + 'account/logout', {
+      method: 'POST',
+      credentials: 'include',
+      mode: 'cors' // явно указываем CORS
+    });
+
+    console.log('Logout attempt completed with status:', response.status);
+    
+  } catch (error) {
+    console.log('IDP logout completed (CORS error expected)', error);
+  } finally {
     localStorage.removeItem("access_token");
-    localStorage.removeItem("token_type");
+    localStorage.removeItem("token_type"); 
     localStorage.removeItem("expires_in");
     setIsAuthenticated(false);
     setIsAdmin(false);
-  };
+  }
+};
 
   if (isLoading) {
     return (
@@ -84,7 +99,6 @@ export function App() {
         <Route path="/" element={isAuthenticated ? <HotelsPage /> : <LoginPage />} />
         <Route path="/reservations" element={isAuthenticated ? <ReservationsPage /> : <LoginPage />} />
         <Route path="/profile" element={isAuthenticated ? <ProfilePage /> : <LoginPage />} />
-        <Route path="/loyalty" element={isAuthenticated ? <LoyaltyPage /> : <LoginPage />} />
         <Route
           path="/admin/create-user"
           element={isAuthenticated && isAdmin ? <CreateUserPage /> : <LoginPage />}

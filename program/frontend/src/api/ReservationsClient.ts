@@ -32,6 +32,7 @@ export interface AggregatedReservationResponse {
     hotelUid: string;
     name: string;
     fullAddress: string;
+    stars?: number;
   };
   startDate: string;
   endDate: string;

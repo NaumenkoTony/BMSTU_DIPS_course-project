@@ -1,10 +1,10 @@
 export interface CreateUserRequest {
-  UserName: string;
-  Email: string;
-  FirstName: string;
-  LastName: string;
-  Password: string;
-  Roles: string[];
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+  roles: string[];
 }
 
 export interface CreateUserResponse {
@@ -17,13 +17,15 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api/v1";
 export async function createUser(userData: CreateUserRequest): Promise<CreateUserResponse> {
   const token = localStorage.getItem("access_token");
   const url = `${API_URL}/create-user`;
-  
-  console.log('Creating user with URL:', url);
+
+  console.log("Creating user with URL:", url);
+  console.log("Request body:", JSON.stringify(userData, null, 2));
+
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token ?? ""}`,
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token ?? ""}`,
     },
     body: JSON.stringify(userData),
   });

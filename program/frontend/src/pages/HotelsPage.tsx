@@ -3,7 +3,7 @@ import { getHotels, type HotelResponse, type HotelsPaginationResponse } from "..
 import BookHotelForm from "../components/BookHotelForm";
 import "./HotelsPage.css";
 import type { CreateReservationResponse } from "../api/ReservationsClient";
-
+import { IconSearch, IconX, IconStar, IconCoin } from "@tabler/icons-react";
 
 const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
   const [filters, setFilters] = useState({
@@ -97,66 +97,74 @@ const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
   };
 
   const handleBooked = (info: CreateReservationResponse) => {
-    console.log("Booked", info);
+    console.log("Booking completed:", info);
   };
 
   return (
     <div className="hotels-container">
       <div className="table-header">
-        <h2>Отели</h2>
-        <div className="filters-row">
-          <div className="filter-input">
-            <input
-              type="text"
-              value={filters.country}
-              onChange={(e) => handleFilterChange('country', e.target.value)}
-              placeholder="Страна..."
-              className="filter-field"
-            />
-          </div>
+        <div className="header-content">
+          <div className="title">Отели</div>
+          <div className="filters-row">
+            <div className="filter-input">
+              <IconSearch size={18} className="filter-icon" />
+              <input
+                type="text"
+                value={filters.country}
+                onChange={(e) => handleFilterChange('country', e.target.value)}
+                placeholder="Страна..."
+                className="filter-field"
+              />
+            </div>
 
-          <div className="filter-input">
-            <input
-              type="text"
-              value={filters.city}
-              onChange={(e) => handleFilterChange('city', e.target.value)}
-              placeholder="Город..."
-              className="filter-field"
-            />
-          </div>
+            <div className="filter-input">
+              <IconSearch size={18} className="filter-icon" />
+              <input
+                type="text"
+                value={filters.city}
+                onChange={(e) => handleFilterChange('city', e.target.value)}
+                placeholder="Город..."
+                className="filter-field"
+              />
+            </div>
 
-          <div className="filter-input">
-            <select
-              value={filters.minStars}
-              onChange={(e) => handleFilterChange('minStars', e.target.value)}
-              className="filter-field"
-            >
-              <option value="">Звезды</option>
-              <option value="1">1★+</option>
-              <option value="2">2★+</option>
-              <option value="3">3★+</option>
-              <option value="4">4★+</option>
-              <option value="5">5★</option>
-            </select>
-          </div>
+            <div className="filter-input">
+              <IconSearch size={18} className="filter-icon" />
+              <select
+                value={filters.minStars}
+                onChange={(e) => handleFilterChange('minStars', e.target.value)}
+                className="filter-field"
+                style={{ paddingLeft: '40px', appearance: 'none', backgroundImage: 'none' }}
+              >
+                <option value="">Звезды (не менее)</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </div>
 
-          <div className="filter-input">
-            <input
-              type="number"
-              value={filters.maxPrice}
-              onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-              placeholder="Цена до..."
-              className="filter-field"
-            />
-          </div>
+            <div className="filter-input">
+              <IconSearch size={18} className="filter-icon" />
+              <input
+                type="number"
+                value={filters.maxPrice}
+                onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+                placeholder="Цена до..."
+                className="filter-field"
+              />
+            </div>
 
-          <div className="filter-actions">
-            <button onClick={clearFilters} className="clear-filters-btn">
-              Очистить фильтры
-            </button>
-            <span className="results-badge">
-              Найдено: {sortedAndFilteredHotels.length}
-            </span>
+            <div className="filter-actions">
+              <button onClick={clearFilters} className="clear-filters-btn">
+                <IconX size={16} />
+                Очистить
+              </button>
+              <span className="results-badge">
+                Найдено: {sortedAndFilteredHotels.length}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -174,15 +182,13 @@ const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
               <th onClick={() => handleSort('name')} className="sortable">
                 Отель {getSortIndicator('name')}
               </th>
-              <th onClick={() => handleSort('stars')} className="sortable text-left">
+              <th onClick={() => handleSort('stars')} className="sortable">
                 Звезды {getSortIndicator('stars')}
               </th>
-              <th onClick={() => handleSort('price')} className="sortable text-left">
-                Стоимость за ночь {getSortIndicator('price')}
+              <th onClick={() => handleSort('price')} className="sortable">
+                Цена {getSortIndicator('price')}
               </th>
-              <th>
-                Бронирование
-              </th>
+              <th>Действия</th>
             </tr>
           </thead>
           <tbody>
@@ -204,24 +210,19 @@ const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
                     {hotel.address && <div className="hotel-address">{hotel.address}</div>}
                   </div>
                 </td>
-                <td className="text-center">
+                <td>
                   <div className="stars-cell">
                     {hotel.stars ? (
                       <div className="stars-rating">
-                        <span className="stars-active">
-                          {'★'.repeat(Math.floor(hotel.stars))}
-                        </span>
-                        <span className="stars-inactive">
-                          {'☆'.repeat(5 - Math.floor(hotel.stars))}
-                        </span>
-                        <span className="stars-count">({hotel.stars})</span>
+                        <IconStar size={16} className="star-icon" />
+                        <span className="stars-count">{hotel.stars}</span>
                       </div>
                     ) : (
                       <span className="no-stars">—</span>
                     )}
                   </div>
                 </td>
-                <td className="text-right">
+                <td>
                   <div className="price-cell">
                     {hotel.price ? (
                       <>
@@ -234,7 +235,9 @@ const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
                   </div>
                 </td>
                 <td>
-                  <button className="book-btn" onClick={() => handleOpenBook(hotel)}>Забронировать</button>
+                  <button className="book-btn" onClick={() => handleOpenBook(hotel)}>
+                    Забронировать
+                  </button>
                 </td>
               </tr>
             ))}
@@ -276,8 +279,8 @@ export default function HotelsPage() {
           totalPages: Math.ceil(data.totalElements / pageSize)
         });
       } catch (err) {
-        console.error("Error loading hotels:", err);
-        setError("Не удалось загрузить отели. Попробуйте позже.");
+        console.error("Failed to load hotels:", err);
+        setError("Не удалось загрузить отели");
       } finally {
         setLoading(false);
       }
@@ -295,7 +298,6 @@ export default function HotelsPage() {
     setPageSize(newSize);
     setCurrentPage(1);
   };
-
 
   if (loading) {
     return <div className="hotels-loading">Загрузка отелей...</div>;
@@ -363,7 +365,7 @@ export default function HotelsPage() {
       <div className="pagination-controls">
         <div className="page-size-select">
           <label>
-            Показывать по:{" "}
+            Показывать по:
             <select value={pageSize} onChange={handlePageSizeChange}>
               <option value={10}>10</option>
               <option value={20}>20</option>

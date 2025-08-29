@@ -9,9 +9,34 @@
   width: 100%;
   max-width: 400px;
   text-align: center;
+  background: white;
+  border: 1px solid #e2e8f0;
 }
 
 .callback-loader {
   margin: 20px auto;
   display: block;
+}
+
+.callback-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.callback-text {
+  color: #6c757d;
+}
+
+.callback-alert {
+  border-radius: 8px;
+}
+
+.callback-success-icon {
+  margin: 0 auto 16px auto;
+  display: block;
+}
+
+.callback-button {
+  margin-top: 16px;
 }

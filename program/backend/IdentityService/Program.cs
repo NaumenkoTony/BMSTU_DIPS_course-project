@@ -9,6 +9,7 @@ using IdentityService.Models;
 using IdentityService.Services;
 using Microsoft.AspNetCore.DataProtection;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,87 +55,30 @@ builder.Services.AddScoped<IAuthorizationCodeStore, AuthorizationCodeStore>();
 
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultScheme = "smart";
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddPolicyScheme("smart", "Smart authentication scheme", options =>
-{
-    options.ForwardDefaultSelector = context =>
-    {
-        var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
-        if (authHeader?.StartsWith("Bearer ") == true)
-        {
-            return "Bearer";
-        }
-        
-        return CookieAuthenticationDefaults.AuthenticationScheme;
-    };
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 })
 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
 {
     options.LoginPath = "/account/login";
     options.LogoutPath = "/account/logout";
     options.Cookie.Name = "idsrv.session";
-    
-    options.Events.OnRedirectToLogin = context =>
-    {
-        if (context.Request.Path.StartsWithSegments("/api") ||
-            context.Request.Path.StartsWithSegments("/admin"))
-        {
-            context.Response.StatusCode = 401;
-            return Task.CompletedTask;
-        }
-        context.Response.Redirect(context.RedirectUri);
-        return Task.CompletedTask;
-    };
-    
-    options.Events.OnRedirectToAccessDenied = context =>
-    {
-        if (context.Request.Path.StartsWithSegments("/api") ||
-            context.Request.Path.StartsWithSegments("/admin"))
-        {
-            context.Response.StatusCode = 403;
-            return Task.CompletedTask;
-        }
-        context.Response.Redirect(context.RedirectUri);
-        return Task.CompletedTask;
-    };
 })
-.AddJwtBearer(options =>
+.AddJwtBearer("Bearer", options =>
+{
+    options.Authority = "http://identity_service:8000";
+    options.Audience = "resource_server";
+    options.RequireHttpsMetadata = false;
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.Authority = "http://identity_service:8000";
-        options.Audience = "resource_server";
-        options.RequireHttpsMetadata = false;
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-        };
-        options.Events = new JwtBearerEvents
-        {
-            OnAuthenticationFailed = context =>
-            {
-                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-                logger.LogError("Authentication failed: " + context.Exception.Message);
-                return Task.CompletedTask;
-            },
-            OnChallenge = context =>
-            {
-                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-                logger.LogWarning("Authentication challenge triggered: {Error}, {ErrorDescription}", context.Error, context.ErrorDescription);
-                return Task.CompletedTask;
-            },
-            OnTokenValidated = context =>
-            {
-                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-                logger.LogInformation("Token validated successfully.");
-                return Task.CompletedTask;
-            }
-        };
-    });
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+    };
+});
+
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddDataProtection()

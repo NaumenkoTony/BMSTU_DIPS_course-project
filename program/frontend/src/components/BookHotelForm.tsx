@@ -37,11 +37,10 @@ export default function BookHotelForm({ hotelUid, hotelName, opened, onClose, on
             setError("Выберите даты заезда и выезда.");
             return;
         }
-        if (startDate > endDate) {
+        if (startDate >= endDate) {
             setError("Дата заезда должна быть раньше даты выезда.");
             return;
         }
-        
         const today = new Date().toISOString().split('T')[0];
         if (startDate < today) {
             setError("Дата заезда не может быть в прошлом.");
