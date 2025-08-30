@@ -149,7 +149,6 @@ namespace IdentityService.Controllers
                 var claims = new List<Claim>
                 {
                     new (ClaimTypes.Name, user.UserName),
-                    new ("preferred_username", user.UserName),
                     new ("name", $"{user.FirstName} {user.LastName}".Trim()),
                     new (ClaimTypes.Email, user.Email ?? ""),
                     new ("auth_time", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()),

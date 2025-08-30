@@ -41,7 +41,7 @@ public class TokenService(IHttpContextAccessor httpContextAccessor) : ITokenServ
             var handler = new JwtSecurityTokenHandler();
             var jwtToken = handler.ReadJwtToken(GetAccessToken());
             
-            var username = jwtToken.Claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value
+            var username = jwtToken.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")?.Value
                         ?? jwtToken.Claims.FirstOrDefault(c => c.Type == "name")?.Value
                         ?? jwtToken.Claims.FirstOrDefault(c => c.Type == "unique_name")?.Value
                         ?? jwtToken.Claims.FirstOrDefault(c => c.Type == "nickname")?.Value
