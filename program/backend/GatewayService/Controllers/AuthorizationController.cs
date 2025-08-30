@@ -6,70 +6,125 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using System.Text.Json;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 
 [Route("/api/v1/authorize")]
 [ApiController]
-public class AuthorizationController(IMemoryCache memoryCache, ILogger<AuthorizationController> logger) : ControllerBase
+public class AuthorizationController : ControllerBase
 {
-    private readonly ILogger<AuthorizationController> logger = logger;
-    private readonly IMemoryCache memoryCache = memoryCache;
+    private readonly IMemoryCache _memoryCache;
+    private readonly ILogger<AuthorizationController> _logger;
+
+    public AuthorizationController(
+        IMemoryCache memoryCache,
+        ILogger<AuthorizationController> logger)
+    {
+        _memoryCache = memoryCache;
+        _logger = logger;
+    }
 
     [HttpGet("login")]
     public IActionResult Login()
     {
-        logger.LogInformation("Login endpoint called");
-        var redirectUri = "http://localhost:8080/api/v1/authorize/callback";
-        var state = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
-        this.memoryCache.Set("oauth_state", state, TimeSpan.FromMinutes(5));
-        var authUrl = $"http://localhost:8000/authorize" +
-                    $"?response_type=code" +
-                    $"&client_id=gateway-client" +
-                    $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
-                    $"&scope=openid profile email" +
-                    $"&state={Uri.EscapeDataString(state)}";
-        logger.LogInformation("Redirect URI: {RedirectUri}", redirectUri);
-        return Redirect(authUrl);
+        const string methodName = nameof(Login);
+        using var scope = _logger.BeginScope(new Dictionary<string, object>
+        {
+            ["Method"] = methodName,
+            ["Endpoint"] = "GET /api/v1/authorize/login"
+        });
+
+        _logger.LogInformation("Starting OAuth login flow");
+
+        try
+        {
+            var redirectUri = "http://localhost:8080/api/v1/authorize/callback";
+            var state = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+            
+            _memoryCache.Set("oauth_state", state, TimeSpan.FromMinutes(5));
+            
+            _logger.LogDebug("Generated OAuth state: {State} (cached for 5 minutes)", state);
+
+            var authUrl = $"http://localhost:8000/authorize" +
+                        $"?response_type=code" +
+                        $"&client_id=gateway-client" +
+                        $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
+                        $"&scope=openid profile email" +
+                        $"&state={Uri.EscapeDataString(state)}";
+
+            _logger.LogInformation("Redirecting to authorization server: {AuthUrl}", authUrl);
+            
+            return Redirect(authUrl);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during login flow initialization");
+            return StatusCode(500, "Internal server error during login initialization");
+        }
     }
 
     [HttpGet("callback")]
     public async Task<IActionResult> Callback([FromQuery] string code, [FromQuery] string state)
     {
-        logger.LogInformation("Callback received. Code: {Code}", code);
+        const string methodName = nameof(Callback);
+        using var scope = _logger.BeginScope(new Dictionary<string, object>
+        {
+            ["Method"] = methodName,
+            ["Endpoint"] = "GET /api/v1/authorize/callback",
+            ["Code"] = code,
+            ["State"] = state
+        });
 
-        if (!this.memoryCache.TryGetValue("oauth_state", out string savedState))
-        {
-            logger.LogWarning("State not found in cache");
-            return BadRequest("Invalid state parameter");
-        }
-        if (savedState != state)
-        {
-            logger.LogWarning("State mismatch. Expected: {Expected}, Actual: {Actual}", 
-                savedState, state);
-            return BadRequest("Invalid state parameter");
-        }
-        this.memoryCache.Remove("oauth_state");
+        _logger.LogInformation("Processing OAuth callback");
+
         try
         {
+            if (!_memoryCache.TryGetValue("oauth_state", out string savedState))
+            {
+                _logger.LogWarning("State not found in cache - possible expired or missing state");
+                return BadRequest("Invalid state parameter");
+            }
+
+            if (savedState != state)
+            {
+                _logger.LogWarning("State mismatch. Expected: {ExpectedState}, Actual: {ActualState}", 
+                    savedState, state);
+                return BadRequest("Invalid state parameter");
+            }
+
+            _memoryCache.Remove("oauth_state");
+            _logger.LogDebug("State validation successful, removed from cache");
+
             var tokenUrl = "http://identity_service:8000/token";
-            logger.LogInformation("Sending token request to: {TokenUrl}", tokenUrl);
+            
+            _logger.LogInformation("Exchanging authorization code for token at: {TokenUrl}", tokenUrl);
 
-            var response = await new HttpClient().PostAsync(tokenUrl,
-                new FormUrlEncodedContent(new Dictionary<string, string>
-                {
-                    { "grant_type", "authorization_code" },
-                    { "code", code },
-                    { "redirect_uri", "http://localhost:8080/api/v1/authorize/callback" },
-                    { "client_id", "gateway-client" },
-                    { "client_secret", "JDgvvoMQxxC7IWdpkBP8a4MkQE1KxjNTZQ0o2_8avjbfj7zIcGRyMGBReydOCZx3" }
-                }));
+            using var httpClient = new HttpClient();
+            var tokenRequestContent = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                { "grant_type", "authorization_code" },
+                { "code", code },
+                { "redirect_uri", "http://localhost:8080/api/v1/authorize/callback" },
+                { "client_id", "gateway-client" },
+                { "client_secret", "JDgvvoMQxxC7IWdpkBP8a4MkQE1KxjNTZQ0o2_8avjbfj7zIcGRyMGBReydOCZx3" }
+            });
 
-            logger.LogInformation("Token response status: {StatusCode}", response.StatusCode);
+            var response = await httpClient.PostAsync(tokenUrl, tokenRequestContent);
+            var responseContent = await response.Content.ReadAsStringAsync();
 
-            var content = await response.Content.ReadAsStringAsync();
-            logger.LogInformation("Token response: {Content}", content);
+            _logger.LogInformation("Token endpoint response: {StatusCode}", response.StatusCode);
+            _logger.LogDebug("Token response content: {ResponseContent}", responseContent);
 
-            var tokenResponse = JsonSerializer.Deserialize<JsonElement>(content);
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Token endpoint returned error: {StatusCode} - {Content}", 
+                    response.StatusCode, responseContent);
+                return StatusCode((int)response.StatusCode, responseContent);
+            }
+
+            var tokenResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
             var accessToken = tokenResponse.GetProperty("access_token").GetString();
+
+            _logger.LogInformation("Successfully obtained access token");
 
             return Ok(new
             {
@@ -79,30 +134,63 @@ public class AuthorizationController(IMemoryCache memoryCache, ILogger<Authoriza
                 scope = "openid profile email"
             });
         }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Failed to deserialize token response");
+            return StatusCode(500, "Invalid token response format");
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to connect to token endpoint");
+            return StatusCode(503, "Token service unavailable");
+        }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error during token request");
-            return StatusCode(500, "Internal server error");
+            _logger.LogError(ex, "Unexpected error during token exchange");
+            return StatusCode(500, "Internal server error during token exchange");
         }
     }
 
     [HttpPost("directlogin")]
     public IActionResult GetTokenDirectly([FromBody] DirectLoginRequest request)
     {
-        logger.LogInformation("directlogin endpoint called");
-        var redirectUri = "http://localhost:8080/api/v1/authorize/callback";
-        var state = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
-        this.memoryCache.Set("oauth_state", state, TimeSpan.FromMinutes(5));
-        var authUrl = $"http://localhost:8000/directauthorize" +
-                    $"?response_type=code" +
-                    $"&client_id=gateway-client" +
-                    $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
-                    $"&scope=openid profile email" +
-                    $"&state={Uri.EscapeDataString(state)}" +
-                    $"&login={request.Username}" +
-                    $"&password={request.Password}";
-        logger.LogInformation("Redirect URI: {RedirectUri}", redirectUri);
-        return Redirect(authUrl);
+        const string methodName = nameof(GetTokenDirectly);
+        using var scope = _logger.BeginScope(new Dictionary<string, object>
+        {
+            ["Method"] = methodName,
+            ["Endpoint"] = "POST /api/v1/authorize/directlogin",
+            ["Username"] = request.Username
+        });
+
+        _logger.LogInformation("Starting direct login flow for user: {Username}", request.Username);
+
+        try
+        {
+            var redirectUri = "http://localhost:8080/api/v1/authorize/callback";
+            var state = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+            
+            _memoryCache.Set("oauth_state", state, TimeSpan.FromMinutes(5));
+            
+            _logger.LogDebug("Generated OAuth state for direct login: {State}", state);
+
+            var authUrl = $"http://localhost:8000/directauthorize" +
+                        $"?response_type=code" +
+                        $"&client_id=gateway-client" +
+                        $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
+                        $"&scope=openid profile email" +
+                        $"&state={Uri.EscapeDataString(state)}" +
+                        $"&login={request.Username}" +
+                        $"&password={request.Password}";
+
+            _logger.LogInformation("Redirecting to direct authorization endpoint");
+            
+            return Redirect(authUrl);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during direct login flow for user: {Username}", request.Username);
+            return StatusCode(500, "Internal server error during direct login");
+        }
     }
 }
 
