@@ -208,7 +208,7 @@ public class GatewayController : ControllerBase
                 Items = _mapper.Map<List<HotelResponse>>(hotelsServiceResponse.Items)
             };
 
-            _logger.LogInformation("Successfully retrieved {Count} hotels", hotelsServiceResponse.Items?.Count ?? 0);
+            _logger.LogInformation("Successfully retrieved {Count} hotels", hotelsServiceResponse.Items?.Count() ?? 0);
             return Ok(pagedResponse);
         }
         catch (Exception ex)
