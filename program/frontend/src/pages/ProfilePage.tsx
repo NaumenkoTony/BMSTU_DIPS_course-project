@@ -99,7 +99,7 @@ export default function ProfilePage() {
                   </div>
                   <Group align="flex-start" mt="md">
                     <Avatar size="lg" radius="xl" color="indigo" className="user-avatar">
-                      {userInfo?.name?.[0]}
+                      {userInfo?.name?.[0] ?? "U"}
                     </Avatar>
                     <div className="user-info">
                       <Text size="md" fw={700} className="user-name">
@@ -112,6 +112,9 @@ export default function ProfilePage() {
                 <div className="info-grid">
                   <div className="info-item">
                     <Text size="xs" c="dimmed">Логин</Text>
+                    <Text size="sm" fw={600} className="info-value">
+                      {userInfo?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"]}
+                    </Text>
                   </div>
                   <div className="info-item">
                     <Text size="xs" c="dimmed">Почта</Text>
