@@ -328,6 +328,63 @@ public class GatewayController : ControllerBase
         }
     }
 
+    [Route("api/v1/loyalty")]
+    [HttpGet]
+    public async Task<ActionResult<LoyaltyInfoResponse>> GetLoyalty()
+    {
+        const string methodName = nameof(GetLoyalty);
+        using var scope = _logger.BeginScope(new Dictionary<string, object>
+        {
+            ["Method"] = methodName
+        });
+
+        _logger.LogInformation("Getting loyalty info");
+
+        try
+        {
+            if (!_loyaltyServiceCircuitBreaker.AllowRequest())
+            {
+                _logger.LogWarning("Loyalty service circuit breaker is open");
+                return StatusCode(503, new { message = "Loyalty Service unavailable" });
+            }
+
+            var loyaltyService = _httpClientFactory.CreateClient("LoyaltyService");
+            var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/loyalties");
+
+            var loyaltyResponse = await loyaltyService.SendAsync(request);
+
+            _logger.LogInformation("Loyalty service response: {StatusCode}", loyaltyResponse.StatusCode);
+
+            if (!loyaltyResponse.IsSuccessStatusCode)
+            {
+                _loyaltyServiceCircuitBreaker.RecordFailure();
+                _logger.LogWarning("Failed to get loyalty: {StatusCode}", loyaltyResponse.StatusCode);
+                return StatusCode(503, new { message = "Error receiving loyalties from microservice" });
+            }
+
+            _loyaltyServiceCircuitBreaker.RecordSuccess();
+
+            var loyaltyJsonString = await loyaltyResponse.Content.ReadAsStringAsync();
+            var loyaltyServiceResponse = JsonConvert.DeserializeObject<LoyaltyResponse>(loyaltyJsonString);
+
+            if (loyaltyServiceResponse == null)
+            {
+                _loyaltyServiceCircuitBreaker.RecordFailure();
+                _logger.LogError("Failed to parse loyalty data");
+                return StatusCode(503, new { message = "Error parsing loyalty data" });
+            }
+
+            _logger.LogInformation("Loyalty info retrieved successfully");
+            return Ok(_mapper.Map<LoyaltyInfoResponse>(loyaltyServiceResponse));
+        }
+        catch (Exception ex)
+        {
+            _loyaltyServiceCircuitBreaker.RecordFailure();
+            _logger.LogError(ex, "Error getting loyalty info");
+            return StatusCode(503, new { message = "Loyalty Service unavailable" });
+        }
+    }
+
     [Route("api/v1/reservations")]
     [HttpPost]
     public async Task<ActionResult<CreateReservationResponse>> BookHotel([FromBody] CreateReservationRequest createReservationRequest)
@@ -644,6 +701,68 @@ public class GatewayController : ControllerBase
         {
             _reservationServiceCircuitBreaker.RecordFailure();
             _logger.LogError(ex, "Error getting reservation by UID");
+            return StatusCode(503, new { message = "Reservation Service unavailable" });
+        }
+    }
+
+    [Route("api/v1/reservations")]
+    [HttpGet]
+    public async Task<ActionResult<AggregatedReservationResponse>> GetReservationsByUsername()
+    {
+        const string methodName = nameof(GetReservationsByUsername);
+        using var scope = _logger.BeginScope(new Dictionary<string, object>
+        {
+            ["Method"] = methodName
+        });
+
+        _logger.LogInformation("Getting all reservations for user");
+
+        try
+        {
+            if (!_reservationServiceCircuitBreaker.AllowRequest())
+            {
+                _logger.LogWarning("Reservation service circuit breaker is open");
+                return StatusCode(503, new { message = "Reservation Service unavailable" });
+            }
+
+            var reservationService = _httpClientFactory.CreateClient("ReservationService");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/reservations");
+            var reservationsResponse = await reservationService.SendAsync(request);
+
+            _logger.LogInformation("Reservation service response: {StatusCode}", reservationsResponse.StatusCode);
+
+            if (!reservationsResponse.IsSuccessStatusCode)
+            {
+                _reservationServiceCircuitBreaker.RecordFailure();
+                _logger.LogWarning("Failed to get reservations: {StatusCode}", reservationsResponse.StatusCode);
+                return StatusCode(503, new { message = $"Error receiving reservations from microservice" });
+            }
+
+            _reservationServiceCircuitBreaker.RecordSuccess();
+            var reservationsJsonString = await reservationsResponse.Content.ReadAsStringAsync();
+            var reservations = JsonConvert.DeserializeObject<List<ReservationResponse>>(reservationsJsonString);
+
+            if (reservations == null)
+            {
+                _logger.LogError("Failed to parse reservation data");
+                return StatusCode(503, new { message = "Error parsing reservation data" });
+            }
+
+            _logger.LogInformation("Retrieved {Count} reservations", reservations.Count);
+
+            List<AggregatedReservationResponse> reservationResponses = [];
+            foreach (var reservation in reservations)
+            {
+                reservationResponses.Add(await CreateReservationResponseAsync(reservation));
+            }
+
+            _logger.LogInformation("All reservations processed successfully");
+            return Ok(reservationResponses);
+        }
+        catch (Exception ex)
+        {
+            _reservationServiceCircuitBreaker.RecordFailure();
+            _logger.LogError(ex, "Error getting reservations for user");
             return StatusCode(503, new { message = "Reservation Service unavailable" });
         }
     }
