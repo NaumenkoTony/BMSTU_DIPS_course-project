@@ -150,6 +150,75 @@ public class GatewayController : ControllerBase
         return reservationResponse;
     }
 
+    [Route("api/v1/hotels")]
+    [HttpGet]
+    public async Task<ActionResult<PaginationResponse>> GetHotelsAsync([FromQuery] int page, [FromQuery] int size)
+    {
+        const string methodName = nameof(GetHotelsAsync);
+        using var scope = _logger.BeginScope(new Dictionary<string, object>
+        {
+            ["Method"] = methodName,
+            ["Page"] = page,
+            ["Size"] = size
+        });
+
+        _logger.LogInformation("Getting hotels list");
+
+        if (page < 0 || size < 1)
+        {
+            _logger.LogWarning("Invalid pagination parameters: Page={Page}, Size={Size}", page, size);
+            return BadRequest(new { message = "Invalid pagination parameters" });
+        }
+
+        try
+        {
+            if (!_reservationServiceCircuitBreaker.AllowRequest())
+            {
+                _logger.LogWarning("Reservation service circuit breaker is open");
+                return StatusCode(503, new { message = "Service unavailable. Please try again later." });
+            }
+
+            var reservationService = _httpClientFactory.CreateClient("ReservationService");
+            var hotelsResponse = await reservationService.GetAsync($"/api/v1/hotels?page={page}&size={size}");
+
+            _logger.LogInformation("Reservation service response: {StatusCode}", hotelsResponse.StatusCode);
+
+            if (!hotelsResponse.IsSuccessStatusCode)
+            {
+                _reservationServiceCircuitBreaker.RecordFailure();
+                _logger.LogWarning("Failed to get hotels: {StatusCode}", hotelsResponse.StatusCode);
+                return StatusCode(503, new { message = "Error receiving hotels from microservice" });
+            }
+
+            _reservationServiceCircuitBreaker.RecordSuccess();
+            var hotelsJsonString = await hotelsResponse.Content.ReadAsStringAsync();
+            var hotelsServiceResponse = JsonConvert.DeserializeObject<PaginatedResponse<HotelResponse>>(hotelsJsonString);
+
+            if (hotelsServiceResponse == null)
+            {
+                _logger.LogError("Failed to parse hotel data");
+                return StatusCode(503, new { message = "Error parsing hotel data" });
+            }
+
+            var pagedResponse = new PaginationResponse
+            {
+                Page = page,
+                PageSize = size,
+                TotalElements = hotelsServiceResponse.TotalCount,
+                Items = _mapper.Map<List<HotelResponse>>(hotelsServiceResponse.Items)
+            };
+
+            _logger.LogInformation("Successfully retrieved {Count} hotels", hotelsServiceResponse.Items?.Count ?? 0);
+            return Ok(pagedResponse);
+        }
+        catch (Exception ex)
+        {
+            _reservationServiceCircuitBreaker.RecordFailure();
+            _logger.LogError(ex, "Error getting hotels");
+            return StatusCode(503, new { message = "Reservation Service unavailable" });
+        }
+    }
+
     [Route("/api/v1/me")]
     [HttpGet]
     public async Task<ActionResult<UserInfoResponse>> GetInfoAsync()
