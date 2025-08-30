@@ -6,6 +6,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using IdentityService.Models;
 using System.Security.Cryptography;
+using Microsoft.Extensions.Logging;
 
 namespace IdentityService.Controllers
 {
@@ -65,36 +66,58 @@ namespace IdentityService.Controllers
                 return BadRequest(new { error = "invalid_grant" });
             }
             
+            // Client secret validation
             if (!string.IsNullOrEmpty(client.ClientSecret))
             {
                 if (client.ClientSecret != client_secret)
+                {
+                    _logger.LogWarning("Invalid client secret for client: {ClientId}", client_id);
                     return Unauthorized(new { error = "invalid_client" });
+                }
+                _logger.LogDebug("Client secret validation successful");
             }
+
+            // PKCE validation
             if (client.RequirePkce)
             {
+                _logger.LogDebug("PKCE required for client: {ClientId}", client_id);
+                
                 if (string.IsNullOrEmpty(authCode.CodeChallenge))
+                {
+                    _logger.LogWarning("Missing PKCE challenge for public client: {ClientId}", client_id);
                     return BadRequest(new { error = "invalid_request", error_description = "Missing PKCE for public client" });
+                }
 
                 if (string.IsNullOrEmpty(code_verifier))
+                {
+                    _logger.LogWarning("Missing code_verifier for PKCE: {ClientId}", client_id);
                     return BadRequest(new { error = "invalid_request", error_description = "Missing code_verifier" });
+                }
 
                 string computedChallenge;
                 if (authCode.CodeChallengeMethod == "S256")
                 {
+                    _logger.LogDebug("Using S256 PKCE method");
                     using var sha256 = SHA256.Create();
                     var bytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(code_verifier));
                     computedChallenge = Base64UrlEncode(bytes);
                 }
                 else
                 {
+                    _logger.LogDebug("Using plain PKCE method");
                     computedChallenge = code_verifier;
                 }
 
                 if (computedChallenge != authCode.CodeChallenge)
+                {
+                    _logger.LogWarning("PKCE verification failed for client: {ClientId}", client_id);
                     return BadRequest(new { error = "invalid_grant", error_description = "PKCE verification failed" });
-            }
-            _logger.LogDebug("Client validation successful: {ClientId}", client_id);
+                }
 
+                _logger.LogDebug("PKCE validation successful");
+            }
+
+            _logger.LogDebug("Client validation successful: {ClientId}", client_id);
 
             if (authCode.RedirectUri != redirect_uri)
             {
@@ -138,8 +161,8 @@ namespace IdentityService.Controllers
                     customClaims.Add(new Claim(ClaimTypes.Role, role));
                 }
 
-                _logger.LogDebug("Creating access token for user: {UserId} with claims: {Claims}",
-                    authCode.UserId, string.Join(", ", customClaims.Select(c => c.Type)));
+                _logger.LogDebug("Creating access token for user: {UserId} with {ClaimCount} claims and {RoleCount} roles",
+                    authCode.UserId, customClaims.Count, roles.Count);
 
                 var accessToken = await _tokenService.CreateAccessTokenAsync(
                     authCode.UserId,

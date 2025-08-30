@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using System.Web;
 using IdentityService.Models;
+using Microsoft.Extensions.Logging;
 
 namespace IdentityService.Controllers
 {
@@ -15,9 +16,10 @@ namespace IdentityService.Controllers
         private readonly IAuthorizationCodeStore _codeStore;
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
-        ILogger<AuthorizationController> _logger;
+        private readonly ILogger<AuthorizationController> _logger;
 
-        public AuthorizationController(IClientStore clientStore, IAuthorizationCodeStore codeStore, UserManager<User> userManager, SignInManager<User> signInManager, ILogger<AuthorizationController> logger)
+        public AuthorizationController(IClientStore clientStore, IAuthorizationCodeStore codeStore, 
+            UserManager<User> userManager, SignInManager<User> signInManager, ILogger<AuthorizationController> logger)
         {
             _clientStore = clientStore;
             _codeStore = codeStore;
@@ -36,22 +38,33 @@ namespace IdentityService.Controllers
             [FromQuery] string code_challenge,
             [FromQuery] string code_challenge_method = "plain")
         {
+            _logger.LogInformation("Authorize request: client_id={ClientId}, redirect_uri={RedirectUri}", 
+                client_id, redirect_uri);
+
             var client = await _clientStore.FindClientByIdAsync(client_id);
             if (client == null)
+            {
+                _logger.LogWarning("Unknown client: {ClientId}", client_id);
                 return BadRequest("Unknown client id");
+            }
 
             if (!_clientStore.ValidateRedirectUri(client, redirect_uri))
             {
-                _logger.LogWarning("Invalid redirect_uri. Client: {ClientRedirectUris}, Request: {RequestRedirectUri}", client.RedirectUris, redirect_uri);
+                _logger.LogWarning("Invalid redirect_uri. Client: {ClientRedirectUris}, Request: {RequestRedirectUri}", 
+                    client.RedirectUris, redirect_uri);
                 return BadRequest("Invalid redirect_uri");
             }
 
             var requestedScopes = (scope ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             if (!_clientStore.ValidateScopes(client, requestedScopes))
+            {
+                _logger.LogWarning("Invalid scopes: {Scopes}", scope);
                 return BadRequest("Invalid or unauthorized scopes");
+            }
 
             if (User.Identity?.IsAuthenticated != true)
             {
+                _logger.LogInformation("User not authenticated, redirecting to login");
                 TempData["response_type"] = response_type;
                 TempData["client_id"] = client_id;
                 TempData["redirect_uri"] = redirect_uri;
@@ -63,6 +76,7 @@ namespace IdentityService.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
+            _logger.LogInformation("User already authenticated, issuing authorization code");
             return await IssueAuthorizationCodeAsync(User, client, redirect_uri, requestedScopes, state, code_challenge, code_challenge_method);
         }
 
@@ -76,25 +90,44 @@ namespace IdentityService.Controllers
             [FromQuery] string login,
             [FromQuery] string password)
         {
+            _logger.LogInformation("DirectAuthorize request: client_id={ClientId}, login={Login}", 
+                client_id, login);
+
             var client = await _clientStore.FindClientByIdAsync(client_id);
             if (client == null)
+            {
+                _logger.LogWarning("Unknown client: {ClientId}", client_id);
                 return BadRequest("Unknown client id");
+            }
 
             if (!_clientStore.ValidateRedirectUri(client, redirect_uri))
+            {
+                _logger.LogWarning("Invalid redirect_uri: {RedirectUri}", redirect_uri);
                 return BadRequest("Invalid redirect_uri");
+            }
 
             var requestedScopes = (scope ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             if (!_clientStore.ValidateScopes(client, requestedScopes))
+            {
+                _logger.LogWarning("Invalid scopes: {Scopes}", scope);
                 return BadRequest("Invalid or unauthorized scopes");
+            }
 
             var user = await _userManager.FindByNameAsync(login);
             if (user == null)
+            {
+                _logger.LogWarning("User not found: {Login}", login);
                 return Unauthorized("Invalid username or password");
+            }
 
             var result = await _signInManager.PasswordSignInAsync(user, password, isPersistent: false, lockoutOnFailure: false);
             if (!result.Succeeded)
-                ModelState.AddModelError("", "Invalid username or password");
+            {
+                _logger.LogWarning("Invalid password for user: {Login}", login);
+                return Unauthorized("Invalid username or password");
+            }
 
+            _logger.LogInformation("Direct authentication successful for user: {Login}", login);
             return await IssueAuthorizationCodeAsync(User, client, redirect_uri, requestedScopes, state);
         }
 
@@ -110,12 +143,15 @@ namespace IdentityService.Controllers
             var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrWhiteSpace(userId))
             {
+                _logger.LogError("Authenticated principal has no NameIdentifier");
                 return Forbid("Authenticated principal has no NameIdentifier.");
             }
 
             var code = Guid.NewGuid().ToString("N");
 
-            _logger.LogInformation("Before save - Challenge: {Challenge}, Method: {Method}", codeChallenge, codeChallengeMethod);
+            _logger.LogDebug("Creating authorization code: Challenge={Challenge}, Method={Method}", 
+                codeChallenge, codeChallengeMethod);
+            
             var authCode = new AuthorizationCode
             {
                 Code = code,
@@ -136,6 +172,9 @@ namespace IdentityService.Controllers
             if (!string.IsNullOrEmpty(state))
                 query["state"] = state;
             uriBuilder.Query = query.ToString();
+
+            _logger.LogInformation("Authorization code issued for user {UserId}, redirecting to {RedirectUri}", 
+                userId, uriBuilder.ToString());
 
             return Redirect(uriBuilder.ToString());
         }

@@ -6,15 +6,20 @@ using System.Security.Claims;
 
 namespace IdentityService.Controllers
 {
-    public class AccountController : Controller
+   public class AccountController : Controller
     {
         private readonly SignInManager<User> _signInManager;
         private readonly UserManager<User> _userManager;
+        private readonly ILogger<AccountController> _logger;
 
-        public AccountController(SignInManager<User> signInManager, UserManager<User> userManager)
+        public AccountController(
+            SignInManager<User> signInManager, 
+            UserManager<User> userManager,
+            ILogger<AccountController> logger)
         {
             _signInManager = signInManager;
-            _userManager   = userManager;
+            _userManager = userManager;
+            _logger = logger;
         }
 
         [HttpGet("account/login")]
@@ -23,19 +28,27 @@ namespace IdentityService.Controllers
         [HttpPost("account/login")]
         public async Task<IActionResult> Login(string username, string password)
         {
+            _logger.LogInformation("Login attempt for user: {Username}", username);
+
             var user = await _userManager.FindByNameAsync(username);
             if (user is null)
             {
+                _logger.LogWarning("Login failed - user not found: {Username}", username);
                 ModelState.AddModelError("", "Invalid username or password");
                 return View();
             }
 
+            _logger.LogDebug("User found: {UserId}", user.Id);
+
             var result = await _signInManager.PasswordSignInAsync(user, password, isPersistent: false, lockoutOnFailure: false);
             if (!result.Succeeded)
             {
+                _logger.LogWarning("Login failed - invalid password for user: {Username}", username);
                 ModelState.AddModelError("", "Invalid username or password");
                 return View();
             }
+
+            _logger.LogInformation("Login successful for user: {Username}", username);
 
             var response_type = TempData["response_type"]?.ToString() ?? "code";
             var client_id = TempData["client_id"]?.ToString() ?? "";
@@ -51,7 +64,18 @@ namespace IdentityService.Controllers
         [HttpPost("account/logout")]
         public async Task<IActionResult> Logout()
         {
+            const string methodName = nameof(Logout);
+            using var scope = _logger.BeginScope(new Dictionary<string, object>
+            {
+                ["Method"] = methodName
+            });
+
+            _logger.LogInformation("Logout requested");
+
+            var userName = User.Identity?.Name;
             await _signInManager.SignOutAsync();
+
+            _logger.LogInformation("User logged out: {UserName}", userName);
             return RedirectToAction("Login");
         }
     }

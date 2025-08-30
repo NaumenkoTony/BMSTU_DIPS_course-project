@@ -114,8 +114,19 @@ public class AdminController : ControllerBase
     [HttpGet("users/roles")]
     public IActionResult GetAvailableRoles()
     {
-        var roles = new[] { "User", "Admin" };
-        return Ok(roles);
+        _logger.LogInformation("Retrieving available roles");
+        
+        try
+        {
+            var roles = new[] { "User", "Admin" };
+            _logger.LogDebug("Available roles: {Roles}", string.Join(", ", roles));
+            return Ok(roles);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving available roles");
+            return StatusCode(500, new { error = "Internal server error" });
+        }
     }
 }
 
