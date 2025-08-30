@@ -1,22 +1,16 @@
-using LoyaltyService.Data;
-using LoyaltyService.Data.RepositoriesPostgreSQL;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using LoyaltyService.TokenService;
+using StatisticsService.Data;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<LoyaltiesContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("LoyaltyService")));
+builder.Services.AddDbContext<StatisticsDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddScoped<ILoyalityRepository, LoyalityRepository>();
-
-builder.Services.AddAutoMapper(typeof(Program));
+builder.Services.AddHostedService<KafkaConsumerService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 .AddJwtBearer(options =>
@@ -57,11 +51,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddControllers();
-
-builder.Services.AddEndpointsApiExplorer();
-
 var app = builder.Build();
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -46,7 +46,7 @@ public class AuthorizationController : ControllerBase
 
             var authUrl = $"http://localhost:8000/authorize" +
                         $"?response_type=code" +
-                        $"&client_id=gateway-client" +
+                        $"&client_id=locus-backend-client" +
                         $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
                         $"&scope=openid profile email" +
                         $"&state={Uri.EscapeDataString(state)}";
@@ -104,7 +104,7 @@ public class AuthorizationController : ControllerBase
                 { "grant_type", "authorization_code" },
                 { "code", code },
                 { "redirect_uri", "http://localhost:8080/api/v1/authorize/callback" },
-                { "client_id", "gateway-client" },
+                { "client_id", "locus-backend-client" },
                 { "client_secret", "JDgvvoMQxxC7IWdpkBP8a4MkQE1KxjNTZQ0o2_8avjbfj7zIcGRyMGBReydOCZx3" }
             });
 
@@ -175,7 +175,7 @@ public class AuthorizationController : ControllerBase
 
             var authUrl = $"http://localhost:8000/directauthorize" +
                         $"?response_type=code" +
-                        $"&client_id=gateway-client" +
+                        $"&client_id=locus-backend-client" +
                         $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
                         $"&scope=openid profile email" +
                         $"&state={Uri.EscapeDataString(state)}" +

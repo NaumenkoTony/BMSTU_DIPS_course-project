@@ -11,6 +11,9 @@ public class Client
 
     [Required]
     public string ClientId { get; set; } = null!;
+    
+    [Required]
+    public required string Audience { get; set; }
 
     public string? ClientSecret { get; set; }
 

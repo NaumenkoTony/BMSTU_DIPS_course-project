@@ -19,6 +19,7 @@ namespace IdentityService.Data
             {
                 entity.HasKey(c => c.Id);
                 entity.Property(c => c.ClientId).IsRequired();
+                entity.Property(c => c.Audience).IsRequired();
                 entity.Property(c => c.ClientSecret);
                 entity.Property(c => c.RedirectUris).IsRequired();
                 entity.Property(c => c.AllowedScopes).IsRequired();

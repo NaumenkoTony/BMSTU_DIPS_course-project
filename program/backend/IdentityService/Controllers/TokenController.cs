@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using IdentityService.Models;
 using System.Security.Cryptography;
 using Microsoft.Extensions.Logging;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace IdentityService.Controllers
 {
@@ -66,7 +67,6 @@ namespace IdentityService.Controllers
                 return BadRequest(new { error = "invalid_grant" });
             }
             
-            // Client secret validation
             if (!string.IsNullOrEmpty(client.ClientSecret))
             {
                 if (client.ClientSecret != client_secret)
@@ -77,7 +77,6 @@ namespace IdentityService.Controllers
                 _logger.LogDebug("Client secret validation successful");
             }
 
-            // PKCE validation
             if (client.RequirePkce)
             {
                 _logger.LogDebug("PKCE required for client: {ClientId}", client_id);
@@ -147,34 +146,36 @@ namespace IdentityService.Controllers
 
             try
             {
-                var customClaims = new[]
+                var claims = new List<Claim>
                 {
-                    new Claim(ClaimTypes.Name, user.UserName),
-                    new Claim(ClaimTypes.Email, user.Email),
-                    new Claim("preferred_username", user.UserName),
-                    new Claim("name", $"{user.FirstName} {user.LastName}".Trim())
-                }.Where(c => !string.IsNullOrEmpty(c.Value)).ToList();
+                    new (ClaimTypes.Name, user.UserName),
+                    new ("preferred_username", user.UserName),
+                    new ("name", $"{user.FirstName} {user.LastName}".Trim()),
+                    new (ClaimTypes.Email, user.Email ?? ""),
+                    new ("auth_time", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()),
+                    new ("scope", string.Join(" ", scopes)),
+                };
 
                 var roles = await _userManager.GetRolesAsync(user);
                 foreach (var role in roles)
                 {
-                    customClaims.Add(new Claim(ClaimTypes.Role, role));
+                    claims.Add(new Claim(ClaimTypes.Role, role));
                 }
 
                 _logger.LogDebug("Creating access token for user: {UserId} with {ClaimCount} claims and {RoleCount} roles",
-                    authCode.UserId, customClaims.Count, roles.Count);
+                    authCode.UserId, claims.Count, roles.Count);
 
                 var accessToken = await _tokenService.CreateAccessTokenAsync(
                     authCode.UserId,
-                    "resource_server",
-                    customClaims,
+                    client.Audience,
+                    claims,
                     scopes);
 
                 _logger.LogDebug("Creating ID token for user: {UserId}", authCode.UserId);
                 var idToken = await _tokenService.CreateIdTokenAsync(
                     authCode.UserId,
-                    client.ClientId,
-                    customClaims,
+                    client.Audience,
+                    claims,
                     scopes);
 
                 _logger.LogDebug("Removing used authorization code: {Code}", code);

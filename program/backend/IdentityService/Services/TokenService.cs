@@ -25,20 +25,19 @@ namespace IdentityService.Services
 
             var jwtClaims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, subject),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(JwtRegisteredClaimNames.Iss, _issuer),
-                new Claim(JwtRegisteredClaimNames.Aud, audience),
-                new Claim(JwtRegisteredClaimNames.Iat, 
-                          new DateTimeOffset(now).ToUnixTimeSeconds().ToString(),
-                          ClaimValueTypes.Integer64)
+                new(JwtRegisteredClaimNames.Sub, subject),
+                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new(JwtRegisteredClaimNames.Iss, _issuer),
+                new(JwtRegisteredClaimNames.Aud, audience),
+                new(JwtRegisteredClaimNames.Iat,
+                        new DateTimeOffset(now).ToUnixTimeSeconds().ToString(),
+                        ClaimValueTypes.Integer64)
             };
 
             jwtClaims.AddRange(claims);
 
             var token = new JwtSecurityToken(
                 issuer: _issuer,
-                audience: audience,
                 claims: jwtClaims,
                 notBefore: now,
                 expires: now.Add(lifetime),
@@ -48,29 +47,25 @@ namespace IdentityService.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public Task<string> CreateIdTokenAsync(string userId, string clientId, IEnumerable<Claim> userClaims, string[] scopes)
+        public Task<string> CreateIdTokenAsync(string userId, string audience, IEnumerable<Claim> userClaims, string[] scopes)
         {
             var claims = new List<Claim>
             {
-                new Claim("scope", string.Join(" ", scopes)),
-                new Claim("auth_time", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString())
+                new("name", userClaims.FirstOrDefault(c => c.Type == "name")?.Value ?? ""),
+                new("email", userClaims.FirstOrDefault(c => c.Type == "email")?.Value ?? ""),
+                new("auth_time", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString())
             };
 
-            claims.AddRange(userClaims);
-
-            return Task.FromResult(CreateToken(userId, clientId, claims, TimeSpan.FromMinutes(60)));
+            return Task.FromResult(CreateToken(userId, audience, claims, TimeSpan.FromMinutes(60)));
         }
 
         public Task<string> CreateAccessTokenAsync(string userId, string audience, IEnumerable<Claim> userClaims, string[] scopes)
         {
-            var claims = new List<Claim>
-            {
-                new Claim("scope", string.Join(" ", scopes))
-            };
-
+            var claims = new List<Claim>();
             claims.AddRange(userClaims);
 
-            return Task.FromResult(CreateToken(userId, audience, claims, TimeSpan.FromMinutes(60)));
+            return Task.FromResult(CreateToken(userId, audience, claims, TimeSpan.FromMinutes(15)));
         }
+
     }
 }

@@ -74,7 +74,6 @@ export function CallbackPage({ onLogin }: CallbackPageProps) {
         localStorage.setItem("access_token", tokenData.access_token);
         localStorage.setItem("token_type", tokenData.token_type);
         localStorage.setItem("expires_in", tokenData.expires_in.toString());
-
         onLogin(tokenData.access_token);
         setStatus("success");
 

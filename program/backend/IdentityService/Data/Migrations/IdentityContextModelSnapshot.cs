@@ -3,20 +3,17 @@ using System;
 using IdentityService.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace IdentityService.Migrations
+namespace IdentityService.Data.Migrations
 {
     [DbContext(typeof(IdentityContext))]
-    [Migration("20250826183212_InitialCreate")]
-    partial class InitialCreate
+    partial class IdentityContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -69,6 +66,10 @@ namespace IdentityService.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("AllowedScopes")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Audience")
                         .IsRequired()
                         .HasColumnType("text");
 

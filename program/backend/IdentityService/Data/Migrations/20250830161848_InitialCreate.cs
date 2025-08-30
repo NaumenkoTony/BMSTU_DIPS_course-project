@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace IdentityService.Migrations
+namespace IdentityService.Data.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -77,6 +77,7 @@ namespace IdentityService.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ClientId = table.Column<string>(type: "text", nullable: false),
+                    Audience = table.Column<string>(type: "text", nullable: false),
                     ClientSecret = table.Column<string>(type: "text", nullable: true),
                     RedirectUris = table.Column<string>(type: "text", nullable: false),
                     AllowedScopes = table.Column<string>(type: "text", nullable: false),

@@ -102,6 +102,57 @@ services:
     volumes:
       - ./IdentityService/Database/db-data:/var/lib/postgresql/data
 
+  # statistics_service:
+  #   container_name: StatisticsService
+  #   build:
+  #     context: .
+  #     dockerfile: ./StatisticsService/Dockerfile
+  #   image: tonynm/statistics_service
+  #   restart: on-failure
+  #   depends_on:
+  #     - statistics_database
+  #     - kafka
+  #   ports:
+  #     - "8010:8090"
+
+  # statistics_database:
+  #   container_name: StatisticsDatabase
+  #   image: library/postgres:13
+  #   restart: on-failure
+  #   environment:
+  #     POSTGRES_USER: postgres_statistics
+  #     POSTGRES_PASSWORD: "postgres_statistics"
+  #     POSTGRES_DB: postgres_statistics
+  #   volumes:
+  #     - ./StatisticsService/Database/db-data:/var/lib/postgresql/data
+  #     - ./StatisticsService/Database/db-scripts/:/docker-entrypoint-initdb.d/
+  #   ports:
+  #     - "8011:5432"
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+
   gateway_service:
     container_name: GatewayService
     build:

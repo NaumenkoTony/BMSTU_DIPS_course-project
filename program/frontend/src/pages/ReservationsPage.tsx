@@ -24,14 +24,18 @@ export default function ReservationsPage() {
     fetchData();
   }, []);
 
+  const [isLoading, setIsLoading] = useState(false);
   const handleCancel = async (uid: string) => {
     try {
+      setIsLoading(true);
       await unbookHotel(uid);
       setReservations((prev) => prev.filter((r) => r.reservationUid !== uid));
       const res = (await getReservations()).reverse();
       setReservations(res);
     } catch (err: any) {
       alert(err?.message ?? "Ошибка при отмене");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -220,17 +224,19 @@ export default function ReservationsPage() {
 
                   {showCancelButton && (
                     <div className="cancel-section">
-                      <Button
-                        color="red"
-                        variant="outline"
-                        onClick={() => handleCancel(r.reservationUid)}
-                        className="cancel-btn"
-                        size="sm"
-                        fullWidth
-                      >
-                        Отменить бронирование
-                      </Button>
-                    </div>
+                    <Button
+                      color="red"
+                      variant="outline"
+                      onClick={() => handleCancel(r.reservationUid)}
+                      className="cancel-btn"
+                      size="sm"
+                      fullWidth
+                      loading={isLoading}
+                      loaderProps={{ type: 'dots' }}
+                    >
+                      {isLoading ? 'Отмена...' : 'Отменить бронирование'}
+                    </Button>
+                  </div>
                   )}
                 </Card>
               );

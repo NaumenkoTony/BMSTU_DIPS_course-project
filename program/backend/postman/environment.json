@@ -19,7 +19,7 @@
 		},
 		{
 		"key": "client_id",
-		"value": "gateway-client",
+		"value": "locus-backend-client",
 		"enabled": true
 		},
 		{
