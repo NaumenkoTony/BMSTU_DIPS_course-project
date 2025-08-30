@@ -25,7 +25,7 @@ INSERT INTO loyalty (
 VALUES (
     2, 
     'admin',
-    0,
-    'BRONZE', 
-    0
+    20,
+    'GOLD', 
+    10
 );

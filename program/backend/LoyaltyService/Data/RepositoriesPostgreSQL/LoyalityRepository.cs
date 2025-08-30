@@ -10,27 +10,42 @@ public class LoyalityRepository(LoyaltiesContext context) : Repository<Loyalty>(
 
     public async Task<Loyalty?> GetLoyalityByUsername(string username)
     {
-        return await db.Loyalties.FirstOrDefaultAsync(r => r.Username == username);
+        var loyalty = await db.Loyalties.FirstOrDefaultAsync(r => r.Username == username);
+        if (loyalty == null)
+        {
+            await CreateLoyalityUser(username);
+            loyalty = await db.Loyalties.FirstOrDefaultAsync(r => r.Username == username);
+        }
+        return loyalty;        
     }
+
 
     public async Task ImproveLoyality(string username)
     {
         var loyalty = await db.Loyalties.FirstOrDefaultAsync(r => r.Username == username);
 
+        if (loyalty == null)
+        {
+            await CreateLoyalityUser(username);
+            loyalty = await db.Loyalties.FirstOrDefaultAsync(r => r.Username == username);
+        }
         if (loyalty != null)
         {
             loyalty.ReservationCount++;
             if (loyalty.ReservationCount >= 20)
             {
                 loyalty.Status = "GOLD";
+                loyalty.Discount = 10;
             }
             else if (loyalty.ReservationCount >= 10)
             {
                 loyalty.Status = "SILVER";
+                loyalty.Discount = 7;
             }
             else
             {
                 loyalty.Status = "BRONZE";
+                loyalty.Discount = 5;
             }
 
             await db.SaveChangesAsync();
@@ -45,20 +60,29 @@ public class LoyalityRepository(LoyaltiesContext context) : Repository<Loyalty>(
     {
         var loyalty = await db.Loyalties.FirstOrDefaultAsync(r => r.Username == username);
 
+        if (loyalty == null)
+        {
+            
+            await CreateLoyalityUser(username);
+            loyalty = await db.Loyalties.FirstOrDefaultAsync(r => r.Username == username);
+        }
         if (loyalty != null)
         {
             loyalty.ReservationCount--;
             if (loyalty.ReservationCount >= 20)
             {
                 loyalty.Status = "GOLD";
+                loyalty.Discount = 10;
             }
             else if (loyalty.ReservationCount >= 10)
             {
                 loyalty.Status = "SILVER";
+                loyalty.Discount = 7;
             }
             else
             {
                 loyalty.Status = "BRONZE";
+                loyalty.Discount = 5;
             }
 
             await db.SaveChangesAsync();
@@ -67,5 +91,15 @@ public class LoyalityRepository(LoyaltiesContext context) : Repository<Loyalty>(
         {
             throw new Exception("User not found");
         }
+    }
+
+    public async Task CreateLoyalityUser(string username)
+    {
+        await db.Loyalties.AddAsync(new()
+        {
+            Username = username,
+            Discount = 5
+        });
+        await db.SaveChangesAsync();
     }
 }

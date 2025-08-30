@@ -40,4 +40,13 @@ public class LoyaltiesController(ILoyalityRepository repository, IMapper mapper,
         await repository.DegradeLoyality(username);
         return Ok();
     }
+
+    [Route("/api/v1/[controller]/create-user")]
+    [Authorize(Roles = "Admin")]
+    [HttpPost]
+    public async Task<ActionResult> CreateLoyalityUser([FromBody] string username)
+    {
+        await repository.CreateLoyalityUser(username);
+        return Ok();
+    }
 }

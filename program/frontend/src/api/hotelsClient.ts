@@ -22,10 +22,10 @@ export interface HotelsPaginationResponse {
   totalPages: number;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api/v1";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 export async function getHotels(page: number = 1, pageSize: number = 10): Promise<PaginationResponse<HotelResponse>> {
-  const res = await fetch(`${API_URL}/hotels?page=${page}&size=${pageSize}`, {
+  const res = await fetch(`${API_URL}/api/v1/hotels?page=${page}&size=${pageSize}`, {
     headers: {
       Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,
     },

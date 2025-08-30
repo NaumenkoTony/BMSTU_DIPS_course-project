@@ -66,7 +66,7 @@ export function App() {
     const response = await fetch(AUTH_URL + 'account/logout', {
       method: 'POST',
       credentials: 'include',
-      mode: 'cors' // явно указываем CORS
+      mode: 'cors'
     });
 
     console.log('Logout attempt completed with status:', response.status);

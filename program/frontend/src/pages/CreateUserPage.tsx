@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { Container, TextInput, PasswordInput, Button, Select, Alert, LoadingOverlay, Paper, Title } from "@mantine/core";
+import { useState, useEffect } from "react";
+import { Container, TextInput, PasswordInput, Button, Select, Alert, LoadingOverlay, Paper, Title, Loader } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { IconCheck, IconX, IconUserPlus } from "@tabler/icons-react";
 import { createUser, type CreateUserRequest } from "../api/AdminClient";
+import { getAvailableRoles } from "../api/AdminClient";
 import "./CreateUserPage.css";
 
 interface CreateUserForm extends CreateUserRequest { }
@@ -10,6 +11,26 @@ interface CreateUserForm extends CreateUserRequest { }
 export default function CreateUserPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [availableRoles, setAvailableRoles] = useState<string[]>([]);
+  const [rolesLoading, setRolesLoading] = useState(true);
+  const [rolesError, setRolesError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadRoles = async () => {
+      try {
+        setRolesLoading(true);
+        const roles = await getAvailableRoles();
+        setAvailableRoles(roles);
+      } catch (error) {
+        setRolesError(error instanceof Error ? error.message : 'Ошибка загрузки ролей');
+        console.error('Failed to load roles:', error);
+      } finally {
+        setRolesLoading(false);
+      }
+    };
+
+    loadRoles();
+  }, []);
 
   const form = useForm<CreateUserForm>({
     initialValues: {
@@ -25,7 +46,7 @@ export default function CreateUserPage() {
       email: (value) => !/^\S+@\S+$/.test(value) ? 'Некорректный email' : null,
       firstName: (value) => value.length < 2 ? 'Имя слишком короткое' : null,
       lastName: (value) => value.length < 2 ? 'Фамилия слишком короткая' : null,
-      password: (value) => value.length < 6 ? 'Пароль должен быть не менее 6 символов' : null,
+      password: (value) => value.length < 6 ? 'Пароль должен быть не менее 6 символов, заглавной буквы и спецсимвола' : null,
     },
   });
 
@@ -117,23 +138,33 @@ export default function CreateUserPage() {
 
               <PasswordInput
                 label="Пароль"
-                placeholder="Не менее 6 символов"
+                placeholder="Не менее 6 символов, заглавной буквы и спецсимвола"
                 required
                 size="md"
                 className="create-user-input"
                 {...form.getInputProps('password')}
               />
 
-              <Select
-                label="Роли"
-                placeholder="Выберите роли"
-                data={['User', 'Admin']}
-                defaultValue={['User']}
-                multiple
-                className="create-user-input"
-                {...form.getInputProps('roles', { type: 'input' })}
-              />
-
+              {rolesLoading ? (
+                <div className="roles-loading">
+                  <Loader size="sm" />
+                  <span>Загрузка ролей...</span>
+                </div>
+              ) : rolesError ? (
+                <Alert color="yellow" className="roles-error">
+                  Не удалось загрузить роли: {rolesError}
+                </Alert>
+              ) : (
+                <Select
+                  label="Роли"
+                  placeholder="Выберите роли"
+                  data={availableRoles} // Используем загруженные роли
+                  defaultValue={['User']}
+                  multiple
+                  className="create-user-input"
+                  {...form.getInputProps('roles')}
+                />
+              )}
 
               <Button
                 type="submit"

@@ -28,6 +28,8 @@ export default function ReservationsPage() {
     try {
       await unbookHotel(uid);
       setReservations((prev) => prev.filter((r) => r.reservationUid !== uid));
+      const res = (await getReservations()).reverse();
+      setReservations(res);
     } catch (err: any) {
       alert(err?.message ?? "Ошибка при отмене");
     }
