@@ -29,7 +29,7 @@ public class LoyaltiesController : Controller
 
     private string GetUserId()
     {
-        return User.FindFirst("sub")?.Value ?? "unknown";
+        return User.FindFirst("user_id")?.Value ?? "unknown";
     }
 
     private string GetUsername()
@@ -57,7 +57,7 @@ public class LoyaltiesController : Controller
                         Service: "Loyalty",
                         Action: action,
                         Status: status,
-                        Timestamp: DateTime.UtcNow,
+                        Timestamp: DateTimeOffset.UtcNow,
                         Metadata: metadata ?? new Dictionary<string, object>()
                     ),
                     cts.Token
@@ -151,32 +151,42 @@ public class LoyaltiesController : Controller
     public async Task<ActionResult> DegradeLoyality()
     {
         var username = _tokenService.GetUsernameFromJWT();
-        var oldLoyalty = await _repository.GetLoyalityByUsername(username);
         _logger.LogInformation("Degrade loyalty request from user: {Username}", username);
-        var newLoyalty = await _repository.GetLoyalityByUsername(username);
-
-        await PublishUserActionAsync(
-                        action: "LoyaltyDegraded",
-                        status: "Success",
-                        metadata: new Dictionary<string, object>
-                        {
-                            ["OldStatus"] = oldLoyalty?.Status ?? "None",
-                            ["NewStatus"] = newLoyalty?.Status ?? "None",
-                            ["OldDiscount"] = oldLoyalty?.Discount ?? 0,
-                            ["NewDiscount"] = newLoyalty?.Discount ?? 0,
-                            ["Reason"] = "ManualDegradation",
-                            ["ReservationCount"] = newLoyalty?.ReservationCount ?? 0
-                        }
-                    );
 
         try
         {
+            var oldLoyalty = await _repository.GetLoyalityByUsername(username);
             await _repository.DegradeLoyality(username);
+            var newLoyalty = await _repository.GetLoyalityByUsername(username);
+
+            await PublishUserActionAsync(
+                action: "LoyaltyDegraded",
+                status: "Success",
+                metadata: new Dictionary<string, object>
+                {
+                    ["OldStatus"] = oldLoyalty?.Status ?? "None",
+                    ["NewStatus"] = newLoyalty?.Status ?? "None",
+                    ["OldDiscount"] = oldLoyalty?.Discount ?? 0,
+                    ["NewDiscount"] = newLoyalty?.Discount ?? 0,
+                    ["Reason"] = "ManualDegradation",
+                    ["ReservationCount"] = newLoyalty?.ReservationCount ?? 0
+                }
+            );
+
             _logger.LogInformation("Loyalty degraded for user: {Username}", username);
             return Ok();
         }
         catch (Exception ex)
         {
+            await PublishUserActionAsync(
+                action: "LoyaltyDegraded",
+                status: "Failed",
+                metadata: new Dictionary<string, object>
+                {
+                    ["Error"] = ex.Message
+                }
+            );
+
             _logger.LogError(ex, "Error degrading loyalty for user: {Username}", username);
             return StatusCode(500, "Internal server error");
         }

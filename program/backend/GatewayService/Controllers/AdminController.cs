@@ -202,8 +202,8 @@ public class AdminController : ControllerBase
             throw;
         }
     }
-    
-    [HttpGet("statistics")]
+
+    [HttpGet("summary")]
     public async Task<IActionResult> GetSummary()
     {
         var client = _httpClientFactory.CreateClient("StatisticsService");
@@ -211,4 +211,19 @@ public class AdminController : ControllerBase
         var content = await response.Content.ReadAsStringAsync();
         return Content(content, "application/json");
     }
+
+    [HttpGet("recent")]
+    public async Task<IActionResult> GetRecent([FromQuery] int page = 1, [FromQuery] int pageSize = 50, [FromQuery] string? username = null)
+    {
+        var client = _httpClientFactory.CreateClient("StatisticsService");
+
+        var url = $"/api/v1/statistics/recent?page={page}&pageSize={pageSize}";
+        if (!string.IsNullOrEmpty(username))
+            url += $"&username={Uri.EscapeDataString(username)}";
+
+        var response = await client.GetAsync(url);
+        var content = await response.Content.ReadAsStringAsync();
+        return Content(content, "application/json");
+    }
+
 }

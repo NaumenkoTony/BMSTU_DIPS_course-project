@@ -105,7 +105,7 @@ export function App() {
           element={isAuthenticated && isAdmin ? <CreateUserPage /> : <LoginPage />}
         />
         <Route
-          path="/admin/create-user"
+          path="/admin/statistics"
           element={isAuthenticated && isAdmin ? <StatisticsPage /> : <LoginPage />}
         />
       </Routes>

@@ -52,8 +52,8 @@ namespace StatisticsService.Data.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("Timestamp")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Topic")
                         .IsRequired()

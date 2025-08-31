@@ -12,7 +12,7 @@ using StatisticsService.Data;
 namespace StatisticsService.Data.Migrations
 {
     [DbContext(typeof(StatisticsDbContext))]
-    [Migration("20250831145521_InitialCreate")]
+    [Migration("20250831205405_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -55,8 +55,8 @@ namespace StatisticsService.Data.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("Timestamp")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Topic")
                         .IsRequired()

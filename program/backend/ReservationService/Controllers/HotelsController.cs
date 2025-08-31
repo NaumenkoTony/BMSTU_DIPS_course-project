@@ -26,7 +26,7 @@ public class HotelsController : Controller
 
     private string GetUserId()
     {
-        return User.FindFirst("sub")?.Value ?? "unknown";
+        return User.FindFirst("user_id")?.Value ?? "unknown";
     }
 
     private string GetUsername()
@@ -51,10 +51,10 @@ public class HotelsController : Controller
                     message: new UserAction(
                         UserId: userId,
                         Username: username,
-                        Service: "Reservations",
+                        Service: "Reservation",
                         Action: action,
                         Status: status,
-                        Timestamp: DateTime.UtcNow,
+                        Timestamp: DateTimeOffset.UtcNow,
                         Metadata: metadata ?? new Dictionary<string, object>()
                     ),
                     cts.Token

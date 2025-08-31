@@ -61,10 +61,10 @@ builder.Services.AddAuthorization();
 using var admin = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = "kafka:9092" }).Build();
 try
 {
-    await admin.CreateTopicsAsync(new TopicSpecification[]
-    {
+    await admin.CreateTopicsAsync(
+    [
         new TopicSpecification { Name = "user-actions", NumPartitions = 5, ReplicationFactor = 1 }
-    });
+    ]);
 }
 catch (CreateTopicsException e) when (e.Results.All(r => r.Error.Code == ErrorCode.TopicAlreadyExists))
 {

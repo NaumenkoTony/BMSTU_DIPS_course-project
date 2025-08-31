@@ -63,7 +63,9 @@ namespace StatisticsService.Kafka
                     {
                         UserId = dto!.UserId,
                         Username = dto.Username,
+                        Service = dto.Service,
                         Action = dto.Action,
+                        Status = dto.Status,
                         Timestamp = dto.Timestamp,
                         MetadataJson = dto.Metadata != null ? JsonSerializer.Serialize(dto.Metadata) : null,
 

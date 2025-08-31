@@ -10,5 +10,5 @@ public interface ILoyalityRepository : IRepository<Loyalty>
     public Task ImproveLoyality(string username);
     public Task DegradeLoyality(string username);
 
-    public Task CreateLoyalityUser(string username);
+    public Task<Loyalty> CreateLoyalityUser(string username);
 }

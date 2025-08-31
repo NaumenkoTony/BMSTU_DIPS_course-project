@@ -21,7 +21,7 @@ namespace StatisticsService.Data.Migrations
                     Service = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
                     Action = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
                     Status = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Timestamp = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     MetadataJson = table.Column<string>(type: "jsonb", nullable: true),
                     Topic = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
                     Partition = table.Column<int>(type: "integer", nullable: false),

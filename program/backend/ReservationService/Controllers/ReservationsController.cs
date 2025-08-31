@@ -31,7 +31,7 @@ public class ReservationsController : Controller
 
     private string GetUserId()
     {
-        return User.FindFirst("sub")?.Value ?? "unknown";
+        return User.FindFirst("user_id")?.Value ?? "unknown";
     }
 
     private string GetUsername()
@@ -59,7 +59,7 @@ public class ReservationsController : Controller
                         Service: "Reservation",
                         Action: action,
                         Status: status,
-                        Timestamp: DateTime.UtcNow,
+                        Timestamp: DateTimeOffset.UtcNow,
                         Metadata: metadata ?? new Dictionary<string, object>()
                     ),
                     cts.Token

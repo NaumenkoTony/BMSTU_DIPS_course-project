@@ -79,13 +79,12 @@ export default function ProfilePage() {
         <Card shadow="lg" radius="lg" p={0} className="profile-main-card">
           <div className="profile-header-card">
             <div className="header-content">
-              <IconUser size={32} color="white" />
-              <h1 className="header-title">
+              <div className="title">
                 Профиль
-              </h1>
-              <p className="header-subtitle">
+              </div>
+              <Text size="m" className="header-subtitle">
                 Ваша личная информация и статус лояльности
-              </p>
+              </Text>
             </div>
           </div>
 

@@ -9,7 +9,7 @@ public class UserActionEntity
     public string Service { get; set; } = null!;
     public string Action { get; set; } = null!;
     public string Status { get; set; } = null!;
-    public DateTime Timestamp { get; set; }
+    public DateTimeOffset Timestamp { get; set; }
 
     public string? MetadataJson { get; set; }
 
