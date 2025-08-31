@@ -17,7 +17,9 @@ public class StatisticsDbContext : DbContext
 
         ua.Property(p => p.UserId).HasMaxLength(128).IsRequired();
         ua.Property(p => p.Username).HasMaxLength(128).IsRequired();
+        ua.Property(p => p.Service).HasMaxLength(128).IsRequired();
         ua.Property(p => p.Action).HasMaxLength(128).IsRequired();
+        ua.Property(p => p.Status).HasMaxLength(128).IsRequired();
         ua.Property(p => p.Timestamp).IsRequired();
 
         ua.Property(p => p.MetadataJson).HasColumnType("jsonb").IsRequired(false);

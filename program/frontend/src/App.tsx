@@ -10,6 +10,7 @@ import ProfilePage from "./pages/ProfilePage";
 import LoginPage from "./pages/LoginPage";
 import { CallbackPage } from "./pages/CallBackPage";
 import CreateUserPage from "./pages/CreateUserPage";
+import StatisticsPage from "./pages/StatisticsPage";
 
 interface DecodedToken {
   exp: number;
@@ -102,6 +103,10 @@ export function App() {
         <Route
           path="/admin/create-user"
           element={isAuthenticated && isAdmin ? <CreateUserPage /> : <LoginPage />}
+        />
+        <Route
+          path="/admin/create-user"
+          element={isAuthenticated && isAdmin ? <StatisticsPage /> : <LoginPage />}
         />
       </Routes>
     </>

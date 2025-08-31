@@ -31,8 +31,8 @@ export default function NavBar({ isAuthenticated, isAdmin, onLogout }: NavBarPro
             
             {isAdmin && (
               <Group gap="xs">
-                <Button variant="subtle" component={Link} to="/reports" className="nav-btn">
-                  Отчёты
+                <Button variant="subtle" component={Link} to="/statistics" className="nav-btn">
+                  Статистика
                 </Button>
                 <Button variant="subtle" component={Link} to="/admin/create-user" className="nav-btn">
                   Создать пользователя

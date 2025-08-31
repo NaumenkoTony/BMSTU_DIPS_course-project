@@ -14,17 +14,50 @@ public class ReservationsController : Controller
     private readonly IReservationRepository _repository;
     private readonly IHotelRepository _hotelRepository;
     private readonly IMapper _mapper;
+    private readonly IKafkaProducer _kafkaProducer;
     private readonly ILogger<ReservationsController> _logger;
     private readonly ITokenService _tokenService;
 
     public ReservationsController(IReservationRepository repository, IHotelRepository hotelRepository, 
-        IMapper mapper, ITokenService tokenService, ILogger<ReservationsController> logger)
+        IMapper mapper, ITokenService tokenService, IKafkaProducer kafkaProducer, ILogger<ReservationsController> logger)
     {
         _repository = repository;
         _hotelRepository = hotelRepository;
         _mapper = mapper;
         _tokenService = tokenService;
+        _kafkaProducer = kafkaProducer;
         _logger = logger;
+    }
+
+    private string GetUserId()
+    {
+        return User.FindFirst("sub")?.Value ?? "unknown";
+    }
+
+    private string GetUsername()
+    {
+        return User.Identity?.Name ?? "unknown";
+    }
+
+    private async Task PublishUserActionAsync(string action, string status, Dictionary<string, object> metadata = null)
+    {
+        var userId = GetUserId();
+        var username = GetUsername();
+
+        await _kafkaProducer.PublishAsync(
+            topic: "user-actions",
+            key: userId,
+            message: new UserAction(
+                UserId: userId,
+                Username: username,
+                Service: "Reservations",
+                Action: action,
+                Status: status,
+                Timestamp: DateTime.UtcNow,
+                Metadata: metadata ?? new Dictionary<string, object>()
+            ),
+            CancellationToken.None
+        );
     }
 
     [Route("/api/v1/[controller]")]
@@ -40,12 +73,35 @@ public class ReservationsController : Controller
             
             _logger.LogInformation("Found {Count} reservations for user: {Username}", 
                 reservations.Count(), username);
+
+             await PublishUserActionAsync(
+                action: "ReservationsListViewed",
+                status: "Success",
+                metadata: new Dictionary<string, object>
+                {
+                    ["ReservationsCount"] = reservations.Count(),
+                    ["ActiveReservations"] = reservations.Count(r => r.Status == "PAID"),
+                    ["CancelledReservations"] = reservations.Count(r => r.Status == "CANCELLED"),
+                    ["FirstReservationUid"] = reservations.FirstOrDefault()?.ReservationUid,
+                    ["LastReservationUid"] = reservations.LastOrDefault()?.ReservationUid
+                }
+            );
             
             return Ok(_mapper.Map<IEnumerable<ReservationResponse>>(reservations));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting reservations for user: {Username}", username);
+
+            await PublishUserActionAsync(
+                action: "ReservationsListViewed",
+                status: "Failed",
+                metadata: new Dictionary<string, object>
+                {
+                    ["Error"] = ex.Message
+                }
+            );
+
             return StatusCode(500, "Internal server error");
         }
     }
@@ -66,12 +122,39 @@ public class ReservationsController : Controller
             _logger.LogInformation("Reservation created successfully. UID: {ReservationUid}, ID: {ReservationId}", 
                 reservation.ReservationUid, reservation.Id);
 
+            await PublishUserActionAsync(
+            action: "ReservationCreated",
+            status: "Success",
+            metadata: new Dictionary<string, object>
+            {
+                ["ReservationUid"] = reservation.ReservationUid,
+                ["HotelUid"] = reservation.Hotel?.HotelUid,
+                ["HotelName"] = reservation.Hotel?.Name,
+                ["Country"] = reservation.Hotel?.Country,
+                ["City"] = reservation.Hotel?.City,
+                ["StartDate"] = reservation.StartDate,
+                ["EndDate"] = reservation.EndData,
+                ["Status"] = reservation.Status
+            });
+
             return Ok(reservation);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating reservation for user: {Username}. HotelId: {HotelId}", 
                 username, reservationRequest.HotelId);
+
+            await PublishUserActionAsync(
+            action: "ReservationCreated",
+            status: "Failed",
+            metadata: new Dictionary<string, object>
+            {
+                ["HotelId"] = reservationRequest.HotelId,
+                ["StartDate"] = reservationRequest.StartDate,
+                ["EndDate"] = reservationRequest.EndData,
+                ["Error"] = ex.Message
+            });
+
             return StatusCode(500, "Internal server error");
         }
     }
@@ -91,13 +174,39 @@ public class ReservationsController : Controller
             if (reservation == null)
             {
                 _logger.LogWarning("Reservation not found for update. UID: {ReservationUid}", reservationResponse.ReservationUid);
+
+                await PublishUserActionAsync(
+                    action: "ReservationUpdated",
+                    status: "NotFound",
+                    metadata: new Dictionary<string, object>
+                    {
+                        ["ReservationUid"] = reservationResponse.ReservationUid,
+                        ["Error"] = "Reservation not found"
+                    }
+                );
+
                 return NotFound();
             }
 
+            var oldStatus = reservation.Status;
             var newModel = _mapper.Map<Reservation>(reservationResponse);
             newModel.Id = reservation.Id;
 
             await _repository.UpdateAsync(newModel, reservation.Id);
+
+            await PublishUserActionAsync(
+                action: "ReservationUpdated",
+                status: "Success",
+                metadata: new Dictionary<string, object>
+                {
+                    ["ReservationUid"] = reservationResponse.ReservationUid,
+                    ["OldStatus"] = oldStatus,
+                    ["NewStatus"] = reservationResponse.Status,
+                    ["StartDate"] = reservation.StartDate,
+                    ["EndDate"] = reservation.EndData,
+                    ["UpdatedDate"] = DateTime.UtcNow,
+                }
+            );
 
             _logger.LogInformation("Reservation updated successfully. UID: {ReservationUid}, Old Status: {OldStatus}, New Status: {NewStatus}", 
                 reservationResponse.ReservationUid, reservation.Status, reservationResponse.Status);
@@ -108,6 +217,18 @@ public class ReservationsController : Controller
         {
             _logger.LogError(ex, "Error updating reservation for user: {Username}. UID: {ReservationUid}", 
                 username, reservationResponse.ReservationUid);
+
+            await PublishUserActionAsync(
+                action: "ReservationUpdated",
+                status: "Failed",
+                metadata: new Dictionary<string, object>
+                {
+                    ["ReservationUid"] = reservationResponse.ReservationUid,
+                    ["NewStatus"] = reservationResponse.Status,
+                    ["Error"] = ex.Message
+                }
+            );
+
             return StatusCode(500, "Internal server error");
         }
     }
@@ -125,16 +246,54 @@ public class ReservationsController : Controller
             if (hotel == null)
             {
                 _logger.LogWarning("Hotel not found. ID: {HotelId}", id);
+
+                await PublishUserActionAsync(
+                    action: "HotelViewedForReservation",
+                    status: "NotFound",
+                    metadata: new Dictionary<string, object>
+                    {
+                        ["HotelId"] = id,
+                        ["Error"] = "Hotel not found"
+                    }
+                );
+
                 return NotFound();
             }
 
             _logger.LogInformation("Hotel found: ID={HotelId}, Name={HotelName}", id, hotel.Name);
-            
+
+            await PublishUserActionAsync(
+                action: "HotelViewedForReservation",
+                status: "Success",
+                metadata: new Dictionary<string, object>
+                {
+                    ["HotelId"] = hotel.Id,
+                    ["HotelUid"] = hotel.HotelUid,
+                    ["HotelName"] = hotel.Name,
+                    ["Country"] = hotel.Country,
+                    ["City"] = hotel.City,
+                    ["Address"] = hotel.Address,
+                    ["Stars"] = hotel.Stars,
+                    ["Price"] = hotel.Price,
+                }
+            );
+
             return Ok(_mapper.Map<HotelResponse>(hotel));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting hotel. ID: {HotelId}", id);
+
+             await PublishUserActionAsync(
+                action: "HotelViewedForReservation",
+                status: "Failed",
+                metadata: new Dictionary<string, object>
+                {
+                    ["HotelId"] = id,
+                    ["Error"] = ex.Message
+                }
+            );
+
             return StatusCode(500, "Internal server error");
         }
     }
@@ -155,11 +314,35 @@ public class ReservationsController : Controller
             {
                 _logger.LogWarning("Reservation not found for user: {Username}. UID: {ReservationUid}", 
                     username, uid);
+
+                await PublishUserActionAsync(
+                    action: "ReservationViewed",
+                    status: "NotFound",
+                    metadata: new Dictionary<string, object>
+                    {
+                        ["ReservationUid"] = uid,
+                        ["Error"] = "Reservation not found"
+                    }
+                );
+
                 return NotFound();
             }
 
             _logger.LogInformation("Reservation found: UID={ReservationUid}, Status={Status}", 
                 uid, reservation.Status);
+
+            await PublishUserActionAsync(
+                action: "ReservationViewed",
+                status: "Success",
+                metadata: new Dictionary<string, object>
+                {
+                    ["ReservationUid"] = reservation.ReservationUid,
+                    ["Status"] = reservation.Status,
+                    ["HotelUid"] = reservation.Hotel?.HotelUid,
+                    ["StartDate"] = reservation.StartDate,
+                    ["EndDate"] = reservation.EndData,
+                }
+            );
             
             return Ok(_mapper.Map<ReservationResponse>(reservation));
         }
@@ -167,6 +350,17 @@ public class ReservationsController : Controller
         {
             _logger.LogError(ex, "Error getting reservation for user: {Username}. UID: {ReservationUid}", 
                 username, uid);
+
+            await PublishUserActionAsync(
+                action: "ReservationViewed",
+                status: "Failed",
+                metadata: new Dictionary<string, object>
+                {
+                    ["ReservationUid"] = uid,
+                    ["Error"] = ex.Message
+                }
+            );
+
             return StatusCode(500, "Internal server error");
         }
     }

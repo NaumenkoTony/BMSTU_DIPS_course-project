@@ -19,7 +19,6 @@ public class LoyalityRepository(LoyaltiesContext context) : Repository<Loyalty>(
         return loyalty;        
     }
 
-
     public async Task ImproveLoyality(string username)
     {
         var loyalty = await db.Loyalties.FirstOrDefaultAsync(r => r.Username == username);
