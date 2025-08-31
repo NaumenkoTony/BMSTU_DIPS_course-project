@@ -32,7 +32,7 @@ public static class IdentitySeeder
                 Email = adminEmail,
                 FirstName = "Tony",
                 LastName = "Naumenko",
-                EmailConfirmed = true
+                EmailConfirmed = true,
             };
             var result = await userManager.CreateAsync(admin, "Admin123!");
             if (result.Succeeded)

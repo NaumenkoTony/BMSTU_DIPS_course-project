@@ -7,7 +7,6 @@ using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
@@ -43,6 +42,12 @@ builder.Services.AddHttpClient("IdentityService", client =>
 {
     client.BaseAddress = new Uri("http://identity_service:8000");
 }).AddHttpMessageHandler<AuthorizationHandler>();
+
+builder.Services.AddHttpClient("StatisticsService", client =>
+{
+    client.BaseAddress = new Uri("http://statistics_service:8010");
+}).AddHttpMessageHandler<AuthorizationHandler>();
+
 
 builder.Services.AddCors(options =>
 {

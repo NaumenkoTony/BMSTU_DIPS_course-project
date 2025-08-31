@@ -1,11 +1,18 @@
 using Microsoft.EntityFrameworkCore;
 using StatisticsService.Data;
+using StatisticsService.Kafka;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Confluent.Kafka;
+using Confluent.Kafka.Admin;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 builder.Services.AddDbContext<StatisticsDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -51,10 +58,25 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-var app = builder.Build();
+using var admin = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = "kafka:9092" }).Build();
+try
+{
+    await admin.CreateTopicsAsync(new TopicSpecification[]
+    {
+        new TopicSpecification { Name = "user-actions", NumPartitions = 5, ReplicationFactor = 1 }
+    });
+}
+catch (CreateTopicsException e) when (e.Results.All(r => r.Error.Code == ErrorCode.TopicAlreadyExists))
+{
+    Console.WriteLine("Topic already exists");
+}
 
-app.UseSwagger();
-app.UseSwaggerUI();
+var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<StatisticsDbContext>();
+    db.Database.Migrate();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();

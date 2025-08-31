@@ -1,4 +1,4 @@
-namespace LoyaltyService.TokenService;
+namespace LoyaltyService.Services;
 
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;

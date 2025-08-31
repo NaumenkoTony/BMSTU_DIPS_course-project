@@ -148,6 +148,7 @@ namespace IdentityService.Controllers
             {
                 var claims = new List<Claim>
                 {
+                    new ("user_id", user.Id.ToString()),
                     new (ClaimTypes.Name, user.UserName),
                     new ("name", $"{user.FirstName} {user.LastName}".Trim()),
                     new (ClaimTypes.Email, user.Email ?? ""),

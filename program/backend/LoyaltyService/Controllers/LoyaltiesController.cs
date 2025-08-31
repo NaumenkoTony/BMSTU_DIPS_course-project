@@ -3,7 +3,7 @@ namespace LoyaltyService.Controllers;
 using AutoMapper;
 using Contracts.Dto;
 using LoyaltyService.Data;
-using LoyaltyService.TokenService;
+using LoyaltyService.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;

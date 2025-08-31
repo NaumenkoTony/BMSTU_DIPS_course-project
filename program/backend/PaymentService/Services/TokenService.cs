@@ -1,4 +1,4 @@
-namespace PaymentService.TokenService;
+namespace PaymentService.Services;
 
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;

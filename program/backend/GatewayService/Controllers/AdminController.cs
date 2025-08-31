@@ -39,7 +39,7 @@ public class AdminController : ControllerBase
         _tokenService = tokenService;
         _loyaltyServiceCircuitBreaker = new CircuitBreaker(5, TimeSpan.FromSeconds(60));
     }
-    
+
     [HttpPost("create-user")]
     public async Task<IActionResult> CreateUser()
     {
@@ -71,7 +71,7 @@ public class AdminController : ControllerBase
 
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("IdentityService returned error: {StatusCode} - {ResponseContent}", 
+                _logger.LogWarning("IdentityService returned error: {StatusCode} - {ResponseContent}",
                     response.StatusCode, responseContent);
                 return StatusCode((int)response.StatusCode, responseContent);
             }
@@ -79,7 +79,7 @@ public class AdminController : ControllerBase
             _logger.LogInformation("User successfully created in IdentityService");
 
             var accessToken = _tokenService.GetAccessToken();
-            
+
             try
             {
                 var user = JsonSerializer.Deserialize<JsonElement>(rawBody);
@@ -94,18 +94,18 @@ public class AdminController : ControllerBase
                 var loyaltyResponse = await loyaltyClient.PostAsync("/api/v1/loyalties/create-user", loyaltyContent);
                 var loyaltyResponseContent = await loyaltyResponse.Content.ReadAsStringAsync();
 
-                _logger.LogInformation("LoyaltyService responded with status: {StatusCode}", 
+                _logger.LogInformation("LoyaltyService responded with status: {StatusCode}",
                     loyaltyResponse.StatusCode);
 
                 if (!loyaltyResponse.IsSuccessStatusCode)
                 {
                     _logger.LogWarning("LoyaltyService returned error: {StatusCode} - {ResponseContent}",
                         loyaltyResponse.StatusCode, loyaltyResponseContent);
-                    
+
                     _loyaltyServiceCircuitBreaker.RecordFailure();
-                    
+
                     _logger.LogWarning("Circuit breaker state updated. Failures recorded");
-                    
+
                     return StatusCode(503, new { message = "Loyalty Service unavailable" });
                 }
 
@@ -114,9 +114,9 @@ public class AdminController : ControllerBase
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while calling LoyaltyService for user creation");
-                
+
                 await EnqueueLoyaltyRequestAsync(accessToken);
-                
+
                 _logger.LogInformation("Loyalty request queued for retry");
             }
 
@@ -186,14 +186,14 @@ public class AdminController : ControllerBase
             return StatusCode(500, new { error = "Internal server error" });
         }
     }
-    
+
     private async Task EnqueueLoyaltyRequestAsync(string accessToken)
     {
         try
         {
             var db = _redis.GetDatabase();
             await db.ListRightPushAsync("loyalty-queue", accessToken);
-            
+
             _logger.LogInformation("Loyalty request queued successfully. Queue: loyalty-queue");
         }
         catch (Exception ex)
@@ -201,5 +201,14 @@ public class AdminController : ControllerBase
             _logger.LogError(ex, "Failed to enqueue loyalty request");
             throw;
         }
+    }
+    
+    [HttpGet("statistics")]
+    public async Task<IActionResult> GetSummary()
+    {
+        var client = _httpClientFactory.CreateClient("StatisticsService");
+        var response = await client.GetAsync("/api/v1/statistics/summary");
+        var content = await response.Content.ReadAsStringAsync();
+        return Content(content, "application/json");
     }
 }

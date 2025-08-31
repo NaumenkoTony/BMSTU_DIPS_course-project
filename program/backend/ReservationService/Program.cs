@@ -3,10 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using ReservationService.Data;
 using ReservationService.Data.RepositoriesPostgreSQL;
-using ReservationService.TokenService;
+using ReservationService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITokenService, TokenService>();
@@ -58,6 +61,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             }
         };
     });
+
+builder.Services.AddSingleton<IKafkaProducer, KafkaProducerService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

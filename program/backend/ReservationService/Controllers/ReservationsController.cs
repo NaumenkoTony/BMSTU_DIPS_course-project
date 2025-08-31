@@ -4,8 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ReservationService.Data;
 using ReservationService.Models.DomainModels;
-using ReservationService.TokenService;
-using Microsoft.Extensions.Logging;
+using ReservationService.Services;
 
 namespace ReservationService.Controllers;
 

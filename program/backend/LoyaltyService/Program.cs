@@ -3,10 +3,13 @@ using LoyaltyService.Data.RepositoriesPostgreSQL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using LoyaltyService.TokenService;
+using LoyaltyService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITokenService, TokenService>();
@@ -54,6 +57,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         }
     };
 });
+
+builder.Services.AddSingleton<IKafkaProducer, KafkaProducerService>();
 
 builder.Services.AddAuthorization();
 
