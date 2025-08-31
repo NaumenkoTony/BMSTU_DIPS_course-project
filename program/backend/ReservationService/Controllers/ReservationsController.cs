@@ -39,25 +39,43 @@ public class ReservationsController : Controller
         return User.Identity?.Name ?? "unknown";
     }
 
-    private async Task PublishUserActionAsync(string action, string status, Dictionary<string, object> metadata = null)
+    private Task PublishUserActionAsync(string action, string status, Dictionary<string, object> metadata = null)
     {
-        var userId = GetUserId();
-        var username = GetUsername();
+        _ = Task.Run(async () =>
+        {
+            var userId = GetUserId();
+            var username = GetUsername();
 
-        await _kafkaProducer.PublishAsync(
-            topic: "user-actions",
-            key: userId,
-            message: new UserAction(
-                UserId: userId,
-                Username: username,
-                Service: "Reservations",
-                Action: action,
-                Status: status,
-                Timestamp: DateTime.UtcNow,
-                Metadata: metadata ?? new Dictionary<string, object>()
-            ),
-            CancellationToken.None
-        );
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
+            try
+            {
+                await _kafkaProducer.PublishAsync(
+                    topic: "user-actions",
+                    key: userId,
+                    message: new UserAction(
+                        UserId: userId,
+                        Username: username,
+                        Service: "Reservation",
+                        Action: action,
+                        Status: status,
+                        Timestamp: DateTime.UtcNow,
+                        Metadata: metadata ?? new Dictionary<string, object>()
+                    ),
+                    cts.Token
+                );
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogWarning("Kafka timeout for {Action}", action);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Kafka failed for {Action}", action);
+            }
+        });
+
+        return Task.CompletedTask;
     }
 
     [Route("/api/v1/[controller]")]
