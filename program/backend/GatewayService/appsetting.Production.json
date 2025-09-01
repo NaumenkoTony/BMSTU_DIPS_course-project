@@ -1,0 +1,22 @@
+{
+  "Services": {
+    "Loyalty": "http://loyalty-service:8050",
+    "Payment": "http://payment-service:8060",
+    "Reservation": "http://reservation-service:8070",
+    "Identity": "http://identity-service:8000",
+    "Statistics": "http://statistics-service:8010",
+    "Gateway": "http://gateway-service:8080"
+  },
+  "Authentication": {
+    "Authority": "http://identity-service:8000",
+    "Audience": "locus_app"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
+  },
+  "AllowedHosts": "*"
+}

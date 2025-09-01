@@ -8,8 +8,6 @@ using IdentityService.Data;
 using IdentityService.Models;
 using IdentityService.Services;
 using Microsoft.AspNetCore.DataProtection;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +51,7 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IClientStore, ClientStore>();
 builder.Services.AddScoped<IAuthorizationCodeStore, AuthorizationCodeStore>();
 
+var authConfig = builder.Configuration.GetSection("Authentication");
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -66,8 +65,8 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer("Bearer", options =>
 {
-    options.Authority = "http://identity_service:8000";
-    options.Audience = "locus_app";
+    options.Authority = authConfig["Authority"];
+    options.Audience = authConfig["Audience"];
     options.RequireHttpsMetadata = false;
     options.TokenValidationParameters = new TokenValidationParameters
     {

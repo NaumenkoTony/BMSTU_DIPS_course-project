@@ -18,34 +18,35 @@ builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 builder.Services.AddScoped<AuthorizationHandler>();
 builder.Services.AddScoped<IInternalTokenService, InternalTokenService>();
 
+var servicesConfig = builder.Configuration.GetSection("Services");
 builder.Services.AddHttpClient("LoyaltyService", client =>
 {
-    client.BaseAddress = new Uri("http://loyalty_service:8050");
+    client.BaseAddress = new Uri(servicesConfig["Loyalty"]);
 }).AddHttpMessageHandler<AuthorizationHandler>();
 
 builder.Services.AddHttpClient("LoyaltyQueueService", client =>
 {
-    client.BaseAddress = new Uri("http://loyalty_service:8050");
+    client.BaseAddress = new Uri(servicesConfig["Loyalty"]);
 });
 
 builder.Services.AddHttpClient("PaymentService", client =>
 {
-    client.BaseAddress = new Uri("http://payment_service:8060");
+    client.BaseAddress = new Uri(servicesConfig["Payment"]);
 }).AddHttpMessageHandler<AuthorizationHandler>();
 
 builder.Services.AddHttpClient("ReservationService", client =>
 {
-    client.BaseAddress = new Uri("http://reservation_service:8070");
+    client.BaseAddress = new Uri(servicesConfig["Reservation"]);
 }).AddHttpMessageHandler<AuthorizationHandler>();
 
 builder.Services.AddHttpClient("IdentityService", client =>
 {
-    client.BaseAddress = new Uri("http://identity_service:8000");
+    client.BaseAddress = new Uri(servicesConfig["Identity"]);
 }).AddHttpMessageHandler<AuthorizationHandler>();
 
 builder.Services.AddHttpClient("StatisticsService", client =>
 {
-    client.BaseAddress = new Uri("http://statistics_service:8010");
+    client.BaseAddress = new Uri(servicesConfig["Statistics"]);
 }).AddHttpMessageHandler<AuthorizationHandler>();
 
 
@@ -62,11 +63,12 @@ builder.Services.AddCors(options =>
 builder.Services.AddMemoryCache();
 builder.Services.AddAutoMapper(typeof(Program));
 
+var authConfig = builder.Configuration.GetSection("Authentication");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.Authority = "http://identity_service:8000";
-        options.Audience = "locus_app";
+        options.Authority = authConfig["Authority"];
+        options.Audience = authConfig["Audience"];
         options.RequireHttpsMetadata = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -106,19 +108,6 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Conn
 builder.Services.AddHostedService<LoyaltyQueueProcessor>();
 
 var app = builder.Build();
-
-// app.Use(async (context, next) =>
-// {
-//     if (context.Request.Cookies.TryGetValue("access_token", out var token) &&
-//         string.IsNullOrEmpty(context.Request.Headers["Authorization"]))
-//     {
-//         context.Request.Headers.Authorization = $"Bearer {token}";
-//         var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-//         logger.LogDebug("Added Authorization header from cookie for: {Path}", context.Request.Path);
-//     }
-//     await next();
-// });
-
 
 app.UseCors("AllowAll");
 

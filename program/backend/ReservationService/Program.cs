@@ -25,11 +25,12 @@ builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 
+var authConfig = builder.Configuration.GetSection("Authentication");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.Authority = "http://identity_service:8000";
-        options.Audience = "locus_app";
+        options.Authority = authConfig["Authority"];
+        options.Audience = authConfig["Audience"];
         options.RequireHttpsMetadata = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {

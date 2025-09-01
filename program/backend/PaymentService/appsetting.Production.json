@@ -1,12 +1,13 @@
 {
   "Authentication": {
-    "Authority": "http://identity_service:8000",
+    "Authority": "http://identity-service:8000",
     "Audience": "locus_app"
   },
   "Logging": {
     "LogLevel": {
       "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information"
     }
   },
   "Kafka": {
@@ -14,8 +15,5 @@
     "GroupId": "statistics-service-group",
     "Topic": "user-actions"
   },
-  "AllowedHosts": "*",
-  "ConnectionStrings": {
-    "LoyaltyService": "Host=loyalty_database;Port=5432;Database=loyalties;Username=program;Password=test"
-  }
+  "AllowedHosts": "*"
 }
