@@ -60,11 +60,11 @@ export function App() {
   }, []);
 
   
-  const AUTH_URL = import.meta.env.VITE_AUTH_URL || "http://localhost:8000/";
+  const AUTH_URL = import.meta.env.VITE_AUTH_URL || "http://localhost:8000";
 
   const handleLogout = async () => {
   try {
-    const response = await fetch(AUTH_URL + 'account/logout', {
+    const response = await fetch(AUTH_URL + '/account/logout', {
       method: 'POST',
       credentials: 'include',
       mode: 'cors'
