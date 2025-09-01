@@ -5,29 +5,34 @@ using Microsoft.EntityFrameworkCore;
 
 public static class ClientSeeder
 {
-    public static async Task EnsureSeededAsync(IdentityContext db)
+    public static async Task EnsureSeededAsync(IdentityContext db, IConfiguration config)
     {
-        if (!await db.Clients.AnyAsync(c => c.ClientId == "locus-backend-client"))
+        var authSection = config.GetSection("Authentication");
+
+        var backendClient = authSection.GetSection("BackendClient");
+        var frontendClient = authSection.GetSection("FrontendClient");
+
+        if (!await db.Clients.AnyAsync(c => c.ClientId == backendClient["ClientId"]))
         {
             db.Clients.Add(new Client
             {
-                ClientId = "locus-backend-client",
+                ClientId = backendClient["ClientId"]!,
                 Audience = "locus_app",
-                ClientSecret = "JDgvvoMQxxC7IWdpkBP8a4MkQE1KxjNTZQ0o2_8avjbfj7zIcGRyMGBReydOCZx3",
-                RedirectUris = "http://localhost:8080/api/v1/authorize/callback|http://gateway_service:8080/api/v1/authorize/callback",
+                ClientSecret = backendClient["ClientSecret"],
+                RedirectUris = backendClient["RedirectUri"]!,
                 AllowedScopes = "openid|profile|email",
                 RequirePkce = false,
                 IsPublic = false
             });
         }
 
-        if (!await db.Clients.AnyAsync(c => c.ClientId == "locus-frontend-client"))
+        if (!await db.Clients.AnyAsync(c => c.ClientId == frontendClient["ClientId"]))
         {
             db.Clients.Add(new Client
             {
-                ClientId = "locus-frontend-client",
+                ClientId = frontendClient["ClientId"]!,
                 Audience = "locus_app",
-                RedirectUris = "http://localhost:80/callback|http://localhost:5173/callback|http://localhost:4173/callback",
+                RedirectUris = string.Join("|", frontendClient.GetSection("RedirectUris").Get<string[]>()!),
                 AllowedScopes = "openid|profile|email",
                 RequirePkce = true,
                 IsPublic = true

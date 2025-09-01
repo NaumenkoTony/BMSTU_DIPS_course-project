@@ -14,13 +14,16 @@ public class AuthorizationController : ControllerBase
 {
     private readonly IMemoryCache _memoryCache;
     private readonly ILogger<AuthorizationController> _logger;
+    private readonly IConfiguration _config;
 
     public AuthorizationController(
         IMemoryCache memoryCache,
-        ILogger<AuthorizationController> logger)
+        ILogger<AuthorizationController> logger,
+        IConfiguration config)
     {
         _memoryCache = memoryCache;
         _logger = logger;
+        _config = config;
     }
 
     [HttpGet("login")]
@@ -37,22 +40,20 @@ public class AuthorizationController : ControllerBase
 
         try
         {
-            var redirectUri = "http://localhost:8080/api/v1/authorize/callback";
+            var redirectUri = _config["Authentication:BackendClient:RedirectUri"];
+            var clientId = _config["Authentication:BackendClient:ClientId"];
+            var authority = _config["Authentication:Authority"];
+
             var state = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
-            
             _memoryCache.Set("oauth_state", state, TimeSpan.FromMinutes(5));
-            
-            _logger.LogDebug("Generated OAuth state: {State} (cached for 5 minutes)", state);
 
-            var authUrl = $"http://localhost:8000/authorize" +
-                        $"?response_type=code" +
-                        $"&client_id=locus-backend-client" +
-                        $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
-                        $"&scope=openid profile email" +
-                        $"&state={Uri.EscapeDataString(state)}";
+            var authUrl = $"{authority}/authorize" +
+                          $"?response_type=code" +
+                          $"&client_id={clientId}" +
+                          $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
+                          $"&scope=openid profile email" +
+                          $"&state={Uri.EscapeDataString(state)}";
 
-            _logger.LogInformation("Redirecting to authorization server: {AuthUrl}", authUrl);
-            
             return Redirect(authUrl);
         }
         catch (Exception ex)
@@ -94,7 +95,7 @@ public class AuthorizationController : ControllerBase
             _memoryCache.Remove("oauth_state");
             _logger.LogDebug("State validation successful, removed from cache");
 
-            var tokenUrl = "http://identity_service:8000/token";
+            var tokenUrl = $"{_config["Authentication:Authority"]}/token";
             
             _logger.LogInformation("Exchanging authorization code for token at: {TokenUrl}", tokenUrl);
 
@@ -103,9 +104,9 @@ public class AuthorizationController : ControllerBase
             {
                 { "grant_type", "authorization_code" },
                 { "code", code },
-                { "redirect_uri", "http://localhost:8080/api/v1/authorize/callback" },
-                { "client_id", "locus-backend-client" },
-                { "client_secret", "JDgvvoMQxxC7IWdpkBP8a4MkQE1KxjNTZQ0o2_8avjbfj7zIcGRyMGBReydOCZx3" }
+                { "redirect_uri", _config["Authentication:BackendClient:RedirectUri"] },
+                { "client_id", _config["Authentication:BackendClient:ClientId"] },
+                { "client_secret", _config["Authentication:BackendClient:ClientSecret"] }
             });
 
             var response = await httpClient.PostAsync(tokenUrl, tokenRequestContent);

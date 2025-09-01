@@ -91,7 +91,7 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 
     db = scope.ServiceProvider.GetRequiredService<IdentityContext>();
-    await ClientSeeder.EnsureSeededAsync(db);
+    await ClientSeeder.EnsureSeededAsync(db, builder.Configuration);
 }
 
 if (app.Environment.IsDevelopment())
@@ -108,7 +108,7 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<IdentityContext>();
     db.Database.Migrate();
 
-    await ClientSeeder.EnsureSeededAsync(db);
+    await ClientSeeder.EnsureSeededAsync(db, builder.Configuration);
 }
 
 using (var scope = app.Services.CreateScope())
