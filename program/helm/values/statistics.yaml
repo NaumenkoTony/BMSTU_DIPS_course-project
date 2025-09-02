@@ -1,0 +1,14 @@
+image:
+  repository: tonynm/statistics_service
+  tag: latest
+
+service:
+  name: statistics-service
+  port: 8010
+
+env:
+  - name: ASPNETCORE_ENVIRONMENT
+    value: "Production"
+
+ingress:
+  enabled: false

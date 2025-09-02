@@ -1,0 +1,17 @@
+replicaCount: 1
+
+image:
+  repository: tonynm/loyalty_service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  name: loyalty-service
+  port: 8050
+
+env:
+  - name: ASPNETCORE_ENVIRONMENT
+    value: "Production"
+
+ingress:
+  enabled: false

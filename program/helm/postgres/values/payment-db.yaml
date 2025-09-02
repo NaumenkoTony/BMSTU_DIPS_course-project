@@ -1,0 +1,24 @@
+auth:
+  username: postgres_payment
+  password: postgres_payment
+  database: postgres_payment
+
+primary:
+  persistence:
+    enabled: false
+  initdbScripts:
+    init.sql: |
+      CREATE ROLE program WITH PASSWORD 'test';
+      ALTER ROLE program WITH LOGIN;
+      CREATE DATABASE payments;
+      DATABASE payments TO program;
+      \connect payments program
+      CREATE TABLE payment
+      (
+          id          SERIAL PRIMARY KEY,
+          payment_uid uuid        NOT NULL,
+          status      VARCHAR(20) NOT NULL
+              CHECK (status IN ('PAID', 'CANCELED')),
+          price       INT         NOT NULL
+      );
+

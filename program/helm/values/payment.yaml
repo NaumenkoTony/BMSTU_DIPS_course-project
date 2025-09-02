@@ -1,0 +1,14 @@
+image:
+  repository: tonynm/payment_service
+  tag: latest
+
+service:
+  name: payment-service
+  port: 8060
+
+env:
+  - name: ASPNETCORE_ENVIRONMENT
+    value: "Production"
+
+ingress:
+  enabled: false

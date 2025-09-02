@@ -4,7 +4,7 @@ import { Container, Title, Loader, Text, Paper, Alert, Button } from "@mantine/c
 import { IconAlertCircle, IconCheck } from "@tabler/icons-react";
 import "./CallbackPage.css";
 
-const AUTH_URL = import.meta.env.VITE_AUTH_URL || "http://localhost:8000";
+const AUTH_URL = import.meta.env.VITE_IDP_API_URL || "http://localhost:8000";
 const CLIENT_ID = import.meta.env.VITE_CLIENT_ID || "locus-frontend-client";
 
 interface CallbackPageProps {

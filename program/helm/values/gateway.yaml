@@ -1,0 +1,19 @@
+replicaCount: 1
+
+image:
+  repository: tonynm/gateway_service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  name: gateway-service
+  port: 8080
+
+env:
+  - name: ASPNETCORE_ENVIRONMENT
+    value: "Production"
+
+ingress:
+  enabled: true
+  host: gateway.local
+  path: /

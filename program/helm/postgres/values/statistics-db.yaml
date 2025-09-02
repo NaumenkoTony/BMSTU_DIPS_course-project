@@ -1,0 +1,8 @@
+auth:
+  username: postgres_statistics
+  password: postgres_statistics
+  database: postgres_statistics
+
+primary:
+  persistence:
+    enabled: false

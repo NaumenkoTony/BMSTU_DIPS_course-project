@@ -1,0 +1,9 @@
+auth:
+  username: postgres_identity
+  password: postgres_identity
+  database: postgres_identity
+
+primary:
+  persistence:
+    enabled: false
+

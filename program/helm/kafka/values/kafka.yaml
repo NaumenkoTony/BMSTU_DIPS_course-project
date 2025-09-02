@@ -1,0 +1,14 @@
+replicaCount: 1
+image:
+  tag: 7.3.0
+
+zookeeper:
+  replicaCount: 1
+
+auth:
+  clientProtocol: plaintext
+  interBrokerProtocol: plaintext
+  enabled: false
+
+persistence:
+  enabled: false

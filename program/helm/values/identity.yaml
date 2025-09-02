@@ -1,0 +1,16 @@
+image:
+  repository: tonynm/identity_service
+  tag: latest
+
+service:
+  name: identity-service
+  port: 8000
+
+env:
+  - name: ASPNETCORE_ENVIRONMENT
+    value: "Production"
+
+ingress:
+  enabled: true
+  host: identity.local
+  path: /

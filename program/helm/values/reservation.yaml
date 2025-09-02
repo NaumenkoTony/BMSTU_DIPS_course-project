@@ -1,0 +1,14 @@
+image:
+  repository: tonynm/reservation_service
+  tag: latest
+
+service:
+  name: reservation-service
+  port: 8070
+
+env:
+  - name: ASPNETCORE_ENVIRONMENT
+    value: "Production"
+
+ingress:
+  enabled: false

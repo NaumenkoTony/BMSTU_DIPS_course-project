@@ -1,0 +1,20 @@
+image:
+  repository: tonynm/frontend
+  tag: latest
+
+service:
+  name: frontend
+  port: 80
+
+env:
+  - name: VITE_IDP_API_URL
+    value: "http://identity.local"
+  - name: VITE_API_URL
+    value: "http://gateway.local"
+  - name: VITE_CLIENT_ID
+    value: "locus-frontend-client"
+
+ingress:
+  enabled: true
+  host: frontend.local
+  path: /

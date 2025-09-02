@@ -1,0 +1,54 @@
+auth:
+  username: postgres_loyalty
+  password: postgres_loyalty
+  database: postgres_loyalty
+
+primary:
+  persistence:
+    enabled: false
+  initdbScripts:
+    init.sql: |
+      CREATE ROLE program WITH PASSWORD 'test';
+      ALTER ROLE program WITH LOGIN;
+      CREATE DATABASE loyalties;
+      PRIVILEGES ON DATABASE loyalties TO program;
+      \connect loyalties program
+      CREATE TABLE loyalty
+      (
+          id                SERIAL PRIMARY KEY,
+          username          VARCHAR(80) NOT NULL UNIQUE,
+          reservation_count INT         NOT NULL DEFAULT 0,
+          status            VARCHAR(80) NOT NULL DEFAULT 'BRONZE'
+              CHECK (status IN ('BRONZE', 'SILVER', 'GOLD')),
+          discount          INT         NOT NULL
+      );
+      \connect loyalties program
+      INSERT INTO loyalty (
+          id, 
+          username, 
+          reservation_count, 
+          status, 
+          discount
+      ) 
+      VALUES (
+          1, 
+          'Test', 
+          25,
+          'GOLD', 
+          10
+      );
+
+      INSERT INTO loyalty (
+          id, 
+          username, 
+          reservation_count, 
+          status, 
+          discount
+      ) 
+      VALUES (
+          2, 
+          'admin',
+          20,
+          'GOLD', 
+          10
+      );

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Container, Title, Button, Text, Paper } from "@mantine/core";
 import "./LoginPage.css";
 
-const AUTH_URL = import.meta.env.VITE_AUTH_URL || "http://localhost:8000";
+const AUTH_URL = import.meta.env.VITE_IDP_API_URL || "http://localhost:8000";
 const CLIENT_ID = import.meta.env.VITE_CLIENT_ID || "locus-frontend-client";
 const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI || "http://localhost:5173/callback";
 const SCOPES = "openid profile email";
