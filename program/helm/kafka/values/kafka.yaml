@@ -1,14 +1,19 @@
 replicaCount: 1
-image:
-  tag: 7.3.0
 
-zookeeper:
-  replicaCount: 1
+kraft:
+  enabled: true
 
-auth:
-  clientProtocol: plaintext
-  interBrokerProtocol: plaintext
-  enabled: false
+listeners:
+  client:
+    protocol: PLAINTEXT
+  controller:
+    protocol: PLAINTEXT
+
+advertisedListeners:
+  client:
+    protocol: PLAINTEXT
+
+allowPlaintextListener: true
 
 persistence:
   enabled: false

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { getLoyalty, type LoyaltyInfoResponse } from "../api/LoyaltyClient";
-import { Card, Container, Loader, Text, Group, Avatar, Skeleton, Progress } from "@mantine/core";
+import { Card, Container, Text, Group, Avatar, Skeleton, Progress } from "@mantine/core";
 import { parseJwt } from "../utils/jwt";
 import "./ProfilePage.css";
-import { IconDiscount, IconCalendarStar, IconCrown, IconMedal, IconMedal2, IconUser, IconId } from "@tabler/icons-react";
+import { IconDiscount, IconCalendarStar, IconCrown, IconMedal, IconMedal2, IconId } from "@tabler/icons-react";
 
 export default function ProfilePage() {
   const [loyalty, setLoyalty] = useState<LoyaltyInfoResponse | null>(null);

@@ -4,9 +4,10 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: frontend
+    image: tonynm/frontend
     ports:
-      - "3000:80"
+      - "80:80"
     environment:
-      - VITE_IDP_API_URL=http://localhost:8000
-      - VITE_API_URL=http://localhost:8080
-      - VITE_CLIENT_ID=locus-frontend-client
+      - IDP_API_URL=http://localhost:8000
+      - API_URL=http://localhost:8080
+      - CLIENT_ID=locus-frontend-client

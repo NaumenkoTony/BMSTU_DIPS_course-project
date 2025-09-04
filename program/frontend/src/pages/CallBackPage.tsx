@@ -2,10 +2,10 @@ import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Container, Title, Loader, Text, Paper, Alert, Button } from "@mantine/core";
 import { IconAlertCircle, IconCheck } from "@tabler/icons-react";
-import "./CallbackPage.css";
+import "./CallBackPage.css";
 
-const AUTH_URL = import.meta.env.VITE_IDP_API_URL || "http://localhost:8000";
-const CLIENT_ID = import.meta.env.VITE_CLIENT_ID || "locus-frontend-client";
+const AUTH_URL = import.meta.env.IDP_API_URL || window.appConfig?.IDP_API_URL || "http://localhost:8000";
+const CLIENT_ID = import.meta.env.CLIENT_ID || window.appConfig?.CLIENT_ID || "locus-frontend-client";
 
 interface CallbackPageProps {
   onLogin: (token: string) => void;
@@ -65,7 +65,6 @@ export function CallbackPage({ onLogin }: CallbackPageProps) {
         });
 
         if (!tokenResponse.ok) {
-          const errorData = await tokenResponse.text();
           throw new Error(`Token request failed: ${tokenResponse.status}`);
         }
 

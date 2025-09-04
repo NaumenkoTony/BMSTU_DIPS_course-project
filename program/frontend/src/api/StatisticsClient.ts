@@ -22,7 +22,7 @@ export interface PagedResult<T> {
   totalCount: number;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const API_URL = import.meta.env.API_URL || window.appConfig?.API_URL || "http://localhost:8080";
 
 async function fetchWithAuth(path: string) {
   const token = localStorage.getItem("access_token");

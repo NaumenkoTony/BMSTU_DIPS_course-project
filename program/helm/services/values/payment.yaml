@@ -1,9 +1,11 @@
 image:
   repository: tonynm/payment_service
   tag: latest
+  pullPolicy: Always
 
 service:
-  name: payment-service
+  fullname: payment-service
+  name: payment
   port: 8060
 
 env:

@@ -6,7 +6,6 @@ using PaymentService.Data.RepositoriesPostgreSQL;
 using PaymentService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();

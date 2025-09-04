@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Modal, Button, Text, Group, Paper, Card } from "@mantine/core";
+import { Modal, Button, Text, Group, Paper } from "@mantine/core";
 import { bookHotel, getReservation, unbookHotel, type AggregatedReservationResponse, type CreateReservationResponse } from "../api/ReservationsClient";
 import "./BookHotelForm.css";
 import { useNavigate } from "react-router-dom";
@@ -17,7 +17,6 @@ export default function BookHotelForm({ hotelUid, hotelName, opened, onClose, on
     const [endDate, setEndDate] = useState<string>("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<CreateReservationResponse  | null>(null);
     const [reservation, setReservation] = useState<AggregatedReservationResponse | null>(null);
 
     const navigate = useNavigate();

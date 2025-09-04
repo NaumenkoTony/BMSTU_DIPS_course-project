@@ -3,10 +3,11 @@ replicaCount: 1
 image:
   repository: tonynm/gateway_service
   tag: latest
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 service:
-  name: gateway-service
+  fullname: gateway-service
+  name: gateway
   port: 8080
 
 env:
@@ -15,5 +16,6 @@ env:
 
 ingress:
   enabled: true
+  name: gateway-ingress
   host: gateway.local
   path: /

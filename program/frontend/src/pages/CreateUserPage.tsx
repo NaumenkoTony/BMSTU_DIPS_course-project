@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { Container, TextInput, PasswordInput, Button, Select, Alert, LoadingOverlay, Paper, Title, Loader } from "@mantine/core";
+import { Container, TextInput, PasswordInput, Button, Select, Alert, LoadingOverlay, Paper, Loader } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { IconCheck, IconX, IconUserPlus } from "@tabler/icons-react";
+import { IconCheck, IconX } from "@tabler/icons-react";
 import { createUser, type CreateUserRequest } from "../api/AdminClient";
 import { getAvailableRoles } from "../api/AdminClient";
 import "./CreateUserPage.css";

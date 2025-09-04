@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getReservations, unbookHotel, type AggregatedReservationResponse } from "../api/ReservationsClient";
-import { Badge, Button, Card, Container, Group, Loader, Text, Title } from "@mantine/core";
+import { Badge, Button, Card, Container, Group, Loader, Text } from "@mantine/core";
 import { IconCalendar, IconClock, IconCheck, IconX, IconCurrentLocation } from "@tabler/icons-react";
 import "./ReservationsPage.css";
 

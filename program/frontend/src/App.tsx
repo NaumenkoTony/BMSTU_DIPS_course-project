@@ -60,7 +60,7 @@ export function App() {
   }, []);
 
   
-  const AUTH_URL = import.meta.env.VITE_IDP_API_URL || "http://localhost:8000";
+  const AUTH_URL = import.meta.env.IDP_API_URL || window.appConfig?.IDP_API_URL || "http://localhost:8000";
 
   const handleLogout = async () => {
   try {

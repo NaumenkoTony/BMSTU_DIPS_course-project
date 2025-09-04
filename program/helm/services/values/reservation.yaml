@@ -1,9 +1,11 @@
 image:
   repository: tonynm/reservation_service
   tag: latest
+  pullPolicy: Always
 
 service:
-  name: reservation-service
+  fullname: reservation-service
+  name: reservation
   port: 8070
 
 env:

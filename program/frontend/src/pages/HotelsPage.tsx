@@ -3,7 +3,7 @@ import { getHotels, type HotelResponse, type HotelsPaginationResponse } from "..
 import BookHotelForm from "../components/BookHotelForm";
 import "./HotelsPage.css";
 import type { CreateReservationResponse } from "../api/ReservationsClient";
-import { IconSearch, IconX, IconStar, IconCoin } from "@tabler/icons-react";
+import { IconSearch, IconX, IconStar } from "@tabler/icons-react";
 
 const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
   const [filters, setFilters] = useState({

@@ -3,10 +3,11 @@ replicaCount: 1
 image:
   repository: tonynm/loyalty_service
   tag: latest
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 service:
-  name: loyalty-service
+  fullname: loyalty-service
+  name: loyalty
   port: 8050
 
 env:

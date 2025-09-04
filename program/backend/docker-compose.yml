@@ -6,6 +6,8 @@ services:
       dockerfile: ./LoyaltyService/Dockerfile
     image: tonynm/loyalty_service
     restart: on-failure
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
     depends_on:
       - loyalty_database
     ports:
@@ -32,6 +34,8 @@ services:
       dockerfile: ./PaymentService/Dockerfile
     depends_on:
       - payment_database
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
     image: tonynm/payment_service
     restart: on-failure
     ports:
@@ -59,6 +63,8 @@ services:
     depends_on:
       - reservation_database
     image: tonynm/reservation_service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
     restart: on-failure
     ports:
       - "8070:8070"
@@ -84,6 +90,8 @@ services:
       dockerfile: ./IdentityService/Dockerfile
     depends_on:
       - identity_database
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
     image: tonynm/identity_service
     restart: on-failure
     ports:
@@ -109,6 +117,8 @@ services:
       dockerfile: ./StatisticsService/Dockerfile
     image: tonynm/statistics_service
     restart: on-failure
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
     depends_on:
       - statistics_database
       - kafka
@@ -169,6 +179,8 @@ services:
       - loyalty_service
       - identity_database
       - redis
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
     image: tonynm/gateway_service
     restart: on-failure
     ports:

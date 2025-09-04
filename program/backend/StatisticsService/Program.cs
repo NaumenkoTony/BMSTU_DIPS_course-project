@@ -19,7 +19,6 @@ builder.Services.AddDbContext<StatisticsDbContext>(options =>
 
 builder.Services.AddHostedService<KafkaConsumerService>();
 
-
 var authConfig = builder.Configuration.GetSection("Authentication");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 .AddJwtBearer(options =>
@@ -60,7 +59,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-using var admin = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = "kafka:9092" }).Build();
+var kafkaConfig = builder.Configuration.GetSection("Kafka");
+Console.WriteLine("Trying to coonect to kafka: " + kafkaConfig["BootstrapServers"]);
+var bootstrapServers = kafkaConfig["BootstrapServers"] ?? "localhost:9092";
+using var admin = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = bootstrapServers }).Build();
 try
 {
     await admin.CreateTopicsAsync(

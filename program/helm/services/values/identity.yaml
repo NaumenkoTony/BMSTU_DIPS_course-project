@@ -1,9 +1,11 @@
 image:
   repository: tonynm/identity_service
   tag: latest
+  pullPolicy: Always
 
 service:
-  name: identity-service
+  fullname: identity-service
+  name: identity
   port: 8000
 
 env:
@@ -12,5 +14,6 @@ env:
 
 ingress:
   enabled: true
+  name: identity-ingress
   host: identity.local
   path: /

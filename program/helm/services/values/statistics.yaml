@@ -1,9 +1,11 @@
 image:
   repository: tonynm/statistics_service
   tag: latest
+  pullPolicy: Always
 
 service:
-  name: statistics-service
+  fullname: statistics-service
+  name: statistics
   port: 8010
 
 env:
