@@ -3,11 +3,10 @@ using System.Net.Http.Headers;
 using StackExchange.Redis;
 using System.IdentityModel.Tokens.Jwt;
 
-class LoyaltyQueueProcessor(IHttpClientFactory httpClientFactory, IInternalTokenService internalTokenService, IConnectionMultiplexer redis) : BackgroundService
+class LoyaltyQueueProcessor(IHttpClientFactory httpClientFactory, IConnectionMultiplexer redis) : BackgroundService
 {
     private readonly IConnectionMultiplexer redis = redis;
     private readonly IHttpClientFactory httpClientFactory = httpClientFactory;
-    private readonly IInternalTokenService internalTokenService = internalTokenService;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

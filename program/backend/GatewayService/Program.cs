@@ -102,9 +102,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-var redis_con_str = builder.Configuration.GetConnectionString("redis");
-builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redis_con_str));
-builder.Services.AddScoped<LoyaltyQueueProcessor>();
+builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("redis")));
+builder.Services.AddHostedService<LoyaltyQueueProcessor>();
 
 var app = builder.Build();
 
