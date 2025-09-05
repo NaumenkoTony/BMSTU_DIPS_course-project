@@ -41,7 +41,7 @@ export interface AggregatedReservationResponse {
 }
 
 
-const API_URL = import.meta.env.API_URL || window.appConfig?.API_URL || "http://localhost:8080";
+const API_URL = window.appConfig?.API_URL || "http://localhost:8080";
 
 export async function bookHotel(req: {
   hotelUid: string;

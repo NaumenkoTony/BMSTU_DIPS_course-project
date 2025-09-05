@@ -5,6 +5,12 @@ metadata:
   name: {{ .Values.ingress.name }}
 spec:
   ingressClassName: nginx
+  tls:
+  - hosts:
+      - frontend.local
+      - identity.local
+      - gateway.local
+    secretName: frontend-tls
   rules:
   - host: {{ .Values.ingress.host }}
     http:

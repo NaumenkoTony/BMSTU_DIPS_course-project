@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Container, Title, Button, Text, Paper } from "@mantine/core";
 import "./LoginPage.css";
 
-const AUTH_URL = import.meta.env.IDP_API_URL || window.appConfig?.IDP_API_URL || "http://localhost:8000";
-const CLIENT_ID = import.meta.env.CLIENT_ID || window.appConfig?.CLIENT_ID || "locus-frontend-client";
-const REDIRECT_URI = import.meta.env.REDIRECT_URI || window.appConfig?.REDIRECT_URI || "http://localhost:5173/callback";
+const AUTH_URL = window.appConfig?.IDP_API_URL || "http://localhost:8000";
+const CLIENT_ID = window.appConfig?.CLIENT_ID || "locus-frontend-client";
+const REDIRECT_URI = window.appConfig?.REDIRECT_URI || "http://localhost:5173/callback";
 const SCOPES = "openid profile email";
 
 const generateRandomString = (length: number = 64): string => {
@@ -37,7 +37,7 @@ export function LoginPage() {
     setIsLoading(true);
     setError(null);
 
-    try {
+    try {     
       const state = crypto.randomUUID();
       const codeVerifier = generateRandomString();
       const codeChallenge = await pkceChallengeFromVerifier(codeVerifier);
@@ -45,7 +45,7 @@ export function LoginPage() {
       sessionStorage.setItem("pkce_verifier", codeVerifier);
       sessionStorage.setItem("auth_state", state);
 
-      const authUrl = new URL(AUTH_URL+'/authorize');
+      const authUrl = new URL(AUTH_URL + "/authorize");
       authUrl.searchParams.append("response_type", "code");
       authUrl.searchParams.append("client_id", CLIENT_ID);
       authUrl.searchParams.append("redirect_uri", REDIRECT_URI);
@@ -84,7 +84,7 @@ export function LoginPage() {
           loaderProps={{ type: "dots" }}
           className="login-button"
         >
-          {isLoading ? 'Перенаправление...' : 'Войти в систему'}
+          {isLoading ? "Перенаправление..." : "Войти в систему"}
         </Button>
 
         <Text size="sm" mt="md" className="login-hint">

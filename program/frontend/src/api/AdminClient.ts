@@ -12,7 +12,7 @@ export interface CreateUserResponse {
   userId: string;
 }
 
-const API_URL = import.meta.env.API_URL || window.appConfig?.API_URL || "http://localhost:8080";
+const API_URL = window.appConfig?.API_URL || "http://localhost:8080";
 
 export async function createUser(userData: CreateUserRequest): Promise<CreateUserResponse> {
   const token = localStorage.getItem("access_token");

@@ -1,0 +1,6 @@
+window.appConfig = {
+  API_URL: "$API_URL",
+  IDP_API_URL: "$IDP_API_URL",
+  CLIENT_ID: "$CLIENT_ID",
+  REDIRECT_URI: "$REDIRECT_URI"
+};

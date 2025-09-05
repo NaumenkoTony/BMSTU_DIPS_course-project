@@ -9,12 +9,14 @@ service:
   port: 80
 
 env:
-  - name: IDP_API_URL
-    value: "http://identity.local"
   - name: API_URL
-    value: "http://gateway.local"
+    value: "https://gateway.local"
+  - name: IDP_API_URL
+    value: "https://identity.local"
   - name: CLIENT_ID
     value: "locus-frontend-client"
+  - name: REDIRECT_URI
+    value: "https://frontend.local/callback"
 
 ingress:
   enabled: true
