@@ -63,19 +63,21 @@ builder.Services.AddAuthentication(options =>
     options.LogoutPath = "/account/logout";
     options.Cookie.Name = "idsrv.session";
 })
-.AddJwtBearer("Bearer", options =>
-{
-    options.Authority = authConfig["Authority"];
-    options.Audience = authConfig["Audience"];
-    options.RequireHttpsMetadata = false;
-    options.TokenValidationParameters = new TokenValidationParameters
+    .AddJwtBearer(options =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-    };
+        options.Authority = authConfig["Authority"];
+        options.Audience = authConfig["Audience"];
+        options.RequireHttpsMetadata = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = authConfig["Issuer"],
+            ValidateAudience = true,
+            ValidAudience = authConfig["Audience"],
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+        };
 });
 
 

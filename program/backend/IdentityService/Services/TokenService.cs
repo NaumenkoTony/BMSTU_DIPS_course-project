@@ -16,7 +16,7 @@ namespace IdentityService.Services
         public TokenService(RsaSecurityKey key, IConfiguration config)
         {
             _key = key;
-            _issuer = config["Issuer"] ?? "http://identity_service:8000";
+            _issuer = config["Authentication:Issuer"] ?? "identityService";
         }
 
         private string CreateToken(string subject, string audience, IEnumerable<Claim> claims, TimeSpan lifetime)

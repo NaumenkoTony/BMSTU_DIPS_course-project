@@ -34,7 +34,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
+            ValidIssuer = authConfig["Issuer"],
             ValidateAudience = true,
+            ValidAudience = authConfig["Audience"],
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"

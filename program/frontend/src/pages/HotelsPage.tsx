@@ -271,6 +271,7 @@ export default function HotelsPage() {
   useEffect(() => {
     const fetchHotels = async () => {
       try {
+        console.log("Loading hotels for page", currentPage, "with page size", pageSize);
         setLoading(true);
         const data = await getHotels(currentPage, pageSize);
         setHotelsData({

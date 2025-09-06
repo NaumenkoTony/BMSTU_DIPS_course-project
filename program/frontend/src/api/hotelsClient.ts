@@ -25,6 +25,7 @@ export interface HotelsPaginationResponse {
 const API_URL = window.appConfig?.API_URL || "http://localhost:8080";
 
 export async function getHotels(page: number = 1, pageSize: number = 10): Promise<PaginationResponse<HotelResponse>> {
+  console.log("Fetching hotels from API:", API_URL);
   const res = await fetch(`${API_URL}/api/v1/hotels?page=${page}&size=${pageSize}`, {
     headers: {
       Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,

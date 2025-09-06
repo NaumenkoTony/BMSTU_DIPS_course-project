@@ -54,6 +54,12 @@ public class AuthorizationController : ControllerBase
                           $"&scope=openid profile email" +
                           $"&state={Uri.EscapeDataString(state)}";
 
+            var customHost = _config["Authentication:Host"];
+            if (!string.IsNullOrEmpty(customHost))
+            {
+                authUrl += $"&Host={Uri.EscapeDataString(customHost)}";
+            }
+
             return Redirect(authUrl);
         }
         catch (Exception ex)
@@ -166,22 +172,29 @@ public class AuthorizationController : ControllerBase
         _logger.LogInformation("Starting direct login flow for user: {Username}", request.Username);
 
         try
-        {
-            var redirectUri = "http://localhost:8080/api/v1/authorize/callback";
+        {           
+            var redirectUri = _config["Authentication:BackendClient:RedirectUri"];
+            var clientId = _config["Authentication:BackendClient:ClientId"];
+            var authority = _config["Authentication:Authority"];
+
             var state = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
-            
             _memoryCache.Set("oauth_state", state, TimeSpan.FromMinutes(5));
             
             _logger.LogDebug("Generated OAuth state for direct login: {State}", state);
 
-            var authUrl = $"http://localhost:8000/directauthorize" +
+            var authUrl = $"{authority}/directauthorize" +
                         $"?response_type=code" +
-                        $"&client_id=locus-backend-client" +
+                        $"&client_id={clientId}" +
                         $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
                         $"&scope=openid profile email" +
                         $"&state={Uri.EscapeDataString(state)}" +
                         $"&login={request.Username}" +
                         $"&password={request.Password}";
+            var customHost = _config["Host"];
+            if (!string.IsNullOrEmpty(customHost))
+            {
+                authUrl += $"&Host={Uri.EscapeDataString(customHost)}";
+            }
 
             _logger.LogInformation("Redirecting to direct authorization endpoint");
             
