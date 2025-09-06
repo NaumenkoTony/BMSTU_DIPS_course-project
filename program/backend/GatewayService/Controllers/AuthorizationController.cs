@@ -42,7 +42,7 @@ public class AuthorizationController : ControllerBase
         {
             var redirectUri = _config["Authentication:BackendClient:RedirectUri"];
             var clientId = _config["Authentication:BackendClient:ClientId"];
-            var authority = _config["Authentication:Authority"];
+            var authority = _config["Authentication:AuthorityLocal"];
 
             var state = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
             _memoryCache.Set("oauth_state", state, TimeSpan.FromMinutes(5));
@@ -175,7 +175,7 @@ public class AuthorizationController : ControllerBase
         {           
             var redirectUri = _config["Authentication:BackendClient:RedirectUri"];
             var clientId = _config["Authentication:BackendClient:ClientId"];
-            var authority = _config["Authentication:Authority"];
+            var authority = _config["Authentication:AuthorityLocal"];
 
             var state = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
             _memoryCache.Set("oauth_state", state, TimeSpan.FromMinutes(5));
