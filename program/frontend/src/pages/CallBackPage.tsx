@@ -4,7 +4,7 @@ import { Container, Title, Loader, Text, Paper, Alert, Button } from "@mantine/c
 import { IconAlertCircle, IconCheck } from "@tabler/icons-react";
 import "./CallBackPage.css";
 
-const AUTH_URL = window.appConfig?.IDP_API_URL || "http://localhost:8000";
+const AUTH_URL = window.appConfig?.IDP_API_URL || "http://localhost:8000/idp";
 const CLIENT_ID = window.appConfig?.CLIENT_ID || "locus-frontend-client";
 
 interface CallbackPageProps {

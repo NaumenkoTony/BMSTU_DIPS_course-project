@@ -64,7 +64,7 @@ public class AdminController : ControllerBase
 
             _logger.LogInformation("Forwarding user creation to IdentityService");
 
-            var response = await client.PostAsync("admin/create-user", content);
+            var response = await client.PostAsync("/idp/admin/create-user", content);
             var responseContent = await response.Content.ReadAsStringAsync();
 
             _logger.LogInformation("IdentityService responded with status: {StatusCode}", response.StatusCode);
@@ -155,7 +155,7 @@ public class AdminController : ControllerBase
 
             _logger.LogDebug("Forwarding roles request to IdentityService");
 
-            var requestMessage = new HttpRequestMessage(HttpMethod.Get, "admin/users/roles");
+            var requestMessage = new HttpRequestMessage(HttpMethod.Get, "/idp/admin/users/roles");
             requestMessage.Headers.Add("Authorization", authHeader);
 
             var response = await identityService.SendAsync(requestMessage);

@@ -59,8 +59,8 @@ builder.Services.AddAuthentication(options =>
 })
 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
 {
-    options.LoginPath = "/account/login";
-    options.LogoutPath = "/account/logout";
+    options.LoginPath = "/idp/account/login";
+    options.LogoutPath = "/idp/account/logout";
     options.Cookie.Name = "idsrv.session";
 })
     .AddJwtBearer(options =>

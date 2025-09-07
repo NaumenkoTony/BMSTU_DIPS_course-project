@@ -7,7 +7,8 @@ using IdentityService.Models;
 
 namespace IdentityService.Controllers
 {
-    [Route("")]
+    [Route("/idp")]
+    [ApiController]
     public class AuthorizationController : Controller
     {
         private readonly IClientStore _clientStore;

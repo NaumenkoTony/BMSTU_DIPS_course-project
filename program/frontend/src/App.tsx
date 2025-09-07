@@ -60,7 +60,7 @@ export function App() {
   }, []);
 
   
-  const AUTH_URL = window.appConfig?.IDP_API_URL || "http://localhost:8000";
+  const AUTH_URL = window.appConfig?.IDP_API_URL || "http://localhost:8000/idp";
 
   const handleLogout = async () => {
   try {

@@ -6,14 +6,15 @@ using System.Security.Claims;
 
 namespace IdentityService.Controllers
 {
-   public class AccountController : Controller
+    [Route("/idp")]
+    public class AccountController : Controller
     {
         private readonly SignInManager<User> _signInManager;
         private readonly UserManager<User> _userManager;
         private readonly ILogger<AccountController> _logger;
 
         public AccountController(
-            SignInManager<User> signInManager, 
+            SignInManager<User> signInManager,
             UserManager<User> userManager,
             ILogger<AccountController> logger)
         {
@@ -58,7 +59,7 @@ namespace IdentityService.Controllers
             var code_challenge = TempData["code_challenge"]?.ToString() ?? "";
             var code_challenge_method = TempData["code_challenge_method"]?.ToString() ?? "";
 
-            return Redirect($"/authorize?response_type={Uri.EscapeDataString(response_type)}&client_id={Uri.EscapeDataString(client_id)}&redirect_uri={Uri.EscapeDataString(redirect_uri)}&scope={Uri.EscapeDataString(scope)}&state={Uri.EscapeDataString(state)}&code_challenge={Uri.EscapeDataString(code_challenge)}&code_challenge_method={Uri.EscapeDataString(code_challenge_method)}");
+            return Redirect($"/idp/authorize?response_type={Uri.EscapeDataString(response_type)}&client_id={Uri.EscapeDataString(client_id)}&redirect_uri={Uri.EscapeDataString(redirect_uri)}&scope={Uri.EscapeDataString(scope)}&state={Uri.EscapeDataString(state)}&code_challenge={Uri.EscapeDataString(code_challenge)}&code_challenge_method={Uri.EscapeDataString(code_challenge_method)}");
         }
 
         [HttpPost("account/logout")]
