@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 namespace IdentityService.Controllers
 {
     [Route("/idp")]
+    [ApiController]
     public class AuthorizationController : Controller
     {
         private readonly IClientStore _clientStore;

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
 [Route("/api/v1")]
+[ApiController]
 public class HealthController : ControllerBase
 {
     private readonly ILogger<HealthController> _logger;
@@ -20,7 +21,7 @@ public class HealthController : ControllerBase
         using var scope = _logger.BeginScope(new Dictionary<string, object>
         {
             ["Method"] = methodName,
-            ["Endpoint"] = "GET /manage/health"
+            ["Endpoint"] = "GET /api/v1/manage/health"
         });
 
         _logger.LogInformation("Health check endpoint called");

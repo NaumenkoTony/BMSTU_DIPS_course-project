@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { getHotels, type HotelResponse, type HotelsPaginationResponse } from "../api/HotelsClient";
+import { getHotels, type HotelResponse, type HotelsPaginationResponse } from "../api/hotelsClient";
 import BookHotelForm from "../components/BookHotelForm";
 import "./HotelsPage.css";
 import type { CreateReservationResponse } from "../api/ReservationsClient";

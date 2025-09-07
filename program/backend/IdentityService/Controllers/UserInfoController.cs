@@ -6,8 +6,8 @@ using Microsoft.Extensions.Logging;
 
 namespace IdentityService.Controllers;
 
-[ApiController]
 [Route("/idp/connect/userinfo")]
+[ApiController]
 public class UserInfoController : ControllerBase
 {
     private readonly UserManager<User> _userManager;
