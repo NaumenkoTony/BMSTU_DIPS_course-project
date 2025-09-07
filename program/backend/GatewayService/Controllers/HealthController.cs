@@ -3,6 +3,7 @@ namespace GatewayService.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
+[Route("/api/v1")]
 public class HealthController : ControllerBase
 {
     private readonly ILogger<HealthController> _logger;
@@ -12,8 +13,7 @@ public class HealthController : ControllerBase
         _logger = logger;
     }
 
-    [Route("/manage/health")]
-    [HttpGet]
+    [HttpGet("/manage/health")]
     public IActionResult IsOk()
     {
         const string methodName = nameof(IsOk);

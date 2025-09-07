@@ -1,3 +1,5 @@
+replicaCount: 1
+
 image:
   repository: tonynm/statistics_service
   tag: latest

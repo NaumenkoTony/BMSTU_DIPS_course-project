@@ -8,6 +8,6 @@ services:
     ports:
       - "80:80"
     environment:
-      - IDP_API_URL=http://localhost:8000
-      - API_URL=http://localhost:8080
+      - IDP_API_URL=http://localhost:8000/idp
+      - API_URL=http://localhost:8080/api/v1
       - CLIENT_ID=locus-frontend-client

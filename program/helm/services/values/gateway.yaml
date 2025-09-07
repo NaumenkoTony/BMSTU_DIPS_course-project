@@ -17,5 +17,4 @@ env:
 ingress:
   enabled: true
   name: gateway-ingress
-  host: gateway.local
-  path: /
+  path: /api/v1

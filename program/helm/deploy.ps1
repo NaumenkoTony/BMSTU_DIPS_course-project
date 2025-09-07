@@ -1,6 +1,8 @@
 Write-Host ">>> Starting Minikube..."
 minikube start --driver=docker
 
+kubectl create secret tls app-tls --cert=certs/tls.crt --key=certs/tls.key
+
 Write-Host ">>> Enabling ingress addon..."
 minikube addons enable ingress
 

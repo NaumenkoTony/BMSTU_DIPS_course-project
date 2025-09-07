@@ -1,3 +1,5 @@
+replicaCount: 1
+
 image:
   repository: tonynm/payment_service
   tag: latest

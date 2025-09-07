@@ -1,3 +1,5 @@
+replicaCount: 1
+
 image:
   repository: tonynm/reservation_service
   tag: latest

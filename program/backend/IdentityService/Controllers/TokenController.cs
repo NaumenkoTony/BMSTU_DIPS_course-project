@@ -11,7 +11,7 @@ using System.IdentityModel.Tokens.Jwt;
 
 namespace IdentityService.Controllers
 {
-    [Route("")]
+    [Route("/idp")]
     [ApiController]
     public class TokenController : ControllerBase
     {

@@ -4,7 +4,7 @@ import { Container, Title, Loader, Text, Paper, Alert, Button } from "@mantine/c
 import { IconAlertCircle, IconCheck } from "@tabler/icons-react";
 import "./CallBackPage.css";
 
-const AUTH_URL = window.appConfig?.IDP_API_URL || "http://localhost:8000";
+const AUTH_URL = window.appConfig?.IDP_API_URL || "http://localhost:8000/idp";
 const CLIENT_ID = window.appConfig?.CLIENT_ID || "locus-frontend-client";
 
 interface CallbackPageProps {
@@ -56,11 +56,12 @@ export function CallbackPage({ onLogin }: CallbackPageProps) {
         formData.append("client_id", CLIENT_ID);
         formData.append("code_verifier", codeVerifier);
 
+        const headers: Record<string, string> = {
+          "Content-Type": "application/x-www-form-urlencoded"
+        };
         const tokenResponse = await fetch(AUTH_URL + '/token', {
           method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
+          headers: headers,
           body: formData,
         });
 
