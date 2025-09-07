@@ -10,16 +10,15 @@ service:
 
 env:
   - name: API_URL
-    value: "https://gateway.local"
+    value: "https://app.local/api/v1"
   - name: IDP_API_URL
-    value: "https://identity.local"
+    value: "https://app.local/idp"
   - name: CLIENT_ID
     value: "locus-frontend-client"
   - name: REDIRECT_URI
-    value: "https://frontend.local/callback"
+    value: "https://app.local/callback"
 
 ingress:
   enabled: true
   name: frontend-ingress
-  host: frontend.local
   path: /

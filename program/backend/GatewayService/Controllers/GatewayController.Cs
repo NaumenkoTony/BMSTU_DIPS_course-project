@@ -15,7 +15,7 @@ using GatewayService.Models;
 using Microsoft.AspNetCore.Authorization;
 using GatewayService.TokenService;
 
-
+[Route("/api/v1/authorize")]
 [Authorize]
 [ApiController]
 public class GatewayController : ControllerBase
@@ -150,7 +150,7 @@ public class GatewayController : ControllerBase
         return reservationResponse;
     }
 
-    [Route("api/v1/hotels")]
+    [Route("hotels")]
     [HttpGet]
     public async Task<ActionResult<PaginationResponse>> GetHotelsAsync([FromQuery] int page, [FromQuery] int size)
     {
@@ -219,7 +219,7 @@ public class GatewayController : ControllerBase
         }
     }
 
-    [Route("/api/v1/me")]
+    [Route("me")]
     [HttpGet]
     public async Task<ActionResult<UserInfoResponse>> GetInfoAsync()
     {
@@ -328,7 +328,7 @@ public class GatewayController : ControllerBase
         }
     }
 
-    [Route("api/v1/loyalty")]
+    [Route("loyalty")]
     [HttpGet]
     public async Task<ActionResult<LoyaltyInfoResponse>> GetLoyalty()
     {
@@ -385,7 +385,7 @@ public class GatewayController : ControllerBase
         }
     }
 
-    [Route("api/v1/reservations")]
+    [Route("reservations")]
     [HttpPost]
     public async Task<ActionResult<CreateReservationResponse>> BookHotel([FromBody] CreateReservationRequest createReservationRequest)
     {
@@ -646,7 +646,7 @@ public class GatewayController : ControllerBase
         return Ok(createReservationResponse);
     }
 
-    [Route("api/v1/reservations/{reservationUid}")]
+    [Route("reservations/{reservationUid}")]
     [HttpGet]
     public async Task<ActionResult<AggregatedReservationResponse>> GetReservationByUsername(string reservationUid)
     {
@@ -705,7 +705,7 @@ public class GatewayController : ControllerBase
         }
     }
 
-    [Route("api/v1/reservations")]
+    [Route("reservations")]
     [HttpGet]
     public async Task<ActionResult<AggregatedReservationResponse>> GetReservationsByUsername()
     {
@@ -767,7 +767,7 @@ public class GatewayController : ControllerBase
         }
     }
 
-    [Route("api/v1/reservations/{reservationUid}")]
+    [Route("reservations/{reservationUid}")]
     [HttpDelete]
     public async Task<ActionResult<AggregatedReservationResponse>> UnbookHotel(string reservationUid)
     {

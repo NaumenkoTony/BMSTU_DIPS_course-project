@@ -4,10 +4,10 @@ export interface LoyaltyInfoResponse {
   reservationCount: number;
 }
 
-const API_URL = window.appConfig?.API_URL || "http://localhost:8080";
+const API_URL = window.appConfig?.API_URL || "http://localhost:8080/api/v1";
 
 export async function getLoyalty(): Promise<LoyaltyInfoResponse> {
-  const res = await fetch(`${API_URL}/api/v1/loyalty`, {
+  const res = await fetch(`${API_URL}/loyalty`, {
     headers: {
       Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,
     },

@@ -7,12 +7,10 @@ spec:
   ingressClassName: nginx
   tls:
   - hosts:
-      - frontend.local
-      - identity.local
-      - gateway.local
-    secretName: frontend-tls
+      - app.local
+    secretName: app-tls
   rules:
-  - host: {{ .Values.ingress.host }}
+  - host: app.local
     http:
       paths:
       - path: {{ .Values.ingress.path }}

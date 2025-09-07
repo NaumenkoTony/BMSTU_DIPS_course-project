@@ -12,11 +12,11 @@ export interface CreateUserResponse {
   userId: string;
 }
 
-const API_URL = window.appConfig?.API_URL || "http://localhost:8080";
+const API_URL = window.appConfig?.API_URL || "http://localhost:8080/api/v1";
 
 export async function createUser(userData: CreateUserRequest): Promise<CreateUserResponse> {
   const token = localStorage.getItem("access_token");
-  const url = `${API_URL}/api/v1/create-user`;
+  const url = `${API_URL}/create-user`;
 
   console.log("Creating user with URL:", url);
   console.log("Request body:", JSON.stringify(userData, null, 2));
@@ -49,7 +49,7 @@ export async function createUser(userData: CreateUserRequest): Promise<CreateUse
 export async function getAvailableRoles(): Promise<string[]> {
   const token = localStorage.getItem("access_token");
   
-  const response = await fetch(`${API_URL}/api/v1/users/roles`, {
+  const response = await fetch(`${API_URL}/users/roles`, {
     headers: {
       'Authorization': `Bearer ${token ?? ""}`,
     },
