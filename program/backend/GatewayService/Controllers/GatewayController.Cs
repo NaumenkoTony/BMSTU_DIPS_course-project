@@ -15,7 +15,7 @@ using GatewayService.Models;
 using Microsoft.AspNetCore.Authorization;
 using GatewayService.TokenService;
 
-[Route("/api/v1/authorize")]
+[Route("/api/v1")]
 [Authorize]
 [ApiController]
 public class GatewayController : ControllerBase
