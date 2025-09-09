@@ -125,7 +125,7 @@ jobs:
     - name: Add identity.local to /etc/hosts
       run: |
         INGRESS_IP=$(minikube ip)
-        echo "'"$INGRESS_IP"' identity.local" | sudo tee -a /etc/hosts
+        echo "$INGRESS_IP identity.local" | sudo tee -a /etc/hosts
 
     - name: Wait 20s
       run: sleep 20s
