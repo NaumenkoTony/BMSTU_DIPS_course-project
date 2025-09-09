@@ -55,7 +55,7 @@ public partial class ReservationsContext : DbContext
             entity.HasIndex(e => e.ReservationUid, "reservation_reservation_uid_key").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.EndData).HasColumnName("end_data");
+            entity.Property(e => e.EndData).HasColumnName("end_date");
             entity.Property(e => e.HotelId).HasColumnName("hotel_id");
             entity.Property(e => e.PaymentUid).HasColumnName("payment_uid");
             entity.Property(e => e.ReservationUid).HasColumnName("reservation_uid");

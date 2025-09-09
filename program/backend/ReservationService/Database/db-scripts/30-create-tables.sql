@@ -21,5 +21,5 @@ CREATE TABLE reservation
     hotel_id        INT         REFERENCES hotels (id),
     status          VARCHAR(20) NOT NULL CHECK (status IN ('PAID', 'CANCELED')),
     start_date      TIMESTAMP WITH TIME ZONE,
-    end_data        TIMESTAMP WITH TIME ZONE
+    end_date        TIMESTAMP WITH TIME ZONE
 );

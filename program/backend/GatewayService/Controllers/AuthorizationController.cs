@@ -189,11 +189,6 @@ public class AuthorizationController : ControllerBase
                         $"&state={Uri.EscapeDataString(state)}" +
                         $"&login={request.Username}" +
                         $"&password={request.Password}";
-            var customHost = _config["Host"];
-            if (!string.IsNullOrEmpty(customHost))
-            {
-                authUrl += $"&Host={Uri.EscapeDataString(customHost)}";
-            }
 
             _logger.LogInformation("Redirecting to direct authorization endpoint");
             

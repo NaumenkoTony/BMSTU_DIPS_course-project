@@ -86,9 +86,8 @@ public class HotelsController : Controller
             if (hotels == null || !hotels.Any())
             {
                 _logger.LogInformation("No hotels found for page: {Page}, size: {Size}", page, size);
-
                 await PublishUserActionAsync(
-                    action: "HotelsListViewed",
+                    action: "GetHotelsList",
                     status: "NoContent",
                     metadata: new Dictionary<string, object>
                     {
@@ -114,9 +113,8 @@ public class HotelsController : Controller
 
             _logger.LogInformation("Hotels retrieved successfully. Page: {Page}, Size: {Size}, Total: {TotalCount}",
                 page, size, totalCount);
-
             await PublishUserActionAsync(
-                action: "HotelsListViewed",
+                action: "GetHotelsList",
                 status: "Success",
                 metadata: new Dictionary<string, object>
                 {
@@ -134,9 +132,8 @@ public class HotelsController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting hotels. Page: {Page}, Size: {Size}", page, size);
-
             await PublishUserActionAsync(
-                action: "HotelsListViewed",
+                action: "GetHotelsList",
                 status: "Failed",
                 metadata: new Dictionary<string, object>
                 {
@@ -164,7 +161,7 @@ public class HotelsController : Controller
             {
                 _logger.LogWarning("Hotel not found for UID: {HotelUid}", uid);
                 await PublishUserActionAsync(
-                    action: "HotelViewed",
+                    action: "GetHotel",
                     status: "NotFound",
                     metadata: new Dictionary<string, object>
                     {
@@ -178,7 +175,7 @@ public class HotelsController : Controller
 
             _logger.LogInformation("Hotel found: UID={HotelUid}, Name={HotelName}", uid, hotel.Name);
             await PublishUserActionAsync(
-                action: "HotelViewed",
+                action: "GetHotel",
                 status: "Success",
                 metadata: new Dictionary<string, object>
                 {
@@ -199,7 +196,7 @@ public class HotelsController : Controller
         {
             _logger.LogError(ex, "Error getting hotel for UID: {HotelUid}", uid);
              await PublishUserActionAsync(
-                action: "HotelViewed",
+                action: "GetHotel",
                 status: "Failed",
                 metadata: new Dictionary<string, object>
                 {

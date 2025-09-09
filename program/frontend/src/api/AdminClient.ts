@@ -30,10 +30,8 @@ export async function createUser(userData: CreateUserRequest): Promise<CreateUse
     body: JSON.stringify(userData),
   });
 
-  console.log('Response status:', response.status);
 
   const responseText = await response.text();
-  console.log('Response text:', responseText);
 
   try {
     const data = JSON.parse(responseText);

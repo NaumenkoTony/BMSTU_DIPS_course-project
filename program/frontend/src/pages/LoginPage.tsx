@@ -44,7 +44,6 @@ export function LoginPage() {
 
       sessionStorage.setItem("pkce_verifier", codeVerifier);
       sessionStorage.setItem("auth_state", state);
-
       const authUrl = new URL(AUTH_URL + "/authorize");
       authUrl.searchParams.append("response_type", "code");
       authUrl.searchParams.append("client_id", CLIENT_ID);

@@ -91,9 +91,8 @@ public class ReservationsController : Controller
             
             _logger.LogInformation("Found {Count} reservations for user: {Username}", 
                 reservations.Count(), username);
-
              await PublishUserActionAsync(
-                action: "ReservationsListViewed",
+                action: "GetReservationsList",
                 status: "Success",
                 metadata: new Dictionary<string, object>
                 {
@@ -110,9 +109,8 @@ public class ReservationsController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting reservations for user: {Username}", username);
-
             await PublishUserActionAsync(
-                action: "ReservationsListViewed",
+                action: "GetReservationsList",
                 status: "Failed",
                 metadata: new Dictionary<string, object>
                 {
@@ -139,9 +137,8 @@ public class ReservationsController : Controller
 
             _logger.LogInformation("Reservation created successfully. UID: {ReservationUid}, ID: {ReservationId}", 
                 reservation.ReservationUid, reservation.Id);
-
             await PublishUserActionAsync(
-            action: "ReservationCreated",
+            action: "CreateReservation",
             status: "Success",
             metadata: new Dictionary<string, object>
             {
@@ -161,9 +158,8 @@ public class ReservationsController : Controller
         {
             _logger.LogError(ex, "Error creating reservation for user: {Username}. HotelId: {HotelId}", 
                 username, reservationRequest.HotelId);
-
             await PublishUserActionAsync(
-            action: "ReservationCreated",
+            action: "CreateReservation",
             status: "Failed",
             metadata: new Dictionary<string, object>
             {
@@ -192,9 +188,8 @@ public class ReservationsController : Controller
             if (reservation == null)
             {
                 _logger.LogWarning("Reservation not found for update. UID: {ReservationUid}", reservationResponse.ReservationUid);
-
                 await PublishUserActionAsync(
-                    action: "ReservationUpdated",
+                    action: "UpdateReservation",
                     status: "NotFound",
                     metadata: new Dictionary<string, object>
                     {
@@ -212,8 +207,10 @@ public class ReservationsController : Controller
 
             await _repository.UpdateAsync(newModel, reservation.Id);
 
+            _logger.LogInformation("Reservation updated successfully. UID: {ReservationUid}, Old Status: {OldStatus}, New Status: {NewStatus}", 
+                reservationResponse.ReservationUid, reservation.Status, reservationResponse.Status);
             await PublishUserActionAsync(
-                action: "ReservationUpdated",
+                action: "UpdateReservation",
                 status: "Success",
                 metadata: new Dictionary<string, object>
                 {
@@ -226,18 +223,14 @@ public class ReservationsController : Controller
                 }
             );
 
-            _logger.LogInformation("Reservation updated successfully. UID: {ReservationUid}, Old Status: {OldStatus}, New Status: {NewStatus}", 
-                reservationResponse.ReservationUid, reservation.Status, reservationResponse.Status);
-
             return Ok(newModel);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating reservation for user: {Username}. UID: {ReservationUid}", 
                 username, reservationResponse.ReservationUid);
-
             await PublishUserActionAsync(
-                action: "ReservationUpdated",
+                action: "UpdateReservation",
                 status: "Failed",
                 metadata: new Dictionary<string, object>
                 {
@@ -260,13 +253,11 @@ public class ReservationsController : Controller
         try
         {
             var hotel = await _hotelRepository.ReadAsync(id);
-            
             if (hotel == null)
             {
                 _logger.LogWarning("Hotel not found. ID: {HotelId}", id);
-
                 await PublishUserActionAsync(
-                    action: "HotelViewedForReservation",
+                    action: "GetHotel",
                     status: "NotFound",
                     metadata: new Dictionary<string, object>
                     {
@@ -279,9 +270,8 @@ public class ReservationsController : Controller
             }
 
             _logger.LogInformation("Hotel found: ID={HotelId}, Name={HotelName}", id, hotel.Name);
-
             await PublishUserActionAsync(
-                action: "HotelViewedForReservation",
+                action: "GetHotel",
                 status: "Success",
                 metadata: new Dictionary<string, object>
                 {
@@ -303,7 +293,7 @@ public class ReservationsController : Controller
             _logger.LogError(ex, "Error getting hotel. ID: {HotelId}", id);
 
              await PublishUserActionAsync(
-                action: "HotelViewedForReservation",
+                action: "GetHotel",
                 status: "Failed",
                 metadata: new Dictionary<string, object>
                 {
@@ -332,9 +322,8 @@ public class ReservationsController : Controller
             {
                 _logger.LogWarning("Reservation not found for user: {Username}. UID: {ReservationUid}", 
                     username, uid);
-
                 await PublishUserActionAsync(
-                    action: "ReservationViewed",
+                    action: "GetReservation",
                     status: "NotFound",
                     metadata: new Dictionary<string, object>
                     {
@@ -348,9 +337,8 @@ public class ReservationsController : Controller
 
             _logger.LogInformation("Reservation found: UID={ReservationUid}, Status={Status}", 
                 uid, reservation.Status);
-
             await PublishUserActionAsync(
-                action: "ReservationViewed",
+                action: "GetReservation",
                 status: "Success",
                 metadata: new Dictionary<string, object>
                 {
@@ -368,7 +356,6 @@ public class ReservationsController : Controller
         {
             _logger.LogError(ex, "Error getting reservation for user: {Username}. UID: {ReservationUid}", 
                 username, uid);
-
             await PublishUserActionAsync(
                 action: "ReservationViewed",
                 status: "Failed",
