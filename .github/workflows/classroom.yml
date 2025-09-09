@@ -79,23 +79,23 @@ jobs:
       run: |
         helm repo add bitnami https://charts.bitnami.com/bitnami
         helm repo update
-        helm upgrade --install loyalty-db bitnami/postgresql -f helm/postgres/values/loyalty-db.yaml
-        helm upgrade --install payment-db bitnami/postgresql -f helm/postgres/values/payment-db.yaml
-        helm upgrade --install reservation-db bitnami/postgresql -f helm/postgres/values/reservation-db.yaml
-        helm upgrade --install identity-db bitnami/postgresql -f helm/postgres/values/identity-db.yaml
-        helm upgrade --install statistics-db bitnami/postgresql -f helm/postgres/values/statistics-db.yaml
-        helm upgrade --install redis bitnami/redis -f helm/redis/values/redis.yaml
-        helm upgrade --install kafka bitnami/kafka -f helm/kafka/values/kafka.yaml
+        helm upgrade --install loyalty-db bitnami/postgresql -f program/helm/postgres/values/loyalty-db.yaml
+        helm upgrade --install payment-db bitnami/postgresql -f program/helm/postgres/values/payment-db.yaml
+        helm upgrade --install reservation-db bitnami/postgresql -f program/helm/postgres/values/reservation-db.yaml
+        helm upgrade --install identity-db bitnami/postgresql -f program/helm/postgres/values/identity-db.yaml
+        helm upgrade --install statistics-db bitnami/postgresql -f program/helm/postgres/values/statistics-db.yaml
+        helm upgrade --install redis bitnami/redis -f program/helm/redis/values/redis.yaml
+        helm upgrade --install kafka bitnami/kafka -f program/helm/kafka/values/kafka.yaml
 
     - name: Deploy microservices
       run: |
-        helm upgrade --install gateway ./services -f helm/services/values/gateway.yaml
-        helm upgrade --install loyalty ./services -f helm/services/values/loyalty.yaml
-        helm upgrade --install payment ./services -f helm/services/values/payment.yaml
-        helm upgrade --install reservation ./services -f helm/services/values/reservation.yaml
-        helm upgrade --install identity ./services -f helm/services/values/identity.yaml
-        helm upgrade --install statistics ./services -f helm/services/values/statistics.yaml
-        helm upgrade --install frontend ./services -f helm/services/values/frontend.yaml
+        helm upgrade --install gateway ./services -f program/helm/services/values/gateway.yaml
+        helm upgrade --install loyalty ./services -f program/helm/services/values/loyalty.yaml
+        helm upgrade --install payment ./services -f program/helm/services/values/payment.yaml
+        helm upgrade --install reservation ./services -f program/helm/services/values/reservation.yaml
+        helm upgrade --install identity ./services -f program/helm/services/values/identity.yaml
+        helm upgrade --install statistics ./services -f program/helm/services/values/statistics.yaml
+        helm upgrade --install frontend ./services -f program/helm/services/values/frontend.yaml
 
     - name: Check cluster status
       run: |
