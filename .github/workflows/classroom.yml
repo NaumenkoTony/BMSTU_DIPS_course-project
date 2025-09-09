@@ -105,21 +105,6 @@ jobs:
         echo ">>> Minikube IP:"
         minikube ip
 
-    - name: Get Ingress IP
-      run: |
-        nohup minikube tunnel > /dev/null 2>&1 &
-        sleep 10s
-        INGRESS_IP=$(minikube ip)
-        echo "Ingress IP: $INGRESS_IP"
-        echo "ingress_ip=$INGRESS_IP" >> $GITHUB_ENV
-
-    - name: Update Postman environment
-      run: |
-        INGRESS_IP=$(minikube ip)
-        jq '.values |= map(if .key == "baseUrl" then .value = "http://'"$INGRESS_IP"'" else . end)' \
-        program/postman/environment.json > updated_environment.json
-        mv updated_environment.json program/postman/environment.json
-
     - name: Wait 20s
       run: sleep 20s
 
