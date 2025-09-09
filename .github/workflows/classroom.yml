@@ -107,7 +107,7 @@ jobs:
 
     - name: Start minikube tunnel
       run: |
-        nohup minikube tunnel > /dev/null 2>&1
+        nohup minikube tunnel > /dev/null 2>&1 &
 
     - name: Wait 20s
       run: sleep 20s
