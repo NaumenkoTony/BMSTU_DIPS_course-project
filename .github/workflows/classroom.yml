@@ -8,12 +8,10 @@ on:
       - '**'
 jobs:
   api-test:
-    name: Test
+    name: run tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       - name: Build images
         timeout-minutes: 10
@@ -45,3 +43,90 @@ jobs:
         run: |
           cd program/backend
           docker compose down -v
+  deploy:
+    name: Deploy to Minikube and run tests
+    needs: api-test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Install kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: v1.30.0
+
+    - name: Install Helm
+      uses: azure/setup-helm@v4.2.0
+      with:
+        version: v3.14.4
+
+    - name: Install Minikube
+      run: |
+        curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+        chmod +x minikube
+        sudo mv minikube /usr/local/bin/
+        minikube version
+
+    - name: Start Minikube and enable ingress
+      run: |
+        echo ">>> Starting Minikube..."
+        minikube start --driver=docker --kubernetes-version=v1.30.0 --memory=4096 --cpus=2
+        echo ">>> Enabling ingress..."
+        minikube addons enable ingress
+
+    - name: Deploy dependencies
+      run: |
+        helm repo add bitnami https://charts.bitnami.com/bitnami
+        helm repo update
+        helm upgrade --install loyalty-db bitnami/postgresql -f ./postgres/values/loyalty-db.yaml
+        helm upgrade --install payment-db bitnami/postgresql -f ./postgres/values/payment-db.yaml
+        helm upgrade --install reservation-db bitnami/postgresql -f ./postgres/values/reservation-db.yaml
+        helm upgrade --install identity-db bitnami/postgresql -f ./postgres/values/identity-db.yaml
+        helm upgrade --install statistics-db bitnami/postgresql -f ./postgres/values/statistics-db.yaml
+        helm upgrade --install redis bitnami/redis -f ./redis/values/redis.yaml
+        helm upgrade --install kafka bitnami/kafka -f ./kafka/values/kafka.yaml
+
+    - name: Deploy microservices
+      run: |
+        helm upgrade --install gateway ./services -f ./services/values/gateway.yaml
+        helm upgrade --install loyalty ./services -f ./services/values/loyalty.yaml
+        helm upgrade --install payment ./services -f ./services/values/payment.yaml
+        helm upgrade --install reservation ./services -f ./services/values/reservation.yaml
+        helm upgrade --install identity ./services -f ./services/values/identity.yaml
+        helm upgrade --install statistics ./services -f ./services/values/statistics.yaml
+        helm upgrade --install frontend ./services -f ./services/values/frontend.yaml
+
+    - name: Check cluster status
+      run: |
+        kubectl get pods -o wide
+        kubectl get svc
+        kubectl get ingress
+        echo ">>> Minikube IP:"
+        minikube ip
+
+    - name: Get Ingress IP
+      run: |
+        nohup minikube tunnel > /dev/null 2>&1 &
+        sleep 10s
+        INGRESS_IP=$(minikube ip)
+        echo "Ingress IP: $INGRESS_IP"
+        echo "ingress_ip=$INGRESS_IP" >> $GITHUB_ENV
+
+    - name: Update Postman environment
+      run: |
+        INGRESS_IP=$(minikube ip)
+        jq '.values |= map(if .key == "baseUrl" then .value = "http://'"$INGRESS_IP"'" else . end)' \
+        program/postman/environment.json > updated_environment.json
+        mv updated_environment.json program/postman/environment.json
+
+    - name: Wait 20s
+      run: sleep 20s
+
+    - name: Run API Tests
+      uses: matt-ball/newman-action@master
+      with:
+        collection: program/postman/collection.json
+        environment: program/postman/environment.json
+        delayRequest: 200
+        reporters: '[ "cli" ]'
