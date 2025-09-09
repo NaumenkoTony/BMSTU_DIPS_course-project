@@ -89,13 +89,13 @@ jobs:
 
     - name: Deploy microservices
       run: |
-        helm upgrade --install gateway ./services -f program/helm/services/values/gateway.yaml
-        helm upgrade --install loyalty ./services -f program/helm/services/values/loyalty.yaml
-        helm upgrade --install payment ./services -f program/helm/services/values/payment.yaml
-        helm upgrade --install reservation ./services -f program/helm/services/values/reservation.yaml
-        helm upgrade --install identity ./services -f program/helm/services/values/identity.yaml
-        helm upgrade --install statistics ./services -f program/helm/services/values/statistics.yaml
-        helm upgrade --install frontend ./services -f program/helm/services/values/frontend.yaml
+        helm upgrade --install gateway program/helm/services -f program/helm/services/values/gateway.yaml
+        helm upgrade --install loyalty program/helm/services -f program/helm/services/values/loyalty.yaml
+        helm upgrade --install payment program/helm/services -f program/helm/services/values/payment.yaml
+        helm upgrade --install reservation program/helm/services -f program/helm/services/values/reservation.yaml
+        helm upgrade --install identity program/helm/services -f program/helm/services/values/identity.yaml
+        helm upgrade --install statistics program/helm/services -f program/helm/services/values/statistics.yaml
+        helm upgrade --install frontend program/helm/services -f program/helm/services/values/frontend.yaml
 
     - name: Check cluster status
       run: |
