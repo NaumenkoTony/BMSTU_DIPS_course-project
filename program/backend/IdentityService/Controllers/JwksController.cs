@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 
 
 [ApiController]
-[Route("/idp/.well-known")]
+[Route("idp/.well-known")]
 public class JwksController : ControllerBase
 {
     private readonly IJwksService _jwksService;

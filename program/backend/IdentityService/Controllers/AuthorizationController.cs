@@ -7,7 +7,7 @@ using IdentityService.Models;
 
 namespace IdentityService.Controllers
 {
-    [Route("/idp")]
+    [Route("idp")]
     [ApiController]
     public class AuthorizationController : Controller
     {

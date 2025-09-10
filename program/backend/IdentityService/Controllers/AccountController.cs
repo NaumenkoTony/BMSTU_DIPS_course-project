@@ -6,7 +6,7 @@ using System.Security.Claims;
 
 namespace IdentityService.Controllers
 {
-    [Route("/idp")]
+    [Route("idp")]
     public class AccountController : Controller
     {
         private readonly SignInManager<User> _signInManager;

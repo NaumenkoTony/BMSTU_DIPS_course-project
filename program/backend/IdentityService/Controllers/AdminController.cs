@@ -8,7 +8,7 @@ namespace IdentityService.Controllers;
 
 [Authorize(Roles = "Admin", AuthenticationSchemes = "Bearer")]
 [ApiController]
-[Route("/idp/[controller]")]
+[Route("idp/[controller]")]
 public class AdminController : ControllerBase
 {
     private readonly UserManager<User> _userManager;
