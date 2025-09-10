@@ -6,7 +6,7 @@ using System.Security.Claims;
 
 namespace IdentityService.Controllers
 {
-    [Route("/idp")]
+    [Route("/idp/account")]
     public class AccountController : Controller
     {
         private readonly SignInManager<User> _signInManager;
@@ -23,10 +23,10 @@ namespace IdentityService.Controllers
             _logger = logger;
         }
 
-        [HttpGet("account/login")]
+        [HttpGet("login")]
         public IActionResult Login() => View();
 
-        [HttpPost("account/login")]
+        [HttpPost("login")]
         public async Task<IActionResult> Login(string username, string password)
         {
             _logger.LogInformation("Login attempt for user: {Username}", username);
@@ -62,7 +62,7 @@ namespace IdentityService.Controllers
             return Redirect($"/idp/authorize?response_type={Uri.EscapeDataString(response_type)}&client_id={Uri.EscapeDataString(client_id)}&redirect_uri={Uri.EscapeDataString(redirect_uri)}&scope={Uri.EscapeDataString(scope)}&state={Uri.EscapeDataString(state)}&code_challenge={Uri.EscapeDataString(code_challenge)}&code_challenge_method={Uri.EscapeDataString(code_challenge_method)}");
         }
 
-        [HttpPost("account/logout")]
+        [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
             const string methodName = nameof(Logout);
