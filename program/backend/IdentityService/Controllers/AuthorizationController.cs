@@ -72,7 +72,7 @@ namespace IdentityService.Controllers
                 TempData["code_challenge"] = code_challenge;
                 TempData["code_challenge_method"] = code_challenge_method;
 
-                return RedirectToAction("Login", "/idp/account");
+                return RedirectToAction("Login", "Account");
             }
 
             _logger.LogInformation("User already authenticated, issuing authorization code");

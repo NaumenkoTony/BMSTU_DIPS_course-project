@@ -4,7 +4,7 @@ import "./LoginPage.css";
 
 const AUTH_URL = window.appConfig?.IDP_API_URL || "http://localhost:8000/idp";
 const CLIENT_ID = window.appConfig?.CLIENT_ID || "locus-frontend-client";
-const REDIRECT_URI = window.appConfig?.REDIRECT_URI || "http://localhost:5173/callback";
+const REDIRECT_URI = window.appConfig?.REDIRECT_URI || "http://localhost:80/callback";
 const SCOPES = "openid profile email";
 
 const generateRandomString = (length: number = 64): string => {
