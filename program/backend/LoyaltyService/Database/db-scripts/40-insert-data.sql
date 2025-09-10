@@ -1,14 +1,12 @@
 \connect loyalties program
 
-INSERT INTO loyalty (
-    id, 
+INSERT INTO loyalty ( 
     username, 
     reservation_count, 
     status, 
     discount
 ) 
 VALUES (
-    1, 
     'Test', 
     25,
     'GOLD', 
@@ -16,14 +14,12 @@ VALUES (
 );
 
 INSERT INTO loyalty (
-    id, 
     username, 
     reservation_count, 
     status, 
     discount
 ) 
 VALUES (
-    2, 
     'admin',
     20,
     'GOLD', 
