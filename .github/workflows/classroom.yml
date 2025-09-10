@@ -127,8 +127,11 @@ jobs:
         INGRESS_IP=$(minikube ip)
         echo "$INGRESS_IP identity.local" | sudo tee -a /etc/hosts
 
-    - name: Wait 20s
-      run: sleep 20s
+    - name: Wait 60s
+      run: sleep 60s 
+      
+    - name: Get pods
+      run: kubectl get pods -o wide
 
     - name: Run API Tests
       uses: matt-ball/newman-action@master
