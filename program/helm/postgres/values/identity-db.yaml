@@ -5,5 +5,7 @@ auth:
 
 primary:
   persistence:
-    enabled: false
+    enabled: true
+    size: 1Gi
+
 

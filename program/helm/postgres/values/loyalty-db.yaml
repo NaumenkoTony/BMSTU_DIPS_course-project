@@ -5,6 +5,7 @@ auth:
 
 primary:
   persistence:
+<<<<<<< HEAD
     enabled: false
   initdbScripts:
     01-schema.sql: |
@@ -24,3 +25,49 @@ primary:
       INSERT INTO loyalty (username, reservation_count, status, discount)
       VALUES ('admin', 20, 'GOLD', 10)
       ON CONFLICT (username) DO NOTHING;
+=======
+    enabled: true
+    size: 1Gi
+
+  initdb:
+    user: program        
+    password: test
+    scripts:
+      10-create-tables.sql: |
+        CREATE TABLE IF NOT EXISTS loyalty
+        (
+            id                SERIAL PRIMARY KEY,
+            username          VARCHAR(80) NOT NULL UNIQUE,
+            reservation_count INT         NOT NULL DEFAULT 0,
+            status            VARCHAR(80) NOT NULL DEFAULT 'BRONZE'
+                CHECK (status IN ('BRONZE', 'SILVER', 'GOLD')),
+            discount          INT         NOT NULL
+        );
+        
+      20-insert-data.sql: |
+        INSERT INTO loyalty (
+            username, 
+            reservation_count, 
+            status, 
+            discount
+        ) 
+        VALUES (
+            'Test', 
+            25,
+            'GOLD', 
+            10
+        );
+
+        INSERT INTO loyalty (
+            username, 
+            reservation_count, 
+            status, 
+            discount
+        ) 
+        VALUES (
+            'admin',
+            20,
+            'GOLD', 
+            10
+        );
+>>>>>>> v3

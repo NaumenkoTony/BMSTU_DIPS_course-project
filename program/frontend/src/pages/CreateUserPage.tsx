@@ -158,7 +158,7 @@ export default function CreateUserPage() {
                 <Select
                   label="Роли"
                   placeholder="Выберите роли"
-                  data={availableRoles} // Используем загруженные роли
+                  data={availableRoles}
                   defaultValue={['User']}
                   multiple
                   className="create-user-input"

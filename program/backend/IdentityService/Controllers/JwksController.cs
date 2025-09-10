@@ -1,8 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
+<<<<<<< HEAD
 [Route(".well-known")]
 [ApiController]
+=======
+[ApiController]
+[Route("/idp/.well-known")]
+>>>>>>> v3
 public class JwksController : ControllerBase
 {
     private readonly IJwksService _jwksService;
@@ -49,7 +54,7 @@ public class JwksController : ControllerBase
 
         try
         {
-            var issuer = $"{Request.Scheme}://{Request.Host}";
+            var issuer = $"{Request.Scheme}://{Request.Host}/idp";
             _logger.LogDebug("Using issuer: {Issuer}", issuer);
 
             var config = new

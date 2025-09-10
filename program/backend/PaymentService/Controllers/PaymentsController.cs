@@ -87,7 +87,7 @@ public class PaymentsController : Controller
             {
                 _logger.LogWarning("Payment not found for UID: {PaymentUid}", uid);
                 await PublishUserActionAsync(
-                    action: "PaymentViewed",
+                    action: "GetPayment",
                     status: "NotFound",
                     metadata: new Dictionary<string, object>
                     {
@@ -100,9 +100,8 @@ public class PaymentsController : Controller
 
             _logger.LogInformation("Payment found: UID={PaymentUid}, Status={Status}, Price={Price}",
                 uid, payment.Status, payment.Price);
-
             await PublishUserActionAsync(
-                action: "PaymentViewed",
+                action: "GetPayment",
                 status: "Success",
                 metadata: new Dictionary<string, object>
                 {
@@ -110,7 +109,7 @@ public class PaymentsController : Controller
                     ["Status"] = payment.Status,
                     ["Amount"] = payment.Price,
                 }
-                );
+            );
 
             return Ok(_mapper.Map<PaymentResponse>(payment));
         }
@@ -138,9 +137,8 @@ public class PaymentsController : Controller
 
             _logger.LogInformation("Payment created successfully. UID: {PaymentUid}, ID: {PaymentId}", 
                 paymentResponse.PaymentUid, paymentResponse.Id);
-            
             await PublishUserActionAsync(
-                action: "PaymentCreated",
+                action: "CreatePayment",
                 status: "Success",
                 metadata: new Dictionary<string, object>
                 {
@@ -157,9 +155,8 @@ public class PaymentsController : Controller
         {
             _logger.LogError(ex, "Error creating payment. Status: {Status}, Price: {Price}", 
                 paymentRequest.Status, paymentRequest.Price);
-
             await PublishUserActionAsync(
-            action: "PaymentCreated",
+            action: "CreatePayment",
             status: "Failed",
             metadata: new Dictionary<string, object>
             {
@@ -185,9 +182,8 @@ public class PaymentsController : Controller
             if (payment == null)
             {
                 _logger.LogWarning("Payment not found for update. UID: {PaymentUid}", paymentResponse.PaymentUid);
-
                 await PublishUserActionAsync(
-                    action: "PaymentUpdated",
+                    action: "UpdatePaymentStatus",
                     status: "NotFound",
                     metadata: new Dictionary<string, object>
                     {
@@ -207,9 +203,8 @@ public class PaymentsController : Controller
 
             _logger.LogInformation("Payment updated successfully. UID: {PaymentUid}, Old Status: {OldStatus}, New Status: {NewStatus}", 
                 paymentResponse.PaymentUid, payment.Status, paymentResponse.Status);
-            
             await PublishUserActionAsync(
-                action: "PaymentUpdated",
+                action: "UpdatePaymentStatus",
                 status: "Success",
                 metadata: new Dictionary<string, object>
                 {
@@ -226,9 +221,8 @@ public class PaymentsController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating payment. UID: {PaymentUid}", paymentResponse.PaymentUid);
-
             await PublishUserActionAsync(
-                action: "PaymentUpdated",
+                action: "UpdatePaymentStatus",
                 status: "Failed",
                 metadata: new Dictionary<string, object>
                 {

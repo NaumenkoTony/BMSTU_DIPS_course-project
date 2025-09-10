@@ -41,7 +41,7 @@ export interface AggregatedReservationResponse {
 }
 
 
-const API_URL = window.appConfig?.API_URL || "http://localhost:8080";
+const API_URL = window.appConfig?.API_URL || "http://localhost:8080/api/v1";
 
 export async function bookHotel(req: {
   hotelUid: string;
@@ -50,7 +50,7 @@ export async function bookHotel(req: {
 }): Promise<CreateReservationResponse> {
   const token = localStorage.getItem("access_token") ?? "";
 
-  const res = await fetch(`${API_URL}/api/v1/reservations`, {
+  const res = await fetch(`${API_URL}/reservations`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -68,7 +68,7 @@ export async function bookHotel(req: {
 }
 
 export async function getReservations(): Promise<AggregatedReservationResponse[]> {
-  const res = await fetch(`${API_URL}/api/v1/reservations`, {
+  const res = await fetch(`${API_URL}/reservations`, {
     headers: {
       Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,
     },
@@ -82,7 +82,7 @@ export async function getReservations(): Promise<AggregatedReservationResponse[]
 }
 
 export async function getReservation(reservationUid: string): Promise<AggregatedReservationResponse> {
-  const res = await fetch(`${API_URL}/api/v1/reservations/${reservationUid}`, {
+  const res = await fetch(`${API_URL}/reservations/${reservationUid}`, {
     headers: {
       Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,
     },
@@ -96,7 +96,7 @@ export async function getReservation(reservationUid: string): Promise<Aggregated
 }
 
 export async function unbookHotel(reservationUid: string): Promise<void> {
-  const res = await fetch(`${API_URL}/api/v1/reservations/${reservationUid}`, {
+  const res = await fetch(`${API_URL}/reservations/${reservationUid}`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,

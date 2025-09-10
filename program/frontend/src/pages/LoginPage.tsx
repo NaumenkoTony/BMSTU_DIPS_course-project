@@ -2,7 +2,11 @@ import { useState } from "react";
 import { Container, Title, Button, Text, Paper } from "@mantine/core";
 import "./LoginPage.css";
 
+<<<<<<< HEAD
 const AUTH_URL = window.appConfig?.IDP_API_URL || "zzzzzzzzzz/idp";
+=======
+const AUTH_URL = window.appConfig?.IDP_API_URL || "http://localhost:8000/idp";
+>>>>>>> v3
 const CLIENT_ID = window.appConfig?.CLIENT_ID || "locus-frontend-client";
 const REDIRECT_URI = window.appConfig?.REDIRECT_URI || "http://localhost:5173/callback";
 const SCOPES = "openid profile email";
@@ -44,7 +48,6 @@ export function LoginPage() {
 
       sessionStorage.setItem("pkce_verifier", codeVerifier);
       sessionStorage.setItem("auth_state", state);
-
       const authUrl = new URL(AUTH_URL + "/authorize");
       authUrl.searchParams.append("response_type", "code");
       authUrl.searchParams.append("client_id", CLIENT_ID);

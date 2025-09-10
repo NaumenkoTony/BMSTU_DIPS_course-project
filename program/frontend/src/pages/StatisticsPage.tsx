@@ -63,10 +63,9 @@ export function StatisticsPage() {
 
   const getServiceColor = (service: string) => {
     const colors: { [key: string]: string } = {
-      Reservations: "blue",
-      Payments: "green",
+      Reservation: "blue",
+      Payment: "green",
       Loyalty: "orange",
-      Hotels: "violet",
     };
     return colors[service] || "gray";
   };
@@ -75,8 +74,8 @@ export function StatisticsPage() {
     const colors: { [key: string]: string } = {
       Success: "green",
       Failed: "red",
-      Pending: "yellow",
-      NotFound: "gray",
+      NoContent: "orange",
+      NotFound: "orange",
     };
     return colors[status] || "gray";
   };

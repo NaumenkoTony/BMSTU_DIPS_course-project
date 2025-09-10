@@ -17,4 +17,8 @@ env:
 ingress:
   enabled: true
   name: gateway-ingress
+<<<<<<< HEAD
   path: /api/v1
+=======
+  path: /api/v1
+>>>>>>> v3

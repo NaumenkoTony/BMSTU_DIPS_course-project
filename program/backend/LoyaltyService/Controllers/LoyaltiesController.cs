@@ -87,8 +87,10 @@ public class LoyaltiesController : Controller
         {
             var loyalty = await _repository.GetLoyalityByUsername(username);
 
+            _logger.LogInformation("Loyalty found for user: {Username}, Status: {Status}, Discount: {Discount}",
+                username, loyalty?.Status, loyalty?.Discount);
             await PublishUserActionAsync(
-                action: "LoyaltyStatusViewed",
+                action: "GetLoyalty",
                 status: "Success",
                 metadata: new Dictionary<string, object>
                 {
@@ -97,15 +99,17 @@ public class LoyaltiesController : Controller
                     ["ReservationCount"] = loyalty?.ReservationCount ?? 0
                 }
             );
-
-            _logger.LogInformation("Loyalty found for user: {Username}, Status: {Status}, Discount: {Discount}",
-                username, loyalty?.Status, loyalty?.Discount);
             
             return Ok(_mapper.Map<LoyaltyResponse>(loyalty));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting loyalty for user: {Username}", username);
+            await PublishUserActionAsync(
+                action: "GetLoyalty",
+                status: "Failed"
+            );
+
             return StatusCode(500, "Internal server error");
         }
     }
@@ -123,8 +127,9 @@ public class LoyaltiesController : Controller
             await _repository.ImproveLoyality(username);
             var newLoyalty = await _repository.GetLoyalityByUsername(username);
 
+            _logger.LogInformation("Loyalty improved for user: {Username}", username);
             await PublishUserActionAsync(
-                action: "LoyaltyImproved",
+                action: "ImproveLoyality",
                 status: "Success",
                 metadata: new Dictionary<string, object>
                 {
@@ -136,12 +141,15 @@ public class LoyaltiesController : Controller
                 }
             );
 
-            _logger.LogInformation("Loyalty improved for user: {Username}", username);
             return Ok();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error improving loyalty for user: {Username}", username);
+            await PublishUserActionAsync(
+                action: "ImproveLoyality",
+                status: "Failed"
+            );
             return StatusCode(500, "Internal server error");
         }
     }
@@ -159,8 +167,9 @@ public class LoyaltiesController : Controller
             await _repository.DegradeLoyality(username);
             var newLoyalty = await _repository.GetLoyalityByUsername(username);
 
+            _logger.LogInformation("Loyalty degraded for user: {Username}", username);
             await PublishUserActionAsync(
-                action: "LoyaltyDegraded",
+                action: "DegradeLoyality",
                 status: "Success",
                 metadata: new Dictionary<string, object>
                 {
@@ -173,21 +182,16 @@ public class LoyaltiesController : Controller
                 }
             );
 
-            _logger.LogInformation("Loyalty degraded for user: {Username}", username);
             return Ok();
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error degrading loyalty for user: {Username}", username);
             await PublishUserActionAsync(
-                action: "LoyaltyDegraded",
-                status: "Failed",
-                metadata: new Dictionary<string, object>
-                {
-                    ["Error"] = ex.Message
-                }
+                action: "DegradeLoyality",
+                status: "Failed"
             );
 
-            _logger.LogError(ex, "Error degrading loyalty for user: {Username}", username);
             return StatusCode(500, "Internal server error");
         }
     }
@@ -202,10 +206,10 @@ public class LoyaltiesController : Controller
         try
         {
             await _repository.CreateLoyalityUser(username);
-            _logger.LogInformation("Loyalty user created successfully: {Username}", username);
 
+            _logger.LogInformation("Loyalty user created successfully: {Username}", username);
             await PublishUserActionAsync(
-                action: "LoyaltyUserCreated",
+                action: "CreateLoyalityUser",
                 status: "Success",
                 metadata: new Dictionary<string, object>
                 {
@@ -221,6 +225,11 @@ public class LoyaltiesController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating loyalty user: {Username}", username);
+            await PublishUserActionAsync(
+                action: "CreateLoyalityUser",
+                status: "Failed"
+            );
+
             return StatusCode(500, "Internal server error");
         }
     }

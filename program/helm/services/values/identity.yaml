@@ -17,4 +17,8 @@ env:
 ingress:
   enabled: true
   name: identity-ingress
+<<<<<<< HEAD
   path: /idp
+=======
+  path: /idp
+>>>>>>> v3

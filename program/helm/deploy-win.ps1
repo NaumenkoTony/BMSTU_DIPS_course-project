@@ -6,9 +6,9 @@ mkdir -p certs
 
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -keyout certs/tls.key -out certs/tls.crt \
-    -subj "/CN=frontend.local/O=frontend.local"
+    -subj "/CN=app.local/O=app.local"
 
-kubectl create secret tls frontend-tls --cert=certs/tls.crt --key=certs/tls.key
+kubectl create secret tls app-tls --cert=certs/tls.crt --key=certs/tls.key
 
 Write-Host ">>> Deploying dependencies..."
 helm repo add bitnami https://charts.bitnami.com/bitnami

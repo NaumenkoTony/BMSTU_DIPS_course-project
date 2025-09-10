@@ -70,7 +70,6 @@ export function CallbackPage({ onLogin }: CallbackPageProps) {
         }
 
         const tokenData = await tokenResponse.json();
-        console.log("recieved token:" + tokenData.access_token)
         localStorage.setItem("access_token", tokenData.access_token);
         localStorage.setItem("token_type", tokenData.token_type);
         localStorage.setItem("expires_in", tokenData.expires_in.toString());

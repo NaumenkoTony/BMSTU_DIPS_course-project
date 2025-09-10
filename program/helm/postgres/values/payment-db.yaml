@@ -5,6 +5,7 @@ auth:
 
 primary:
   persistence:
+<<<<<<< HEAD
     enabled: false
   initdbScripts:
     01-schema.sql: |
@@ -16,3 +17,21 @@ primary:
               CHECK (status IN ('PAID', 'CANCELED')),
           price       INT         NOT NULL
       );
+=======
+    enabled: true
+    size: 1Gi
+
+  initdb:
+    user: program        
+    password: test
+    scripts:
+      10-create-tables.sql: |
+        CREATE TABLE IF NOT EXISTS payment
+        (
+            id           SERIAL      PRIMARY KEY,
+            payment_uid  uuid        NOT NULL UNIQUE,
+            status       VARCHAR(20) NOT NULL CHECK (status IN ('PAID', 'CANCELED')),
+            price        INT         NOT NULL
+        );
+
+>>>>>>> v3
