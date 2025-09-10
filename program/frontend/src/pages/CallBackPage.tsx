@@ -6,6 +6,7 @@ import "./CallBackPage.css";
 
 const AUTH_URL = window.appConfig?.IDP_API_URL || "http://localhost:8000/idp";
 const CLIENT_ID = window.appConfig?.CLIENT_ID || "locus-frontend-client";
+const REDIRECT_URI = window.appConfig?.REDIRECT_URI || "http://localhost:80/callback";
 
 interface CallbackPageProps {
   onLogin: (token: string) => void;
@@ -52,7 +53,7 @@ export function CallbackPage({ onLogin }: CallbackPageProps) {
         const formData = new URLSearchParams();
         formData.append("grant_type", "authorization_code");
         formData.append("code", code);
-        formData.append("redirect_uri", window.location.origin + "/callback");
+        formData.append("redirect_uri", REDIRECT_URI);
         formData.append("client_id", CLIENT_ID);
         formData.append("code_verifier", codeVerifier);
 
