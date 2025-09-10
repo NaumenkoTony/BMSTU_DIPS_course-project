@@ -1,13 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-<<<<<<< HEAD
-[Route(".well-known")]
-[ApiController]
-=======
+
 [ApiController]
 [Route("/idp/.well-known")]
->>>>>>> v3
 public class JwksController : ControllerBase
 {
     private readonly IJwksService _jwksService;
