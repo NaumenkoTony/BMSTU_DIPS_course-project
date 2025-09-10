@@ -15,10 +15,6 @@ using GatewayService.Models;
 using Microsoft.AspNetCore.Authorization;
 using GatewayService.TokenService;
 
-<<<<<<< HEAD
-
-=======
->>>>>>> v3
 [Route("/api/v1")]
 [Authorize]
 [ApiController]
@@ -154,12 +150,9 @@ public class GatewayController : ControllerBase
         return reservationResponse;
     }
 
-<<<<<<< HEAD
-    [HttpGet("hotels")]
-=======
+
     [Route("hotels")]
     [HttpGet]
->>>>>>> v3
     public async Task<ActionResult<PaginationResponse>> GetHotelsAsync([FromQuery] int page, [FromQuery] int size)
     {
         const string methodName = nameof(GetHotelsAsync);
@@ -227,12 +220,8 @@ public class GatewayController : ControllerBase
         }
     }
 
-<<<<<<< HEAD
-    [HttpGet("me")]
-=======
     [Route("me")]
     [HttpGet]
->>>>>>> v3
     public async Task<ActionResult<UserInfoResponse>> GetInfoAsync()
     {
         const string methodName = nameof(GetInfoAsync);
@@ -340,12 +329,9 @@ public class GatewayController : ControllerBase
         }
     }
 
-<<<<<<< HEAD
-    [HttpGet("loyalty")]
-=======
+
     [Route("loyalty")]
     [HttpGet]
->>>>>>> v3
     public async Task<ActionResult<LoyaltyInfoResponse>> GetLoyalty()
     {
         const string methodName = nameof(GetLoyalty);
@@ -401,12 +387,9 @@ public class GatewayController : ControllerBase
         }
     }
 
-<<<<<<< HEAD
-    [HttpPost("reservations")]
-=======
+
     [Route("reservations")]
     [HttpPost]
->>>>>>> v3
     public async Task<ActionResult<CreateReservationResponse>> BookHotel([FromBody] CreateReservationRequest createReservationRequest)
     {
         const string methodName = nameof(BookHotel);
@@ -666,12 +649,9 @@ public class GatewayController : ControllerBase
         return Ok(createReservationResponse);
     }
 
-<<<<<<< HEAD
-    [HttpGet("reservations/{reservationUid}")]
-=======
+
     [Route("reservations/{reservationUid}")]
     [HttpGet]
->>>>>>> v3
     public async Task<ActionResult<AggregatedReservationResponse>> GetReservationByUsername(string reservationUid)
     {
         const string methodName = nameof(GetReservationByUsername);
@@ -729,12 +709,9 @@ public class GatewayController : ControllerBase
         }
     }
 
-<<<<<<< HEAD
-    [HttpGet("reservations")]
-=======
+
     [Route("reservations")]
     [HttpGet]
->>>>>>> v3
     public async Task<ActionResult<AggregatedReservationResponse>> GetReservationsByUsername()
     {
         const string methodName = nameof(GetReservationsByUsername);
@@ -795,12 +772,8 @@ public class GatewayController : ControllerBase
         }
     }
 
-<<<<<<< HEAD
-    [HttpDelete("reservations/{reservationUid}")]
-=======
     [Route("reservations/{reservationUid}")]
     [HttpDelete]
->>>>>>> v3
     public async Task<ActionResult<AggregatedReservationResponse>> UnbookHotel(string reservationUid)
     {
         const string methodName = nameof(UnbookHotel);

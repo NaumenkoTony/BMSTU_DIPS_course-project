@@ -14,12 +14,8 @@ public class HealthController : ControllerBase
         _logger = logger;
     }
 
-<<<<<<< HEAD
-    [HttpGet("/manage/health")]
-=======
     [Route("manage/health")]
     [HttpGet]
->>>>>>> v3
     public IActionResult IsOk()
     {
         const string methodName = nameof(IsOk);
