@@ -46,7 +46,7 @@ jobs:
 
   push-images:
     name: Push to Docker Hub
-    needs: [api-test]
+    needs: api-test
     runs-on: ubuntu-latest
     if: success()
     steps:
@@ -70,7 +70,7 @@ jobs:
 
   deploy:
     name: Deploy to Minikube and run tests
-    needs: api-test
+    needs: push-images
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
