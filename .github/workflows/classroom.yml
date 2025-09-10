@@ -140,3 +140,4 @@ jobs:
         environment: program/postman/environment.json
         delayRequest: 200
         reporters: '[ "cli" ]'
+        insecure: true
