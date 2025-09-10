@@ -10,19 +10,6 @@ spec:
       - app.local
     secretName: app-tls
   rules:
-<<<<<<< HEAD
-  - host: app.local
-    http:
-      paths:
-      - path: {{ .Values.ingress.path }}
-        pathType: Prefix
-        backend:
-          service:
-            name: {{ .Values.service.fullname }}
-            port:
-              number: 80
-{{- end }}
-=======
     - host: app.local
       http:
         paths:
@@ -43,4 +30,3 @@ spec:
                 port:
                   number: {{ .Values.service.port }}
 {{- end }}
->>>>>>> v3

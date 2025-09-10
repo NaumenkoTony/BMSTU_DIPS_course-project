@@ -12,11 +12,7 @@ env:
   - name: API_URL
     value: "https://app.local/api/v1"
   - name: IDP_API_URL
-<<<<<<< HEAD
-    value: "https://app.local/identity"
-=======
     value: "https://app.local/idp"
->>>>>>> v3
   - name: CLIENT_ID
     value: "locus-frontend-client"
   - name: REDIRECT_URI
@@ -25,8 +21,4 @@ env:
 ingress:
   enabled: true
   name: frontend-ingress
-<<<<<<< HEAD
   path: /
-=======
-  path: /
->>>>>>> v3
