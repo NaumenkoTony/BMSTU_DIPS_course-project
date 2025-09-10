@@ -37,6 +37,12 @@ jobs:
           SERVICE_NAME: loyalty_service
           PORT_NUMBER: 8050
 
+      - name: Push images
+        if: success()
+        run: |
+          cd program/backend
+          docker compose push
+
       - name: Stop containers
         if: always()
         continue-on-error: true
