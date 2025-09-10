@@ -122,10 +122,10 @@ jobs:
         mv updated_environment.json program/postman/environment.json
         cat program/postman/environment.json
 
-    - name: Add identity.local to /etc/hosts
+    - name: Adding dns names to /etc/hosts
       run: |
         INGRESS_IP=$(minikube ip)
-        echo "$INGRESS_IP identity.local" | sudo tee -a /etc/hosts
+        echo "$INGRESS_IP identity.local gateway.local" | sudo tee -a /etc/hosts
 
     - name: Wait 60s
       run: sleep 60s 
