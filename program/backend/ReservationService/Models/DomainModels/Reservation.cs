@@ -16,7 +16,7 @@ public partial class Reservation
 
     public DateTime? StartDate { get; set; }
 
-    public DateTime? EndData { get; set; }
+    public DateTime? EndDate { get; set; }
 
     public virtual Hotel? Hotel { get; set; }
 }

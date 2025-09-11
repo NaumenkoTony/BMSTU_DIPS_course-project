@@ -148,7 +148,7 @@ public class ReservationsController : Controller
                 ["Country"] = reservation.Hotel?.Country,
                 ["City"] = reservation.Hotel?.City,
                 ["StartDate"] = reservation.StartDate,
-                ["EndDate"] = reservation.EndData,
+                ["EndDate"] = reservation.EndDate,
                 ["Status"] = reservation.Status
             });
 
@@ -165,7 +165,7 @@ public class ReservationsController : Controller
             {
                 ["HotelId"] = reservationRequest.HotelId,
                 ["StartDate"] = reservationRequest.StartDate,
-                ["EndDate"] = reservationRequest.EndData,
+                ["EndDate"] = reservationRequest.EndDate,
                 ["Error"] = ex.Message
             });
 
@@ -218,7 +218,7 @@ public class ReservationsController : Controller
                     ["OldStatus"] = oldStatus,
                     ["NewStatus"] = reservationResponse.Status,
                     ["StartDate"] = reservation.StartDate,
-                    ["EndDate"] = reservation.EndData,
+                    ["EndDate"] = reservation.EndDate,
                     ["UpdatedDate"] = DateTime.UtcNow,
                 }
             );
@@ -346,7 +346,7 @@ public class ReservationsController : Controller
                     ["Status"] = reservation.Status,
                     ["HotelUid"] = reservation.Hotel?.HotelUid,
                     ["StartDate"] = reservation.StartDate,
-                    ["EndDate"] = reservation.EndData,
+                    ["EndDate"] = reservation.EndDate,
                 }
             );
             

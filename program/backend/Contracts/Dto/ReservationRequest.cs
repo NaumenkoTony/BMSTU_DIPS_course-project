@@ -12,5 +12,5 @@ public class ReservationRequest
 
     public required string StartDate { get; set; }
 
-    public required string EndData { get; set; }
+    public required string EndDate { get; set; }
 }

@@ -563,7 +563,7 @@ public class GatewayController : ControllerBase
             Username = username,
             HotelId = hotel.Id,
             StartDate = startDate.ToString(),
-            EndData = endDate.ToString(),
+            EndDate = endDate.ToString(),
             Status = ReservationStatus.PAID.ToString(),
             PaymentUid = Convert.ToString(payment.PaymentUid)
         };
