@@ -1,0 +1,75 @@
+@startuml
+skinparam ParticipantPadding 20
+skinparam Shadowing false
+skinparam SequenceLifeLineBorderColor black
+skinparam SequenceLifeLineBackgroundColor #f8f8f8
+skinparam sequence {
+    LifeLineStrategy solid
+    ParticipantBorderColor black
+    ParticipantBackgroundColor #ffffff
+    ActorBorderColor black
+    ActorBackgroundColor #ffffff
+    BoxBorderColor #000000
+    BoxBackgroundColor #eeeeee
+}
+
+actor "Пользователь" as user
+boundary "Фронтенд" as frontend
+control "GatewayService" as gateway
+participant "ReservationService" as reservation
+participant "PaymentService" as payment
+participant "LoyaltyService" as loyalty
+
+== Получение списка отелей ==
+user -> frontend: открыть страницу поиска
+activate frontend
+frontend -> gateway: GET /api/v1/hotels
+activate gateway
+gateway -> reservation: GET /api/v1/hotels
+activate reservation
+reservation --> gateway: список отелей
+deactivate reservation
+gateway --> frontend: список отелей
+deactivate gateway
+frontend --> user: показать отели
+deactivate frontend
+
+== Создание бронирования ==
+user -> frontend: выбрать отель и ввести даты
+activate frontend
+frontend -> gateway: POST /reservations (hotelUid, startDate, endDate)
+activate gateway
+
+gateway -> reservation: GET /api/v1/hotels/{hotelUid}
+activate reservation
+reservation --> gateway: отель найден (price, id)
+deactivate reservation
+
+gateway -> gateway: рассчитать ночи и стоимость
+
+gateway -> loyalty: GET /api/v1/loyalties
+activate loyalty
+loyalty --> gateway: скидка (5/7/10%)
+deactivate loyalty
+
+gateway -> payment: POST /api/v1/payments (priceWithDiscount)
+activate payment
+payment --> gateway: подтверждение оплаты (paymentUid, status)
+deactivate payment
+
+gateway -> reservation: POST /api/v1/reservations (username, hotelId, startDate, endDate, status, paymentUid)
+activate reservation
+reservation --> gateway: подтверждение бронирования (reservationUid)
+deactivate reservation
+
+gateway -> loyalty: GET /api/v1/loyalties/improve
+activate loyalty
+loyalty --> gateway: подтверждение улучшения статуса
+deactivate loyalty
+
+gateway --> frontend: результат бронирования (reservationUid, hotelUid, startDate, endDate, discount, status, payment)
+deactivate gateway
+
+frontend --> user: показать подтверждение бронирования
+deactivate frontend
+@enduml
