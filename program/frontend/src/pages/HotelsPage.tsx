@@ -9,7 +9,6 @@ const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
   const [filters, setFilters] = useState({
     country: '',
     city: '',
-    address: '',
     name: '',
     minStars: '',
     maxPrice: ''
@@ -23,7 +22,6 @@ const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
     setFilters({
       country: '',
       city: '',
-      address: '',
       name: '',
       minStars: '',
       maxPrice: ''
@@ -40,7 +38,6 @@ const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
       return (
         (filters.country === '' || hotel.country.toLowerCase().includes(filters.country.toLowerCase())) &&
         (filters.city === '' || hotel.city.toLowerCase().includes(filters.city.toLowerCase())) &&
-        (filters.address === '' || (hotel.address && hotel.address.toLowerCase().includes(filters.address.toLowerCase()))) &&
         (filters.name === '' || hotel.name.toLowerCase().includes(filters.name.toLowerCase())) &&
         (filters.minStars === '' || (hotel.stars && hotel.stars >= Number(filters.minStars))) &&
         (filters.maxPrice === '' || (hotel.price && hotel.price <= Number(filters.maxPrice)))
@@ -124,6 +121,17 @@ const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
                 value={filters.city}
                 onChange={(e) => handleFilterChange('city', e.target.value)}
                 placeholder="Город..."
+                className="filter-field"
+              />
+            </div>
+
+            <div className="filter-input">
+              <IconSearch size={18} className="filter-icon" />
+              <input
+                type="text"
+                value={filters.name}
+                onChange={(e) => handleFilterChange('name', e.target.value)}
+                placeholder="Отель..."
                 className="filter-field"
               />
             </div>

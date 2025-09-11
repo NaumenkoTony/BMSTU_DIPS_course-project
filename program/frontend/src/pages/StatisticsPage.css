@@ -202,20 +202,19 @@
 
 .search-button {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
   border: none;
+  padding: 10px 20px;
   border-radius: 8px;
+  cursor: pointer;
   font-weight: 600;
+  font-size: 16px;
   transition: all 0.2s ease;
-  white-space: nowrap;
 }
 
 .search-button:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.search-button-text {
-  margin-left: 0.5rem;
 }
 
 .table-container {

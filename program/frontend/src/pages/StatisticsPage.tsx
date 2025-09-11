@@ -11,7 +11,6 @@ import {
   Box, 
   Container,
   TextInput,
-  Button,
   Group,
   Text,
   Pagination,
@@ -21,7 +20,7 @@ import {
   Tooltip,
   SimpleGrid
 } from "@mantine/core";
-import { IconSearch, IconHistory, IconUser, IconActivity, IconCheck, IconCopy, IconCrown, IconTrendingUp } from "@tabler/icons-react";
+import { IconHistory, IconUser, IconActivity, IconCheck, IconCopy, IconCrown, IconTrendingUp } from "@tabler/icons-react";
 import "./StatisticsPage.css";
 
 export function StatisticsPage() {
@@ -240,15 +239,12 @@ export function StatisticsPage() {
                   className="search-input"
                   size="md"
                 />
-                <Button
+                <button
                   type="submit"
-                  loading={loading}
                   className="search-button"
-                  size="md"
                 >
-                  <IconSearch size={18} />
-                  <span className="search-button-text">Найти</span>
-                </Button>
+                  <span>Найти</span>
+                </button>
               </Group>
             </form>
 

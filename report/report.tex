@@ -1,0 +1,34 @@
+\documentclass{bmstu}
+\usepackage{pdfpages}
+\usepackage{url}
+\usepackage{hyperref}
+
+\addbibresource{./inc/biblio/sources.bib}
+
+\begin{document}
+	\includepdf[pages=-]{Титульный лист.pdf}
+	
+	\setcounter{page}{3}
+	
+	\includechapter{report}
+	
+	\renewcommand{\contentsname}{Содержание}
+	{\centering\maketableofcontents}
+	
+	\includechapter{introduction}
+	
+	\includechapter{analytical}
+	
+	\includechapter{design}
+	
+	%\includechapter{technological}
+	
+	%\includechapter{conclusion}
+	
+	\includechapter{literature}
+	
+	%{\centering{\chapter*{ПРИЛОЖЕНИЕ А}}}
+	%\addcontentsline{toc}{chapter}{ПРИЛОЖЕНИЕ А}
+	
+	%\centering{\textbf{Презентация}}
+\end{document}

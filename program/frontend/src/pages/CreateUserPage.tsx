@@ -100,25 +100,6 @@ export default function CreateUserPage() {
           <div className="create-user-form">
             <form onSubmit={form.onSubmit(handleSubmit)}>
               <TextInput
-                label="Имя пользователя"
-                placeholder="username"
-                required
-                size="md"
-                className="create-user-input"
-                {...form.getInputProps('username')}
-              />
-
-              <TextInput
-                label="Email"
-                placeholder="user@example.com"
-                type="email"
-                required
-                size="md"
-                className="create-user-input"
-                {...form.getInputProps('email')}
-              />
-
-              <TextInput
                 label="Имя"
                 placeholder="Иван"
                 required
@@ -136,6 +117,25 @@ export default function CreateUserPage() {
                 {...form.getInputProps('lastName')}
               />
 
+              <TextInput
+                label="Почта"
+                placeholder="user@example.com"
+                type="email"
+                required
+                size="md"
+                className="create-user-input"
+                {...form.getInputProps('email')}
+              />
+
+              <TextInput
+                label="Логин"
+                placeholder="username"
+                required
+                size="md"
+                className="create-user-input"
+                {...form.getInputProps('username')}
+              />
+
               <PasswordInput
                 label="Пароль"
                 placeholder="Не менее 6 символов, заглавной буквы и спецсимвола"
@@ -147,7 +147,7 @@ export default function CreateUserPage() {
 
               {rolesLoading ? (
                 <div className="roles-loading">
-                  <Loader size="sm" />
+                  <Loader size="md" />
                   <span>Загрузка ролей...</span>
                 </div>
               ) : rolesError ? (
@@ -156,7 +156,8 @@ export default function CreateUserPage() {
                 </Alert>
               ) : (
                 <Select
-                  label="Роли"
+                  label="Роль"
+                  size="md"
                   placeholder="Выберите роли"
                   data={availableRoles}
                   defaultValue={['User']}
