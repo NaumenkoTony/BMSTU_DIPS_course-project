@@ -14,14 +14,16 @@ primary:
     scripts:
       10-create-tables.sql: |
         CREATE TABLE IF NOT EXISTS hotels (
-          id SERIAL PRIMARY KEY,
-          hotel_uid uuid NOT NULL UNIQUE,
-          name VARCHAR(255) NOT NULL,
-          country VARCHAR(80) NOT NULL,
-          city VARCHAR(80) NOT NULL,
-          address VARCHAR(255) NOT NULL,
-          stars INT,
-          price INT NOT NULL
+        (
+            id        SERIAL       PRIMARY KEY,
+            hotel_uid uuid         NOT NULL UNIQUE,
+            name      VARCHAR(255) NOT NULL,
+            country   VARCHAR(80)  NOT NULL,
+            city      VARCHAR(80)  NOT NULL,
+            address   VARCHAR(255) NOT NULL,
+            stars     INT,
+            rooms_count INT         NOT NULL DEFAULT 3,
+            price     INT          NOT NULL
         );
 
         CREATE TABLE IF NOT EXISTS reservation (
@@ -34,6 +36,16 @@ primary:
           start_date TIMESTAMPTZ,
           end_date TIMESTAMPTZ
         );
+
+        CREATE TABLE IF NOT EXISTS hotel_availability
+        (
+            id              SERIAL PRIMARY KEY,
+            hotel_id        INT NOT NULL REFERENCES hotels (id),
+            date            DATE NOT NULL,
+            available_rooms INT NOT NULL,
+            CONSTRAINT uq_hotel_date UNIQUE (hotel_id, date)
+        );
+
 
       20-insert-data.sql: |
         INSERT INTO hotels (id, hotel_uid, name, country, city, address, stars, price)
@@ -1047,3 +1059,8 @@ primary:
         INSERT INTO hotels (id, hotel_uid, name, country, city, address, stars, price) values (998, '5e1feb39-bfb8-4eca-ac44-cb268fbd1820', 'Schmitt-Cummerata', 'China', 'Fangshan', '36475 Miller Lane', 2, 8087);
         INSERT INTO hotels (id, hotel_uid, name, country, city, address, stars, price) values (999, 'c2109104-ea47-4fa1-bb37-384c237507d0', 'Deckow-McKenzie', 'Ukraine', 'Hołoby', '932 Corscot Court', 3, 8229);
         INSERT INTO hotels (id, hotel_uid, name, country, city, address, stars, price) values (1000, 'fd93ae21-2d1d-456b-845d-bf176735bac7', 'Padberg-Hodkiewicz', 'China', 'Mawu', '4 Grim Lane', 2, 13834);
+
+        INSERT INTO hotel_availability (hotel_id, date, available_rooms)
+        SELECT h.id, d::date, h.rooms_count
+        FROM hotels h
+        CROSS JOIN generate_series(current_date, current_date + interval '3 years', interval '1 day') d;

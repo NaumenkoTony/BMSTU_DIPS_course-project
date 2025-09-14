@@ -88,3 +88,13 @@
 .book-btn:active {
   transform: translateY(0);
 }
+
+.date-input:disabled {
+    background-color: #f0f0f0;
+    cursor: not-allowed;
+}
+
+.date-input.unavailable {
+    background-color: #ffe6e6;
+    border-color: #ff6b6b;
+}

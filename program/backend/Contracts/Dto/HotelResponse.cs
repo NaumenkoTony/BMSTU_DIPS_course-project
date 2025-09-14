@@ -14,6 +14,8 @@ public class HotelResponse
 
     public required string Address { get; set; }
 
+    public required int RoomsCount { get; set; }
+
     public int? Stars { get; set; }
 
     public int Price { get; set; }

@@ -12,17 +12,19 @@ namespace ReservationService.Controllers;
 public class ReservationsController : Controller
 {
     private readonly IReservationRepository _repository;
+    private readonly IHotelAvailabilityRepository _availabilityRepository;
     private readonly IHotelRepository _hotelRepository;
     private readonly IMapper _mapper;
     private readonly IKafkaProducer _kafkaProducer;
     private readonly ILogger<ReservationsController> _logger;
     private readonly ITokenService _tokenService;
 
-    public ReservationsController(IReservationRepository repository, IHotelRepository hotelRepository, 
+    public ReservationsController(IReservationRepository repository, IHotelRepository hotelRepository, IHotelAvailabilityRepository availabilityRepository,
         IMapper mapper, ITokenService tokenService, IKafkaProducer kafkaProducer, ILogger<ReservationsController> logger)
     {
         _repository = repository;
         _hotelRepository = hotelRepository;
+        _availabilityRepository = availabilityRepository;
         _mapper = mapper;
         _tokenService = tokenService;
         _kafkaProducer = kafkaProducer;
@@ -88,22 +90,22 @@ public class ReservationsController : Controller
         try
         {
             var reservations = await _repository.GetReservationsByUsernameAsync(username);
-            
-            _logger.LogInformation("Found {Count} reservations for user: {Username}", 
+
+            _logger.LogInformation("Found {Count} reservations for user: {Username}",
                 reservations.Count(), username);
-             await PublishUserActionAsync(
-                action: "GetReservationsList",
-                status: "Success",
-                metadata: new Dictionary<string, object>
-                {
-                    ["ReservationsCount"] = reservations.Count(),
-                    ["ActiveReservations"] = reservations.Count(r => r.Status == "PAID"),
-                    ["CancelledReservations"] = reservations.Count(r => r.Status == "CANCELLED"),
-                    ["FirstReservationUid"] = reservations.FirstOrDefault()?.ReservationUid,
-                    ["LastReservationUid"] = reservations.LastOrDefault()?.ReservationUid
-                }
-            );
-            
+            await PublishUserActionAsync(
+               action: "GetReservationsList",
+               status: "Success",
+               metadata: new Dictionary<string, object>
+               {
+                   ["ReservationsCount"] = reservations.Count(),
+                   ["ActiveReservations"] = reservations.Count(r => r.Status == "PAID"),
+                   ["CancelledReservations"] = reservations.Count(r => r.Status == "CANCELLED"),
+                   ["FirstReservationUid"] = reservations.FirstOrDefault()?.ReservationUid,
+                   ["LastReservationUid"] = reservations.LastOrDefault()?.ReservationUid
+               }
+           );
+
             return Ok(_mapper.Map<IEnumerable<ReservationResponse>>(reservations));
         }
         catch (Exception ex)
@@ -127,7 +129,7 @@ public class ReservationsController : Controller
     public async Task<ActionResult<ReservationResponse>> CreateReservationAsync([FromBody] ReservationRequest reservationRequest)
     {
         var username = _tokenService.GetUsernameFromJWT();
-        _logger.LogInformation("Create reservation request from user: {Username}. HotelId: {HotelId}, Status: {Status}", 
+        _logger.LogInformation("Create reservation request from user: {Username}. HotelId: {HotelId}, Status: {Status}",
             username, reservationRequest.HotelId, reservationRequest.Status);
 
         try
@@ -135,7 +137,7 @@ public class ReservationsController : Controller
             var reservation = _mapper.Map<Reservation>(reservationRequest);
             await _repository.CreateAsync(reservation);
 
-            _logger.LogInformation("Reservation created successfully. UID: {ReservationUid}, ID: {ReservationId}", 
+            _logger.LogInformation("Reservation created successfully. UID: {ReservationUid}, ID: {ReservationId}",
                 reservation.ReservationUid, reservation.Id);
             await PublishUserActionAsync(
             action: "CreateReservation",
@@ -152,11 +154,26 @@ public class ReservationsController : Controller
                 ["Status"] = reservation.Status
             });
 
+            var startDate = DateTime.Parse(reservationRequest.StartDate);
+            var endDate = DateTime.Parse(reservationRequest.EndDate);
+            foreach (var date in EachDate(startDate, endDate))
+            {
+                var availability = await _availabilityRepository.GetByDateAsync(reservation.HotelId, date);
+                if (availability == null)
+                    return BadRequest($"No availability data for {date:yyyy-MM-dd}");
+
+                if (availability.AvailableRooms <= 0)
+                    return BadRequest($"No rooms available on {date:yyyy-MM-dd}");
+
+                availability.AvailableRooms -= 1;
+                await _availabilityRepository.UpdateAsync(availability);
+            }
+
             return Ok(reservation);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating reservation for user: {Username}. HotelId: {HotelId}", 
+            _logger.LogError(ex, "Error creating reservation for user: {Username}. HotelId: {HotelId}",
                 username, reservationRequest.HotelId);
             await PublishUserActionAsync(
             action: "CreateReservation",
@@ -178,13 +195,13 @@ public class ReservationsController : Controller
     public async Task<ActionResult<ReservationResponse>> UpdateReservationStatusAsync([FromBody] ReservationResponse reservationResponse)
     {
         var username = _tokenService.GetUsernameFromJWT();
-        _logger.LogInformation("Update reservation request from user: {Username}. UID: {ReservationUid}, New Status: {Status}", 
+        _logger.LogInformation("Update reservation request from user: {Username}. UID: {ReservationUid}, New Status: {Status}",
             username, reservationResponse.ReservationUid, reservationResponse.Status);
 
         try
         {
             var reservation = await _repository.GetByUidAsync(reservationResponse.ReservationUid);
-            
+
             if (reservation == null)
             {
                 _logger.LogWarning("Reservation not found for update. UID: {ReservationUid}", reservationResponse.ReservationUid);
@@ -207,7 +224,7 @@ public class ReservationsController : Controller
 
             await _repository.UpdateAsync(newModel, reservation.Id);
 
-            _logger.LogInformation("Reservation updated successfully. UID: {ReservationUid}, Old Status: {OldStatus}, New Status: {NewStatus}", 
+            _logger.LogInformation("Reservation updated successfully. UID: {ReservationUid}, Old Status: {OldStatus}, New Status: {NewStatus}",
                 reservationResponse.ReservationUid, reservation.Status, reservationResponse.Status);
             await PublishUserActionAsync(
                 action: "UpdateReservation",
@@ -223,11 +240,26 @@ public class ReservationsController : Controller
                 }
             );
 
+            var startDate = DateTime.Parse(reservationResponse.StartDate);
+            var endDate = DateTime.Parse(reservationResponse.EndDate);
+            if (oldStatus == "PAID" && reservationResponse.Status == "CANCELLED")
+            {
+                foreach (var date in EachDate(startDate, endDate))
+                {
+                    var availability = await _availabilityRepository.GetByDateAsync(reservation.HotelId, date);
+                    if (availability != null)
+                    {
+                        availability.AvailableRooms += 1;
+                        await _availabilityRepository.UpdateAsync(availability);
+                    }
+                }
+            }
+
             return Ok(newModel);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating reservation for user: {Username}. UID: {ReservationUid}", 
+            _logger.LogError(ex, "Error updating reservation for user: {Username}. UID: {ReservationUid}",
                 username, reservationResponse.ReservationUid);
             await PublishUserActionAsync(
                 action: "UpdateReservation",
@@ -292,15 +324,15 @@ public class ReservationsController : Controller
         {
             _logger.LogError(ex, "Error getting hotel. ID: {HotelId}", id);
 
-             await PublishUserActionAsync(
-                action: "GetHotel",
-                status: "Failed",
-                metadata: new Dictionary<string, object>
-                {
-                    ["HotelId"] = id,
-                    ["Error"] = ex.Message
-                }
-            );
+            await PublishUserActionAsync(
+               action: "GetHotel",
+               status: "Failed",
+               metadata: new Dictionary<string, object>
+               {
+                   ["HotelId"] = id,
+                   ["Error"] = ex.Message
+               }
+           );
 
             return StatusCode(500, "Internal server error");
         }
@@ -311,16 +343,16 @@ public class ReservationsController : Controller
     public async Task<ActionResult<ReservationResponse>> GetReservationAsync(string uid)
     {
         var username = _tokenService.GetUsernameFromJWT();
-        _logger.LogInformation("Get reservation request from user: {Username}. UID: {ReservationUid}", 
+        _logger.LogInformation("Get reservation request from user: {Username}. UID: {ReservationUid}",
             username, uid);
 
         try
         {
             var reservation = await _repository.GetByUsernameUidAsync(username, uid);
-            
+
             if (reservation == null)
             {
-                _logger.LogWarning("Reservation not found for user: {Username}. UID: {ReservationUid}", 
+                _logger.LogWarning("Reservation not found for user: {Username}. UID: {ReservationUid}",
                     username, uid);
                 await PublishUserActionAsync(
                     action: "GetReservation",
@@ -335,7 +367,7 @@ public class ReservationsController : Controller
                 return NotFound();
             }
 
-            _logger.LogInformation("Reservation found: UID={ReservationUid}, Status={Status}", 
+            _logger.LogInformation("Reservation found: UID={ReservationUid}, Status={Status}",
                 uid, reservation.Status);
             await PublishUserActionAsync(
                 action: "GetReservation",
@@ -349,12 +381,12 @@ public class ReservationsController : Controller
                     ["EndDate"] = reservation.EndDate,
                 }
             );
-            
+
             return Ok(_mapper.Map<ReservationResponse>(reservation));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting reservation for user: {Username}. UID: {ReservationUid}", 
+            _logger.LogError(ex, "Error getting reservation for user: {Username}. UID: {ReservationUid}",
                 username, uid);
             await PublishUserActionAsync(
                 action: "ReservationViewed",
@@ -368,5 +400,35 @@ public class ReservationsController : Controller
 
             return StatusCode(500, "Internal server error");
         }
+    }
+
+    [Route("/api/v1/hotels/{hotelId}/availability")]
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<object>>> GetAvailabilityAsync(
+        int hotelId,
+        DateTime? from,
+        DateTime? to)
+    {
+        var start = from ?? DateTime.UtcNow.Date;
+        var end = to ?? start.AddMonths(3);
+
+        if (end < start)
+            return BadRequest("Invalid date range");
+
+        var availability = await _availabilityRepository.GetAvailabilityAsync(hotelId, start, end);
+
+        var result = availability.Select(a => new
+        {
+            a.Date,
+            a.AvailableRooms
+        });
+
+        return Ok(result);
+    }
+    
+    private IEnumerable<DateTime> EachDate(DateTime from, DateTime to)
+    {
+        for (var day = from.Date; day < to.Date; day = day.AddDays(1))
+            yield return day;
     }
 }

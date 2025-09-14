@@ -21,6 +21,7 @@ builder.Services.AddDbContext<ReservationsContext>(options =>
 
 builder.Services.AddScoped<IHotelRepository, HotelRepository>();
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
+builder.Services.AddScoped<IHotelAvailabilityRepository, HotelAvailabilityRepository>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 
@@ -64,6 +65,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+builder.Services.AddScoped<AvailabilityService>();
+
 builder.Services.AddSingleton<IKafkaProducer, KafkaProducerService>();
 
 builder.Services.AddControllers();
@@ -77,3 +80,9 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+using (var scope = app.Services.CreateScope())
+{
+    var availabilityService = scope.ServiceProvider.GetRequiredService<AvailabilityService>();
+    await availabilityService.EnsureAvailabilityWindowAsync();
+}

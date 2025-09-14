@@ -17,7 +17,9 @@ public partial class ReservationsContext : DbContext
     public virtual DbSet<Hotel> Hotels { get; set; }
 
     public virtual DbSet<Reservation> Reservations { get; set; }
-    
+
+    public virtual DbSet<HotelAvailability> HotelAvailabilities { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Hotel>(entity =>
@@ -42,6 +44,7 @@ public partial class ReservationsContext : DbContext
             entity.Property(e => e.Name)
                 .HasMaxLength(255)
                 .HasColumnName("name");
+            entity.Property(e => e.RoomsCount).HasColumnName("rooms_count");
             entity.Property(e => e.Price).HasColumnName("price");
             entity.Property(e => e.Stars).HasColumnName("stars");
         });
@@ -70,6 +73,25 @@ public partial class ReservationsContext : DbContext
             entity.HasOne(d => d.Hotel).WithMany(p => p.Reservations)
                 .HasForeignKey(d => d.HotelId)
                 .HasConstraintName("reservation_hotel_id_fkey");
+        });
+
+        modelBuilder.Entity<HotelAvailability>(entity =>
+        {
+            entity.ToTable("hotel_availability");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.HotelId).HasColumnName("hotel_id");
+            entity.Property(e => e.Date).HasColumnName("date");
+            entity.Property(e => e.AvailableRooms).HasColumnName("available_rooms");
+
+            entity.HasIndex(e => new { e.HotelId, e.Date })
+                .IsUnique()
+                .HasDatabaseName("uq_hotel_date");
+
+            entity.HasOne(e => e.Hotel)
+                .WithMany()
+                .HasForeignKey(e => e.HotelId);
         });
 
         OnModelCreatingPartial(modelBuilder);

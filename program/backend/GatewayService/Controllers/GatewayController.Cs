@@ -220,6 +220,31 @@ public class GatewayController : ControllerBase
         }
     }
 
+    [Route("hotels/{hotelId}/availability")]
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<object>>> GetHotelAvailabilityAsync(
+        int hotelId,
+        [FromQuery] DateTime? from,
+        [FromQuery] DateTime? to)
+    {
+        var reservationService = _httpClientFactory.CreateClient("ReservationService");
+
+        var query = $"?from={(from?.ToString("yyyy-MM-dd") ?? "")}&to={(to?.ToString("yyyy-MM-dd") ?? "")}";
+        var response = await reservationService.GetAsync($"/api/v1/hotels/{hotelId}/availability{query}");
+
+        if (!response.IsSuccessStatusCode)
+            return StatusCode((int)response.StatusCode);
+
+        var content = await response.Content.ReadAsStringAsync();
+        var availability = System.Text.Json.JsonSerializer.Deserialize<IEnumerable<object>>(content, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        return Ok(availability);
+    }
+
+
     [Route("me")]
     [HttpGet]
     public async Task<ActionResult<UserInfoResponse>> GetInfoAsync()

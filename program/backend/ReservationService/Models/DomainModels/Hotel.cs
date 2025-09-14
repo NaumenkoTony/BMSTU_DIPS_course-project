@@ -18,5 +18,7 @@ public partial class Hotel
 
     public int Price { get; set; }
 
+    public int RoomsCount { get; set; }
+
     public virtual ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
 }
