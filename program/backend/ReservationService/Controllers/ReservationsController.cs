@@ -423,20 +423,21 @@ public class ReservationsController : Controller
         }
     }
 
-    [Route("/api/v1/hotels/{hotelId}/availability")]
+    [Route("/api/v1/hotels/{hotelUid}/availability")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<object>>> GetAvailabilityAsync(
-        int hotelId,
+        string hotelUid,
         DateTime? from,
         DateTime? to)
     {
-        var start = from ?? DateTime.UtcNow.Date;
-        var end = to ?? start.AddMonths(3);
+        var start = DateTime.SpecifyKind(from ?? DateTime.UtcNow.Date, DateTimeKind.Utc);
+        var end = DateTime.SpecifyKind(to ?? start.AddMonths(3), DateTimeKind.Utc);
+
 
         if (end < start)
             return BadRequest("Invalid date range");
 
-        var availability = await _availabilityRepository.GetAvailabilityAsync(hotelId, start, end);
+        var availability = await _availabilityRepository.GetAvailabilityAsync(hotelUid, start, end);
 
         var result = availability.Select(a => new
         {

@@ -9,10 +9,18 @@ public class HotelAvailabilityRepository(ReservationsContext context) : Reposito
 {
     private readonly ReservationsContext _context = context;
     
-    public async Task<IEnumerable<HotelAvailability>> GetAvailabilityAsync(int hotelId, DateTime from, DateTime to)
+    public async Task<IEnumerable<HotelAvailability>> GetAvailabilityAsync(string hotelUid, DateTime from, DateTime to)
     {
+        if (!Guid.TryParse(hotelUid, out var parsedUid))
+            return Enumerable.Empty<HotelAvailability>();
+
+        var fromUtc = DateTime.SpecifyKind(from, DateTimeKind.Utc);
+        var toUtc = DateTime.SpecifyKind(to, DateTimeKind.Utc);
+
         return await _context.HotelAvailabilities
-            .Where(a => a.HotelId == hotelId && a.Date >= from && a.Date <= to)
+            .Where(a => a.Hotel.HotelUid == parsedUid 
+                        && a.Date >= fromUtc 
+                        && a.Date <= toUtc)
             .OrderBy(a => a.Date)
             .ToListAsync();
     }

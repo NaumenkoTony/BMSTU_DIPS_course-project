@@ -220,17 +220,22 @@ public class GatewayController : ControllerBase
         }
     }
 
-    [Route("hotels/{hotelId}/availability")]
+    [Route("hotels/{hotelUid}/availability")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<object>>> GetHotelAvailabilityAsync(
-        int hotelId,
+        string hotelUid,
         [FromQuery] DateTime? from,
         [FromQuery] DateTime? to)
     {
         var reservationService = _httpClientFactory.CreateClient("ReservationService");
 
-        var query = $"?from={(from?.ToString("yyyy-MM-dd") ?? "")}&to={(to?.ToString("yyyy-MM-dd") ?? "")}";
-        var response = await reservationService.GetAsync($"/api/v1/hotels/{hotelId}/availability{query}");
+        var queryParams = new List<string>();
+        if (from.HasValue) queryParams.Add($"from={from.Value:yyyy-MM-dd}");
+        if (to.HasValue) queryParams.Add($"to={to.Value:yyyy-MM-dd}");
+
+        var query = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : string.Empty;
+
+        var response = await reservationService.GetAsync($"/api/v1/hotels/{hotelUid}/availability{query}");
 
         if (!response.IsSuccessStatusCode)
             return StatusCode((int)response.StatusCode);
@@ -243,7 +248,6 @@ public class GatewayController : ControllerBase
 
         return Ok(availability);
     }
-
 
     [Route("me")]
     [HttpGet]
