@@ -196,6 +196,7 @@ const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
               <th onClick={() => handleSort('price')} className="sortable">
                 Цена {getSortIndicator('price')}
               </th>
+              <th>Количество мест</th>
               <th>Действия</th>
             </tr>
           </thead>
@@ -239,6 +240,17 @@ const HotelsTable = ({ hotels }: { hotels: HotelResponse[] }) => {
                       </>
                     ) : (
                       <span className="no-price">—</span>
+                    )}
+                  </div>
+                </td>
+                <td>
+                  <div className="capacity-cell">
+                    {hotel.roomsCount ? (
+                      <div className="rooms-count">
+                        <span className="rooms-number">{hotel.roomsCount}</span>
+                      </div>
+                    ) : (
+                      <span className="no-rooms">—</span>
                     )}
                   </div>
                 </td>

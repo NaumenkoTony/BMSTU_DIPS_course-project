@@ -154,11 +154,20 @@ public class ReservationsController : Controller
                 ["Status"] = reservation.Status
             });
 
-            var startDate = DateTime.Parse(reservationRequest.StartDate).ToUniversalTime();
-            var endDate = DateTime.Parse(reservationRequest.EndDate).ToUniversalTime();
+            _logger.LogInformation("Received reservation dates. StartDate: {StartDateRaw}, EndDate: {EndDateRaw}",
+    reservationRequest.StartDate, reservationRequest.EndDate);
+            var startDate = DateTimeOffset.Parse(reservationRequest.StartDate).UtcDateTime;
+            var endDate = DateTimeOffset.Parse(reservationRequest.EndDate).UtcDateTime;
+            _logger.LogInformation("Converted reservation dates to UTC. StartDate: {StartDateUtc}, EndDate: {EndDateUtc}",
+    startDate, endDate);
             foreach (var date in EachDate(startDate, endDate))
             {
-                var availability = await _availabilityRepository.GetByDateAsync(reservation.HotelId, date);
+                var utcDate = DateTime.SpecifyKind(date.Date, DateTimeKind.Utc);
+
+                var availability = await _availabilityRepository.GetByDateAsync(
+                    reservation.HotelId,
+                    utcDate
+                );
                 if (availability == null)
                     return BadRequest($"No availability data for {date:yyyy-MM-dd}");
 
@@ -166,6 +175,8 @@ public class ReservationsController : Controller
                     return BadRequest($"No rooms available on {date:yyyy-MM-dd}");
 
                 availability.AvailableRooms -= 1;
+                availability.Date = utcDate;
+
                 await _availabilityRepository.UpdateAsync(availability);
             }
 
@@ -240,18 +251,28 @@ public class ReservationsController : Controller
                 }
             );
 
-            var startDate = DateTime.Parse(reservationResponse.StartDate).ToUniversalTime();
-            var endDate = DateTime.Parse(reservationResponse.EndDate).ToUniversalTime();
+            var startDate = DateTimeOffset.Parse(reservationResponse.StartDate).UtcDateTime;
+            var endDate = DateTimeOffset.Parse(reservationResponse.EndDate).UtcDateTime;
             if (oldStatus == "PAID" && reservationResponse.Status == "CANCELLED")
             {
                 foreach (var date in EachDate(startDate, endDate))
                 {
-                    var availability = await _availabilityRepository.GetByDateAsync(reservation.HotelId, date);
-                    if (availability != null)
-                    {
-                        availability.AvailableRooms += 1;
-                        await _availabilityRepository.UpdateAsync(availability);
-                    }
+                    var utcDate = DateTime.SpecifyKind(date.Date, DateTimeKind.Utc);
+
+                    var availability = await _availabilityRepository.GetByDateAsync(
+                        reservation.HotelId,
+                        utcDate
+                    );
+                    if (availability == null)
+                        return BadRequest($"No availability data for {date:yyyy-MM-dd}");
+
+                    if (availability.AvailableRooms <= 0)
+                        return BadRequest($"No rooms available on {date:yyyy-MM-dd}");
+
+                    availability.AvailableRooms -= 1;
+                    availability.Date = utcDate;
+
+                    await _availabilityRepository.UpdateAsync(availability);
                 }
             }
 
@@ -425,10 +446,10 @@ public class ReservationsController : Controller
 
         return Ok(result);
     }
-    
-    private IEnumerable<DateTime> EachDate(DateTime from, DateTime to)
+
+    IEnumerable<DateTime> EachDate(DateTime start, DateTime end)
     {
-        for (var day = from.Date; day < to.Date; day = day.AddDays(1))
-            yield return day;
+        for (var day = start.Date; day <= end.Date; day = day.AddDays(1))
+            yield return DateTime.SpecifyKind(day, DateTimeKind.Utc);
     }
 }

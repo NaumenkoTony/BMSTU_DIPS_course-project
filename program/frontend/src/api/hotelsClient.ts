@@ -6,6 +6,7 @@ export interface HotelResponse {
   city: string;
   address: string;
   stars?: number;
+  roomsCount: number;
   price: number;
 }
 

@@ -305,7 +305,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"hotelUid\": \"{{hotelUid}}\",\n    \"startDate\": \"2021-10-08\",\n    \"endDate\": \"2021-10-11\"\n}"
+							"raw": "{\n    \"hotelUid\": \"{{hotelUid}}\",\n    \"startDate\": \"2025-10-08\",\n    \"endDate\": \"2025-10-11\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/reservations",
@@ -382,7 +382,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"hotelUid\": \"{{hotelUid}}\",\n    \"startDate\": \"2021-10-08\",\n    \"endDate\": \"2021-10-11\"\n}"
+							"raw": "{\n    \"hotelUid\": \"{{hotelUid}}\",\n    \"startDate\": \"2025-10-08\",\n    \"endDate\": \"2025-10-11\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/reservations",
