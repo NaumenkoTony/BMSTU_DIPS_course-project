@@ -28,6 +28,9 @@ jobs:
         env:
           WAIT_PORTS: 8080,8070,8060,8050
 
+      - name: Wait 30s
+        run: sleep 30s 
+
       - name: Run API Tests
         timeout-minutes: 5
         run: |

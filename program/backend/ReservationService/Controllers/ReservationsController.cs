@@ -154,8 +154,8 @@ public class ReservationsController : Controller
                 ["Status"] = reservation.Status
             });
 
-            var startDate = DateTime.Parse(reservationRequest.StartDate);
-            var endDate = DateTime.Parse(reservationRequest.EndDate);
+            var startDate = DateTime.Parse(reservationRequest.StartDate).ToUniversalTime();
+            var endDate = DateTime.Parse(reservationRequest.EndDate).ToUniversalTime();
             foreach (var date in EachDate(startDate, endDate))
             {
                 var availability = await _availabilityRepository.GetByDateAsync(reservation.HotelId, date);
@@ -240,8 +240,8 @@ public class ReservationsController : Controller
                 }
             );
 
-            var startDate = DateTime.Parse(reservationResponse.StartDate);
-            var endDate = DateTime.Parse(reservationResponse.EndDate);
+            var startDate = DateTime.Parse(reservationResponse.StartDate).ToUniversalTime();
+            var endDate = DateTime.Parse(reservationResponse.EndDate).ToUniversalTime();
             if (oldStatus == "PAID" && reservationResponse.Status == "CANCELLED")
             {
                 foreach (var date in EachDate(startDate, endDate))
