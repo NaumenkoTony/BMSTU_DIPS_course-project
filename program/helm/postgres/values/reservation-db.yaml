@@ -13,20 +13,21 @@ primary:
     password: test
     scripts:
       10-create-tables.sql: |
-        CREATE TABLE IF NOT EXISTS hotels (
+        CREATE TABLE IF NOT EXISTS hotels 
         (
-            id        SERIAL       PRIMARY KEY,
-            hotel_uid uuid         NOT NULL UNIQUE,
-            name      VARCHAR(255) NOT NULL,
-            country   VARCHAR(80)  NOT NULL,
-            city      VARCHAR(80)  NOT NULL,
-            address   VARCHAR(255) NOT NULL,
-            stars     INT,
-            rooms_count INT         NOT NULL DEFAULT 3,
-            price     INT          NOT NULL
+            id          SERIAL       PRIMARY KEY,
+            hotel_uid   uuid         NOT NULL UNIQUE,
+            name        VARCHAR(255) NOT NULL,
+            country     VARCHAR(80)  NOT NULL,
+            city        VARCHAR(80)  NOT NULL,
+            address     VARCHAR(255) NOT NULL,
+            stars       INT,
+            rooms_count INT          NOT NULL DEFAULT 3,
+            price       INT          NOT NULL
         );
 
-        CREATE TABLE IF NOT EXISTS reservation (
+        CREATE TABLE IF NOT EXISTS reservation 
+        (
           id SERIAL PRIMARY KEY,
           reservation_uid uuid UNIQUE NOT NULL,
           username VARCHAR(80) NOT NULL,
@@ -1060,7 +1061,6 @@ primary:
         INSERT INTO hotels (id, hotel_uid, name, country, city, address, stars, price) values (999, 'c2109104-ea47-4fa1-bb37-384c237507d0', 'Deckow-McKenzie', 'Ukraine', 'Hołoby', '932 Corscot Court', 3, 8229);
         INSERT INTO hotels (id, hotel_uid, name, country, city, address, stars, price) values (1000, 'fd93ae21-2d1d-456b-845d-bf176735bac7', 'Padberg-Hodkiewicz', 'China', 'Mawu', '4 Grim Lane', 2, 13834);
 
-      30-insert-hotels-availability.sql: |
         INSERT INTO hotel_availability (hotel_id, date, available_rooms)
         SELECT h.id, d::date, h.rooms_count
         FROM hotels h
