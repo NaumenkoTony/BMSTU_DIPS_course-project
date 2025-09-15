@@ -1,8 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Button, Text, Group, Paper } from "@mantine/core";
-import { bookHotel, getReservation, unbookHotel, type AggregatedReservationResponse, type CreateReservationResponse } from "../api/ReservationsClient";
-import "./BookHotelForm.css";
+import { DateRangePicker } from 'rsuite';
+import isAfter from 'date-fns/isAfter';
+import dayjs from "dayjs";
+import "dayjs/locale/ru";
+import "rsuite/dist/rsuite.min.css";
+import {
+  bookHotel,
+  getHotelAvailability,
+  getReservation,
+  unbookHotel,
+  type AggregatedReservationResponse,
+  type CreateReservationResponse,
+} from "../api/ReservationsClient";
 import { useNavigate } from "react-router-dom";
+import "./BookHotelForm.css";
+
+dayjs.locale("ru");
 
 interface Props {
   hotelUid: string;
@@ -17,9 +31,14 @@ interface Availability {
   availableRooms: number;
 }
 
-export default function BookHotelForm({ hotelUid, hotelName, opened, onClose, onBooked }: Props) {
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
+export default function BookHotelForm({
+  hotelUid,
+  hotelName,
+  opened,
+  onClose,
+  onBooked,
+}: Props) {
+  const [range, setRange] = useState<[Date, Date] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reservation, setReservation] = useState<AggregatedReservationResponse | null>(null);
@@ -28,48 +47,68 @@ export default function BookHotelForm({ hotelUid, hotelName, opened, onClose, on
   const navigate = useNavigate();
 
   const reset = () => {
-    setStartDate("");
-    setEndDate("");
+    setRange(null);
     setError(null);
     setReservation(null);
   };
 
   useEffect(() => {
     if (!opened) return;
+
     const fetchAvailability = async () => {
       try {
-        const res = await fetch(`${window.appConfig?.API_URL || "http://localhost:8080/api/v1"}/hotels/${hotelUid}/availability`);
-        if (!res.ok) throw new Error("Failed to fetch availability");
-        const data: Availability[] = await res.json();
+        const from = new Date();
+        const to = dayjs().add(3, "month").toDate();
+        const data = await getHotelAvailability(hotelUid, from, to);
+        console.log(data);
         setAvailability(data);
       } catch (err: any) {
-        console.error(err);
+        console.error("Error fetching availability:", err);
       }
     };
+
     fetchAvailability();
   }, [hotelUid, opened]);
+
+  const unavailableDates = availability
+    .filter((a) => a.availableRooms === 0)
+    .map((a) => a.date.split("T")[0]);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     setError(null);
 
-    if (!startDate || !endDate) {
+    if (!range) {
       setError("Выберите даты заезда и выезда.");
       return;
     }
+
+    const [startDateObj, endDateObj] = range;
+
+    const startDate = dayjs(startDateObj).format('YYYY-MM-DD');
+    const endDate = dayjs(endDateObj).format('YYYY-MM-DD');
+
     if (startDate >= endDate) {
       setError("Дата заезда должна быть раньше даты выезда.");
       return;
     }
 
-    const today = new Date().toISOString().split("T")[0];
-    if (startDate < today) {
+    const today = dayjs().startOf("day");
+    if (dayjs(startDate).isBefore(today)) {
       setError("Дата заезда не может быть в прошлом.");
       return;
     }
 
-    const unavailableDates = availability.filter(a => a.availableRooms === 0).map(a => a.date.split("T")[0]);
-    if (unavailableDates.includes(startDate) || unavailableDates.includes(endDate)) {
+    const selectedDates = [];
+    let current = dayjs(startDate);
+    while (current.isBefore(dayjs(endDate).add(1, "day"))) {
+      selectedDates.push(current.format("YYYY-MM-DD"));
+      current = current.add(1, "day");
+    }
+
+    console.log("Selected dates:", selectedDates);
+    console.log("Unavailable dates:", unavailableDates);
+    if (selectedDates.some((d) => unavailableDates.includes(d))) {
       setError("Выбранная дата недоступна для бронирования.");
       return;
     }
@@ -98,55 +137,48 @@ export default function BookHotelForm({ hotelUid, hotelName, opened, onClose, on
     }
   };
 
-  const today = new Date().toISOString().split("T")[0];
-  const unavailableDates = availability.filter(a => a.availableRooms === 0).map(a => a.date.split("T")[0]);
-
-  const isDateDisabled = (date: string) => {
-    return date < today || unavailableDates.includes(date);
-  };
-
   return (
     <Modal
       opened={opened}
-      onClose={() => { reset(); onClose(); }}
+      onClose={() => {
+        reset();
+        onClose();
+      }}
       title={`Бронирование: ${hotelName ?? hotelUid}`}
       centered
-      size="md"
+      size="lg"
     >
       <Paper className="book-form" withBorder p="lg" radius="lg">
-        {loading}
         {!reservation && !loading && (
           <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label className="label">Дата заезда</label>
-              <input
-                className="date-input"
-                type="date"
-                value={startDate}
-                min={today}
-                onChange={(e) => {
-                  if (!isDateDisabled(e.target.value)) setStartDate(e.target.value);
-                }}
-              />
-            </div>
+            <DateRangePicker
+              value={range}
+              onChange={setRange}
+              format="dd.MM.yyyy"
+              placeholder="Выберите период"
+              shouldDisableDate={(date: Date) => {
+                const dateStr = dayjs(date).format('YYYY-MM-DD');
+                return isAfter(new Date(), date) || unavailableDates.includes(dateStr);
+              }}
+              style={{ width: '100%' }}
+              container={() => document.body}
+            />
 
-            <div className="form-group">
-              <label className="label">Дата выезда</label>
-              <input
-                className="date-input"
-                type="date"
-                value={endDate}
-                min={startDate || today}
-                onChange={(e) => {
-                  if (!isDateDisabled(e.target.value)) setEndDate(e.target.value);
-                }}
-              />
-            </div>
-
-            {error && <Text color="red" size="sm">{error}</Text>}
+            {error && (
+              <Text color="red" size="sm" mt="md">
+                {error}
+              </Text>
+            )}
 
             <Group mt="xl">
-              <Button variant="light" color="gray" onClick={() => { reset(); onClose(); }}>
+              <Button
+                variant="light"
+                color="gray"
+                onClick={() => {
+                  reset();
+                  onClose();
+                }}
+              >
                 Отмена
               </Button>
               <Button type="submit" loading={loading}>
@@ -158,12 +190,22 @@ export default function BookHotelForm({ hotelUid, hotelName, opened, onClose, on
 
         {reservation && (
           <div>
-            <Text size="sm" mb="sm" color="green">Бронирование подтверждено!</Text>
-            <Text>Отель: <b>{reservation.hotel?.name}</b></Text>
+            <Text size="sm" mb="sm" color="green">
+              Бронирование подтверждено!
+            </Text>
+            <Text>
+              Отель: <b>{reservation.hotel?.name}</b>
+            </Text>
             <Text>Город: {reservation.hotel?.fullAddress}</Text>
-            <Text>Даты: {reservation.startDate} – {reservation.endDate}</Text>
-            <Text>Статус: <b>{reservation.status}</b></Text>
-            <Text>Стоимость: <b>{reservation.payment?.price} ₽</b></Text>
+            <Text>
+              Даты: {reservation.startDate} – {reservation.endDate}
+            </Text>
+            <Text>
+              Статус: <b>{reservation.status}</b>
+            </Text>
+            <Text>
+              Стоимость: <b>{reservation.payment?.price} ₽</b>
+            </Text>
 
             <Group mt="xl">
               <Button variant="light" color="red" onClick={handleCancel}>

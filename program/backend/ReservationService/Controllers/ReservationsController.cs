@@ -236,7 +236,7 @@ public class ReservationsController : Controller
             await _repository.UpdateAsync(newModel, reservation.Id);
 
             _logger.LogInformation("Reservation updated successfully. UID: {ReservationUid}, Old Status: {OldStatus}, New Status: {NewStatus}",
-                reservationResponse.ReservationUid, reservation.Status, reservationResponse.Status);
+                reservationResponse.ReservationUid, oldStatus, reservationResponse.Status);
             await PublishUserActionAsync(
                 action: "UpdateReservation",
                 status: "Success",
@@ -253,7 +253,7 @@ public class ReservationsController : Controller
 
             var startDate = DateTimeOffset.Parse(reservationResponse.StartDate).UtcDateTime;
             var endDate = DateTimeOffset.Parse(reservationResponse.EndDate).UtcDateTime;
-            if (oldStatus == "PAID" && reservationResponse.Status == "CANCELLED")
+            if (oldStatus == "PAID" && reservationResponse.Status == "CANCELED")
             {
                 foreach (var date in EachDate(startDate, endDate))
                 {
@@ -263,15 +263,9 @@ public class ReservationsController : Controller
                         reservation.HotelId,
                         utcDate
                     );
-                    if (availability == null)
-                        return BadRequest($"No availability data for {date:yyyy-MM-dd}");
 
-                    if (availability.AvailableRooms <= 0)
-                        return BadRequest($"No rooms available on {date:yyyy-MM-dd}");
-
-                    availability.AvailableRooms -= 1;
+                    availability.AvailableRooms += 1;
                     availability.Date = utcDate;
-
                     await _availabilityRepository.UpdateAsync(availability);
                 }
             }

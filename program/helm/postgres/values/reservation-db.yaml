@@ -1060,6 +1060,7 @@ primary:
         INSERT INTO hotels (id, hotel_uid, name, country, city, address, stars, price) values (999, 'c2109104-ea47-4fa1-bb37-384c237507d0', 'Deckow-McKenzie', 'Ukraine', 'Hołoby', '932 Corscot Court', 3, 8229);
         INSERT INTO hotels (id, hotel_uid, name, country, city, address, stars, price) values (1000, 'fd93ae21-2d1d-456b-845d-bf176735bac7', 'Padberg-Hodkiewicz', 'China', 'Mawu', '4 Grim Lane', 2, 13834);
 
+      30-insert-hotels-availability.sql: |
         INSERT INTO hotel_availability (hotel_id, date, available_rooms)
         SELECT h.id, d::date, h.rooms_count
         FROM hotels h

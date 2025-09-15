@@ -107,3 +107,31 @@ export async function unbookHotel(reservationUid: string): Promise<void> {
     throw new Error(`Failed to unbook hotel: ${res.status}`);
   }
 }
+
+export interface Availability {
+  date: string;
+  availableRooms: number;
+}
+
+export async function getHotelAvailability(hotelUid: string, from?: Date, to?: Date): Promise<Availability[]> {
+  const params = new URLSearchParams();
+  
+  if (from) params.append('from', from.toISOString().split('T')[0]);
+  if (to) params.append('to', to.toISOString().split('T')[0]);
+  
+  const queryString = params.toString();
+  const url = `${API_URL}/hotels/${hotelUid}/availability${queryString ? `?${queryString}` : ''}`;
+  console.log(url)
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to get hotel availability: ${res.status} ${res.statusText}`);
+  }
+
+  return await res.json();
+}

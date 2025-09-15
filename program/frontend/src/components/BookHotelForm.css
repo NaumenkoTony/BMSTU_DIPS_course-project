@@ -98,3 +98,61 @@
     background-color: #ffe6e6;
     border-color: #ff6b6b;
 }
+
+.book-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-weight: 500;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.calendar-day {
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.calendar-day.disabled {
+  background-color: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.calendar-day.selected {
+  background-color: #4caf50;
+  color: white;
+  font-weight: bold;
+}
+
+.rs-picker-popup {
+  position: fixed !important;
+  z-index: 9999 !important;
+}
+
+.rs-picker-menu {
+  z-index: 10000 !important;
+}
+
+.rs-calendar-table-cell-disabled {
+  background-color: #f5f5f5;
+  color: #999;
+}
